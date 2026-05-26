@@ -56,7 +56,7 @@ export function parseVndInput(input: string): ParseVndResult {
 
   const amount = parseGroupedInteger(normalized);
 
-  if (!Number.isSafeInteger(amount) || amount <= 0) {
+  if (amount === null || !Number.isSafeInteger(amount) || amount <= 0) {
     return INVALID_AMOUNT;
   }
 
