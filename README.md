@@ -26,3 +26,15 @@ Run lint:
 ```bash
 pnpm lint
 ```
+
+Validate Prisma schema:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/money_mind_ai?schema=public" pnpm db:validate
+```
+
+Run the initial PostgreSQL migration after setting `DATABASE_URL`:
+
+```bash
+pnpm prisma migrate dev --name init
+```
