@@ -22,6 +22,9 @@ export default function PublicHomePage() {
           <Button asChild>
             <Link href="/dashboard">Vào ứng dụng</Link>
           </Button>
+          <Button asChild variant="secondary">
+            <Link href="/signup">Tạo tài khoản</Link>
+          </Button>
           <Button asChild variant="outline">
             <Link href="/login">Đăng nhập</Link>
           </Button>

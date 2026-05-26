@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { LogoutButton } from "@/components/auth/logout-button";
+import { getCurrentSession } from "@/lib/auth-session";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -6,11 +10,17 @@ const navItems = [
   { href: "/categories", label: "Danh mục" },
 ] as const;
 
-export default function AppLayout({
+export default async function AppLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getCurrentSession();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b bg-card">
@@ -29,6 +39,12 @@ export default function AppLayout({
               </Link>
             ))}
           </nav>
+          <div className="flex items-center gap-2">
+            <span className="hidden max-w-40 truncate text-sm text-muted-foreground sm:inline">
+              {session.user.email}
+            </span>
+            <LogoutButton />
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl px-4 py-8">{children}</main>

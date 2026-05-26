@@ -1,11 +1,12 @@
 import Link from "next/link";
 
+import { SignupForm } from "@/components/auth/signup-form";
 import { Button } from "@/components/ui/button";
 
 export default function SignupPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
-      <section className="w-full max-w-sm space-y-5">
+      <section className="w-full max-w-sm space-y-6">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">
             MoneyMind AI
@@ -14,9 +15,10 @@ export default function SignupPage() {
             Tạo tài khoản
           </h1>
           <p className="text-sm leading-6 text-muted-foreground">
-            Form đăng ký sẽ được triển khai trong Phase 2.
+            Sau khi tạo tài khoản, hệ thống sẽ chuẩn bị danh mục mặc định cho bạn.
           </p>
         </div>
+        <SignupForm />
         <Button asChild variant="outline">
           <Link href="/">Quay lại trang chủ</Link>
         </Button>
