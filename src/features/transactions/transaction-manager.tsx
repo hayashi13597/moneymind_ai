@@ -45,13 +45,24 @@ export function TransactionManager({
 }: TransactionManagerProps) {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [type, setType] = useState<"income" | "expense">("expense");
+  const [amount, setAmount] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [transactionDate, setTransactionDate] = useState(
+    toDateInputValue(new Date()),
+  );
+  const [note, setNote] = useState("");
+  const [merchant, setMerchant] = useState("");
+  const [rawInput, setRawInput] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [aiPending, setAiPending] = useState(false);
 
   const matchingCategories = useMemo(
-    () => categories.filter((category) => !category.type || category.type === type),
+    () =>
+      categories.filter((category) => !category.type || category.type === type),
     [categories, type],
   );
+  const selectedCategoryId = categoryId || matchingCategories[0]?.id || "";
 
   async function refreshTransactions() {
     const response = await fetch("/api/transactions");
@@ -70,7 +81,7 @@ export function TransactionManager({
     );
   }
 
-  async function createTransaction(formData: FormData) {
+  async function createTransaction() {
     setPending(true);
     setError("");
 
@@ -79,12 +90,12 @@ export function TransactionManager({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type,
-        amount: String(formData.get("amount") ?? ""),
-        categoryId: String(formData.get("categoryId") ?? ""),
-        note: String(formData.get("note") ?? ""),
-        merchant: String(formData.get("merchant") ?? ""),
-        rawInput: String(formData.get("rawInput") ?? ""),
-        transactionDate: String(formData.get("transactionDate") ?? ""),
+        amount,
+        categoryId: selectedCategoryId,
+        note,
+        merchant,
+        rawInput,
+        transactionDate,
       }),
     });
 
@@ -94,12 +105,57 @@ export function TransactionManager({
       return;
     }
 
-    const form = document.getElementById(
-      "transaction-form",
-    ) as HTMLFormElement | null;
-    form?.reset();
+    setAmount("");
+    setCategoryId("");
+    setTransactionDate(toDateInputValue(new Date()));
+    setNote("");
+    setMerchant("");
+    setRawInput("");
     await refreshTransactions();
     setPending(false);
+  }
+
+  async function parseRawInput() {
+    if (!rawInput.trim()) {
+      setError("Nhập mô tả giao dịch trước khi dùng AI.");
+      return;
+    }
+
+    setAiPending(true);
+    setError("");
+
+    const response = await fetch("/api/ai/parse-transaction", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input: rawInput }),
+    });
+
+    if (!response.ok) {
+      setError(await readJsonError(response));
+      setAiPending(false);
+      return;
+    }
+
+    const payload = (await response.json()) as {
+      draft: {
+        type: "income" | "expense";
+        amount: number;
+        categoryId: string;
+        note: string;
+        merchant: string | null;
+        rawInput: string;
+        transactionDate: string;
+      };
+    };
+
+    setType(payload.draft.type);
+    setAmount(String(payload.draft.amount));
+    setCategoryId(payload.draft.categoryId);
+    setNote(payload.draft.note);
+    setMerchant(payload.draft.merchant ?? "");
+    setRawInput(payload.draft.rawInput);
+    setTransactionDate(payload.draft.transactionDate);
+    setAiPending(false);
   }
 
   async function editTransaction(transaction: Transaction) {
@@ -165,7 +221,10 @@ export function TransactionManager({
         <select
           name="type"
           value={type}
-          onChange={(event) => setType(event.target.value as typeof type)}
+          onChange={(event) => {
+            setType(event.target.value as typeof type);
+            setCategoryId("");
+          }}
           className="h-9 rounded-md border bg-background px-3 text-sm"
         >
           <option value="expense">Chi tiêu</option>
@@ -173,12 +232,16 @@ export function TransactionManager({
         </select>
         <input
           name="amount"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
           placeholder="55k"
           className="h-9 rounded-md border bg-background px-3 text-sm"
           required
         />
         <select
           name="categoryId"
+          value={selectedCategoryId}
+          onChange={(event) => setCategoryId(event.target.value)}
           className="h-9 rounded-md border bg-background px-3 text-sm"
           required
         >
@@ -191,12 +254,15 @@ export function TransactionManager({
         <input
           name="transactionDate"
           type="date"
-          defaultValue={toDateInputValue(new Date())}
+          value={transactionDate}
+          onChange={(event) => setTransactionDate(event.target.value)}
           className="h-9 rounded-md border bg-background px-3 text-sm"
           required
         />
         <input
           name="note"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
           placeholder="Ghi chú"
           className="h-9 rounded-md border bg-background px-3 text-sm"
           required
@@ -206,14 +272,26 @@ export function TransactionManager({
         </Button>
         <input
           name="merchant"
+          value={merchant}
+          onChange={(event) => setMerchant(event.target.value)}
           placeholder="Người bán"
           className="h-9 rounded-md border bg-background px-3 text-sm lg:col-span-2"
         />
         <input
           name="rawInput"
+          value={rawInput}
+          onChange={(event) => setRawInput(event.target.value)}
           placeholder="Nhập thô, ví dụ: ăn trưa 55k"
-          className="h-9 rounded-md border bg-background px-3 text-sm lg:col-span-4"
+          className="h-9 rounded-md border bg-background px-3 text-sm lg:col-span-3"
         />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={parseRawInput}
+          disabled={aiPending}
+        >
+          AI parse
+        </Button>
       </form>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
