@@ -27,6 +27,22 @@ describe("category schemas", () => {
     });
   });
 
+  it("drops empty optional metadata", () => {
+    expect(
+      categoryCreateSchema.parse({
+        name: "Cafe",
+        type: "expense",
+        color: "",
+        icon: "  ",
+      }),
+    ).toEqual({
+      name: "Cafe",
+      type: "expense",
+      color: undefined,
+      icon: undefined,
+    });
+  });
+
   it("rejects empty names", () => {
     expect(() =>
       categoryCreateSchema.parse({ name: "   ", type: "income" }),

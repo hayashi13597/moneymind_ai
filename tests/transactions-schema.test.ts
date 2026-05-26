@@ -38,6 +38,23 @@ describe("transaction schemas", () => {
     ).toBe(18000000);
   });
 
+  it("drops empty optional text fields", () => {
+    expect(
+      transactionCreateSchema.parse({
+        type: "expense",
+        amount: "49k",
+        categoryId: "cat_cafe",
+        note: "Cafe",
+        merchant: "",
+        rawInput: "  ",
+        transactionDate: "2026-05-26",
+      }),
+    ).toMatchObject({
+      merchant: undefined,
+      rawInput: undefined,
+    });
+  });
+
   it("rejects invalid amounts", () => {
     expect(() =>
       transactionCreateSchema.parse({

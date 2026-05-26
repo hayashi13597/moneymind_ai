@@ -38,7 +38,10 @@ const dateSchema = z.string().min(1).transform((value, ctx) => {
   return date;
 });
 
-const optionalTrimmedString = z.string().trim().min(1).optional();
+const optionalTrimmedString = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
 
 export const transactionCreateSchema = z.object({
   type: transactionTypeSchema,

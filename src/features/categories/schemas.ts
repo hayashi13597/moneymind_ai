@@ -2,7 +2,10 @@ import { z } from "zod";
 
 const transactionTypeSchema = z.enum(["income", "expense"]);
 
-const optionalTrimmedString = z.string().trim().min(1).optional();
+const optionalTrimmedString = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
 
 export const categoryCreateSchema = z.object({
   name: z.string().trim().min(1, "Tên danh mục là bắt buộc."),
