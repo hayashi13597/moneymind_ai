@@ -1,6 +1,6 @@
 "use client";
 
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import { formatVnd } from "@/lib/money";
 
@@ -28,27 +28,23 @@ export function CategoryBreakdownChart({ data }: CategoryBreakdownChartProps) {
     );
   }
 
+  const chartData = data.map((item, index) => ({
+    ...item,
+    fill: item.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length],
+  }));
+
   return (
     <div className="h-64 w-full">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={256}>
         <PieChart>
           <Pie
-            data={data}
+            data={chartData}
             dataKey="amount"
             nameKey="name"
             innerRadius={58}
             outerRadius={92}
             paddingAngle={3}
-          >
-            {data.map((item, index) => (
-              <Cell
-                key={item.categoryId}
-                fill={
-                  item.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]
-                }
-              />
-            ))}
-          </Pie>
+          />
           <Tooltip
             formatter={(value) =>
               typeof value === "number" ? formatVnd(value) : String(value)
