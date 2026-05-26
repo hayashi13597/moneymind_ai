@@ -8,6 +8,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/transactions", label: "Giao dịch" },
   { href: "/categories", label: "Danh mục" },
+  { href: "/settings/ai", label: "AI" },
 ] as const;
 
 export default async function AppLayout({
