@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import type { MonthlyInsightDto } from "@/features/ai/monthly-insight";
+import { MonthlyInsightPanel } from "@/features/ai/monthly-insight-panel";
 import { formatVnd } from "@/lib/money";
 
 import { CategoryBreakdownChart } from "./category-breakdown-chart";
@@ -8,6 +10,7 @@ import type { MonthComparison, MonthlyDashboard } from "./service";
 
 type DashboardViewProps = {
   dashboard: MonthlyDashboard;
+  initialInsight: MonthlyInsightDto | null;
 };
 
 function comparisonText(label: string, comparison: MonthComparison) {
@@ -37,7 +40,10 @@ function kpiTone(type: "income" | "expense" | "remaining") {
   return "text-foreground";
 }
 
-export function DashboardView({ dashboard }: DashboardViewProps) {
+export function DashboardView({
+  dashboard,
+  initialInsight,
+}: DashboardViewProps) {
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -87,6 +93,11 @@ export function DashboardView({ dashboard }: DashboardViewProps) {
           </p>
         </div>
       </div>
+
+      <MonthlyInsightPanel
+        month={dashboard.month.key}
+        initialInsight={initialInsight}
+      />
 
       {dashboard.isEmpty ? (
         <div className="rounded-lg border bg-card p-6">

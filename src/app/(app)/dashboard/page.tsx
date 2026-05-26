@@ -1,3 +1,4 @@
+import { getCachedMonthlyInsight } from "@/features/ai/monthly-insight";
 import { DashboardView } from "@/features/dashboard/dashboard-view";
 import { getSelectedMonth } from "@/features/dashboard/month";
 import { getMonthlyDashboard } from "@/features/dashboard/service";
@@ -22,7 +23,10 @@ export default async function DashboardPage({
   }
 
   const selectedMonth = getSelectedMonth(month);
-  const dashboard = await getMonthlyDashboard(session.user.id, selectedMonth);
+  const [dashboard, initialInsight] = await Promise.all([
+    getMonthlyDashboard(session.user.id, selectedMonth),
+    getCachedMonthlyInsight(session.user.id, selectedMonth.key),
+  ]);
 
-  return <DashboardView dashboard={dashboard} />;
+  return <DashboardView dashboard={dashboard} initialInsight={initialInsight} />;
 }
