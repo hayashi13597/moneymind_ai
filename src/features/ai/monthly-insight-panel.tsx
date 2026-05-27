@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import type { MonthlyInsightDto } from "@/features/ai/monthly-insight";
+import { MonthlyInsightMarkdown } from "@/features/ai/monthly-insight-markdown";
 
 type MonthlyInsightPanelProps = {
   month: string;
@@ -30,21 +32,30 @@ export function MonthlyInsightPanel({
     setPending(true);
     setError("");
 
-    const response = await fetch("/api/ai/monthly-insight", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ month, regenerate }),
-    });
+    try {
+      const response = await fetch("/api/ai/monthly-insight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ month, regenerate }),
+      });
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      const payload = (await response.json()) as { insight: MonthlyInsightDto };
+      setInsight(payload.insight);
+      toast.success(regenerate ? "Đã tạo lại insight AI." : "Đã tạo insight AI.");
+    } catch {
+      const message = "Không thể kết nối dịch vụ AI.";
+      setError(message);
+      toast.error(message);
+    } finally {
       setPending(false);
-      return;
     }
-
-    const payload = (await response.json()) as { insight: MonthlyInsightDto };
-    setInsight(payload.insight);
-    setPending(false);
   }
 
   return (
@@ -66,9 +77,7 @@ export function MonthlyInsightPanel({
         </Button>
       </div>
       {insight ? (
-        <p className="mt-4 whitespace-pre-line text-sm leading-6">
-          {insight.content}
-        </p>
+        <MonthlyInsightMarkdown content={insight.content} />
       ) : (
         <p className="mt-4 text-sm text-muted-foreground">
           Chưa có insight cho tháng này.

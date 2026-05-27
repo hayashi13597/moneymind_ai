@@ -51,6 +51,7 @@ export async function generateMonthlyInsight(
     baseUrl: setting.baseUrl,
     apiKey: setting.apiKey,
     model: setting.model,
+    timeoutMs: 45000,
     messages: [
       {
         role: "system",

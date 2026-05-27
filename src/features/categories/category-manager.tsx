@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
@@ -31,6 +32,8 @@ async function readJsonError(response: Response) {
   return payload?.error ?? "Không thể lưu thay đổi.";
 }
 
+const NETWORK_ERROR_MESSAGE = "Không thể kết nối máy chủ.";
+
 export function CategoryManager({ initialCategories }: CategoryManagerProps) {
   const [categories, setCategories] = useState(initialCategories);
   const [error, setError] = useState("");
@@ -48,39 +51,57 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
   );
 
   async function refreshCategories() {
-    const response = await fetch("/api/categories");
+    try {
+      const response = await fetch("/api/categories");
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
-      return;
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return false;
+      }
+
+      const payload = (await response.json()) as { categories: Category[] };
+      setCategories(payload.categories);
+      return true;
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
+      return false;
     }
-
-    const payload = (await response.json()) as { categories: Category[] };
-    setCategories(payload.categories);
   }
 
   async function createCategory(formData: FormData) {
     setPending(true);
     setError("");
 
-    const response = await fetch("/api/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: String(formData.get("name") ?? ""),
-        type: String(formData.get("type") ?? "expense"),
-      }),
-    });
+    try {
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: String(formData.get("name") ?? ""),
+          type: String(formData.get("type") ?? "expense"),
+        }),
+      });
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      setName("");
+      if (await refreshCategories()) {
+        toast.success("Đã thêm danh mục.");
+      }
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
+    } finally {
       setPending(false);
-      return;
     }
-
-    setName("");
-    await refreshCategories();
-    setPending(false);
   }
 
   async function renameCategory(category: Category) {
@@ -92,18 +113,27 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
 
     setError("");
 
-    const response = await fetch(`/api/categories/${category.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: nextName }),
-    });
+    try {
+      const response = await fetch(`/api/categories/${category.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nextName }),
+      });
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
-      return;
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      if (await refreshCategories()) {
+        toast.success("Đã cập nhật danh mục.");
+      }
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
     }
-
-    await refreshCategories();
   }
 
   async function deleteCategoryById(category: Category) {
@@ -115,16 +145,25 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
 
     setError("");
 
-    const response = await fetch(`/api/categories/${category.id}`, {
-      method: "DELETE",
-    });
+    try {
+      const response = await fetch(`/api/categories/${category.id}`, {
+        method: "DELETE",
+      });
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
-      return;
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      if (await refreshCategories()) {
+        toast.success("Đã xóa danh mục.");
+      }
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
     }
-
-    await refreshCategories();
   }
 
   return (
