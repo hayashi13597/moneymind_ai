@@ -78,4 +78,20 @@ describe("OpenAI-compatible adapter", () => {
       }),
     ).rejects.toEqual(new AiDomainError("provider_invalid_response"));
   });
+
+  it("maps aborted requests to provider_timeout", async () => {
+    const abortError = new Error("The operation was aborted.");
+    abortError.name = "AbortError";
+    fetchMock.mockRejectedValue(abortError);
+
+    await expect(
+      createOpenAiCompatibleChat({
+        baseUrl: "https://provider.example/v1",
+        apiKey: "sk-test",
+        model: "model",
+        messages: [{ role: "user", content: "Ping" }],
+        timeoutMs: 1000,
+      }),
+    ).rejects.toEqual(new AiDomainError("provider_timeout"));
+  });
 });

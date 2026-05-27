@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +21,8 @@ async function readJsonError(response: Response) {
   return payload?.error ?? "Không thể lưu cấu hình AI.";
 }
 
+const NETWORK_ERROR_MESSAGE = "Không thể kết nối máy chủ.";
+
 export function AiSettingsForm({ initialSetting }: AiSettingsFormProps) {
   const [baseUrl, setBaseUrl] = useState(
     initialSetting?.baseUrl ?? "https://api.openai.com/v1",
@@ -27,7 +30,6 @@ export function AiSettingsForm({ initialSetting }: AiSettingsFormProps) {
   const [model, setModel] = useState(initialSetting?.model ?? "gpt-4.1-mini");
   const [hasApiKey, setHasApiKey] = useState(Boolean(initialSetting?.hasApiKey));
   const [apiKey, setApiKey] = useState("");
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -35,31 +37,37 @@ export function AiSettingsForm({ initialSetting }: AiSettingsFormProps) {
     event.preventDefault();
     setPending(true);
     setError("");
-    setMessage("");
 
-    const response = await fetch("/api/settings/ai", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        baseUrl,
-        model,
-        apiKey: apiKey || undefined,
-      }),
-    });
+    try {
+      const response = await fetch("/api/settings/ai", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl,
+          model,
+          apiKey: apiKey || undefined,
+        }),
+      });
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      const payload = (await response.json()) as {
+        setting: { hasApiKey: boolean };
+      };
+      setHasApiKey(payload.setting.hasApiKey);
+      setApiKey("");
+      toast.success("Đã lưu cấu hình AI.");
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
+    } finally {
       setPending(false);
-      return;
     }
-
-    const payload = (await response.json()) as {
-      setting: { hasApiKey: boolean };
-    };
-    setHasApiKey(payload.setting.hasApiKey);
-    setApiKey("");
-    setMessage("Đã lưu cấu hình AI.");
-    setPending(false);
   }
 
   return (
@@ -116,7 +124,6 @@ export function AiSettingsForm({ initialSetting }: AiSettingsFormProps) {
           {hasApiKey ? "API key đã cấu hình" : "Chưa có API key"}
         </span>
       </div>
-      {message ? <p className="text-sm text-green-600">{message}</p> : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </form>
   );

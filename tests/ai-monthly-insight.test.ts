@@ -111,6 +111,11 @@ describe("monthly insight service", () => {
     const insight = await generateMonthlyInsight("user_1", "2026-05", false);
 
     expect(insight.content).toBe("Bạn đang chi nhiều hơn cho ăn uống.");
+    expect(chatMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timeoutMs: 45000,
+      }),
+    );
     expect(upsertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId_month: { userId: "user_1", month: "2026-05" } },

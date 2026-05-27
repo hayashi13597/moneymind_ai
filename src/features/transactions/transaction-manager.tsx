@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { formatVnd } from "@/lib/money";
@@ -35,6 +36,8 @@ async function readJsonError(response: Response) {
   return payload?.error ?? "Không thể lưu thay đổi.";
 }
 
+const NETWORK_ERROR_MESSAGE = "Không thể kết nối máy chủ.";
+
 function toDateInputValue(date: Date) {
   return date.toISOString().slice(0, 10);
 }
@@ -65,97 +68,125 @@ export function TransactionManager({
   const selectedCategoryId = categoryId || matchingCategories[0]?.id || "";
 
   async function refreshTransactions() {
-    const response = await fetch("/api/transactions");
+    try {
+      const response = await fetch("/api/transactions");
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
-      return;
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return false;
+      }
+
+      const payload = (await response.json()) as { transactions: Transaction[] };
+      setTransactions(
+        payload.transactions.map((transaction) => ({
+          ...transaction,
+          transactionDate: new Date(transaction.transactionDate).toISOString(),
+        })),
+      );
+      return true;
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
+      return false;
     }
-
-    const payload = (await response.json()) as { transactions: Transaction[] };
-    setTransactions(
-      payload.transactions.map((transaction) => ({
-        ...transaction,
-        transactionDate: new Date(transaction.transactionDate).toISOString(),
-      })),
-    );
   }
 
   async function createTransaction() {
     setPending(true);
     setError("");
 
-    const response = await fetch("/api/transactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type,
-        amount,
-        categoryId: selectedCategoryId,
-        note,
-        merchant,
-        rawInput,
-        transactionDate,
-      }),
-    });
+    try {
+      const response = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          amount,
+          categoryId: selectedCategoryId,
+          note,
+          merchant,
+          rawInput,
+          transactionDate,
+        }),
+      });
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      setAmount("");
+      setCategoryId("");
+      setTransactionDate(toDateInputValue(new Date()));
+      setNote("");
+      setMerchant("");
+      setRawInput("");
+      if (await refreshTransactions()) {
+        toast.success("Đã thêm giao dịch.");
+      }
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
+    } finally {
       setPending(false);
-      return;
     }
-
-    setAmount("");
-    setCategoryId("");
-    setTransactionDate(toDateInputValue(new Date()));
-    setNote("");
-    setMerchant("");
-    setRawInput("");
-    await refreshTransactions();
-    setPending(false);
   }
 
   async function parseRawInput() {
     if (!rawInput.trim()) {
-      setError("Nhập mô tả giao dịch trước khi dùng AI.");
+      const message = "Nhập mô tả giao dịch trước khi dùng AI.";
+      setError(message);
+      toast.error(message);
       return;
     }
 
     setAiPending(true);
     setError("");
 
-    const response = await fetch("/api/ai/parse-transaction", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input: rawInput }),
-    });
+    try {
+      const response = await fetch("/api/ai/parse-transaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: rawInput }),
+      });
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
-      setAiPending(false);
-      return;
-    }
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return;
+      }
 
-    const payload = (await response.json()) as {
-      draft: {
-        type: "income" | "expense";
-        amount: number;
-        categoryId: string;
-        note: string;
-        merchant: string | null;
-        rawInput: string;
-        transactionDate: string;
+      const payload = (await response.json()) as {
+        draft: {
+          type: "income" | "expense";
+          amount: number;
+          categoryId: string;
+          note: string;
+          merchant: string | null;
+          rawInput: string;
+          transactionDate: string;
+        };
       };
-    };
 
-    setType(payload.draft.type);
-    setAmount(String(payload.draft.amount));
-    setCategoryId(payload.draft.categoryId);
-    setNote(payload.draft.note);
-    setMerchant(payload.draft.merchant ?? "");
-    setRawInput(payload.draft.rawInput);
-    setTransactionDate(payload.draft.transactionDate);
-    setAiPending(false);
+      setType(payload.draft.type);
+      setAmount(String(payload.draft.amount));
+      setCategoryId(payload.draft.categoryId);
+      setNote(payload.draft.note);
+      setMerchant(payload.draft.merchant ?? "");
+      setRawInput(payload.draft.rawInput);
+      setTransactionDate(payload.draft.transactionDate);
+      toast.success("AI đã phân tích giao dịch.");
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
+    } finally {
+      setAiPending(false);
+    }
   }
 
   async function editTransaction(transaction: Transaction) {
@@ -173,21 +204,30 @@ export function TransactionManager({
 
     setError("");
 
-    const response = await fetch(`/api/transactions/${transaction.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        note: nextNote,
-        amount: nextAmount,
-      }),
-    });
+    try {
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          note: nextNote,
+          amount: nextAmount,
+        }),
+      });
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
-      return;
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      if (await refreshTransactions()) {
+        toast.success("Đã cập nhật giao dịch.");
+      }
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
     }
-
-    await refreshTransactions();
   }
 
   async function deleteTransactionById(transaction: Transaction) {
@@ -199,16 +239,25 @@ export function TransactionManager({
 
     setError("");
 
-    const response = await fetch(`/api/transactions/${transaction.id}`, {
-      method: "DELETE",
-    });
+    try {
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        method: "DELETE",
+      });
 
-    if (!response.ok) {
-      setError(await readJsonError(response));
-      return;
+      if (!response.ok) {
+        const message = await readJsonError(response);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      if (await refreshTransactions()) {
+        toast.success("Đã xóa giao dịch.");
+      }
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      toast.error(NETWORK_ERROR_MESSAGE);
     }
-
-    await refreshTransactions();
   }
 
   return (
