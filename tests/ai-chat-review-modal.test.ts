@@ -1,0 +1,84 @@
+import React from "react";
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+
+import { AiChatTransactionReviewModal } from "@/features/ai-chat/transaction-review-modal";
+import type { AiChatTransactionDraft } from "@/features/ai-chat/schemas";
+
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean })
+  .IS_REACT_ACT_ENVIRONMENT = true;
+
+const categories = [
+  { id: "cat_food", name: "Ăn uống", type: "expense" as const },
+  { id: "cat_income", name: "Thu nhập", type: "income" as const },
+];
+
+const draft: AiChatTransactionDraft = {
+  type: "expense",
+  amount: 55000,
+  categoryId: "cat_food",
+  categoryName: "Ăn uống",
+  note: "Tiền ăn bún bò huế",
+  merchant: "Quán bún bò",
+  rawInput: "Thêm chi tiêu hôm nay là 55k tiền ăn bún bò huế",
+  transactionDate: "2026-05-27",
+};
+
+function renderModal({
+  root,
+  draft,
+  onClose = jest.fn(),
+  onSaved = jest.fn(),
+}: {
+  root: Root;
+  draft: AiChatTransactionDraft | null;
+  onClose?: () => void;
+  onSaved?: () => void;
+}) {
+  act(() => {
+    root.render(
+      React.createElement(AiChatTransactionReviewModal, {
+        draft,
+        categories,
+        onClose,
+        onSaved,
+      }),
+    );
+  });
+}
+
+describe("AiChatTransactionReviewModal", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it("hydrates form fields when a draft arrives after initial null render", () => {
+    renderModal({ root, draft: null });
+
+    expect(container.textContent).toBe("");
+
+    renderModal({ root, draft });
+
+    const selects = Array.from(container.querySelectorAll("select"));
+    const inputs = Array.from(container.querySelectorAll("input"));
+
+    expect(selects[0]?.value).toBe("expense");
+    expect(inputs[0]?.value).toBe("55000");
+    expect(selects[1]?.value).toBe("cat_food");
+    expect(inputs[1]?.value).toBe("2026-05-27");
+    expect(inputs[2]?.value).toBe("Quán bún bò");
+    expect(inputs[3]?.value).toBe("Tiền ăn bún bò huế");
+  });
+});

@@ -19,6 +19,13 @@ type AiChatTransactionReviewModalProps = {
   onSaved: () => void;
 };
 
+type AiChatTransactionReviewFormProps = {
+  draft: AiChatTransactionDraft;
+  categories: Category[];
+  onClose: () => void;
+  onSaved: () => void;
+};
+
 async function readJsonError(response: Response) {
   const payload = (await response.json().catch(() => null)) as {
     error?: string;
@@ -27,22 +34,32 @@ async function readJsonError(response: Response) {
   return payload?.error ?? "Không thể lưu giao dịch.";
 }
 
-export function AiChatTransactionReviewModal({
+function draftKey(draft: AiChatTransactionDraft) {
+  return [
+    draft.type,
+    draft.amount,
+    draft.categoryId,
+    draft.transactionDate,
+    draft.note,
+    draft.merchant ?? "",
+    draft.rawInput,
+  ].join("|");
+}
+
+function AiChatTransactionReviewForm({
   draft,
   categories,
   onClose,
   onSaved,
-}: AiChatTransactionReviewModalProps) {
+}: AiChatTransactionReviewFormProps) {
   const [type, setType] = useState<"income" | "expense">(
-    draft?.type ?? "expense",
+    draft.type,
   );
-  const [amount, setAmount] = useState(draft ? String(draft.amount) : "");
-  const [categoryId, setCategoryId] = useState(draft?.categoryId ?? "");
-  const [transactionDate, setTransactionDate] = useState(
-    draft?.transactionDate ?? new Date().toISOString().slice(0, 10),
-  );
-  const [note, setNote] = useState(draft?.note ?? "");
-  const [merchant, setMerchant] = useState(draft?.merchant ?? "");
+  const [amount, setAmount] = useState(String(draft.amount));
+  const [categoryId, setCategoryId] = useState(draft.categoryId);
+  const [transactionDate, setTransactionDate] = useState(draft.transactionDate);
+  const [note, setNote] = useState(draft.note);
+  const [merchant, setMerchant] = useState(draft.merchant ?? "");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -53,15 +70,7 @@ export function AiChatTransactionReviewModal({
   );
   const selectedCategoryId = categoryId || matchingCategories[0]?.id || "";
 
-  if (!draft) {
-    return null;
-  }
-
   async function saveDraft() {
-    if (!draft) {
-      return;
-    }
-
     setPending(true);
     setError("");
 
@@ -176,5 +185,26 @@ export function AiChatTransactionReviewModal({
         </form>
       </div>
     </div>
+  );
+}
+
+export function AiChatTransactionReviewModal({
+  draft,
+  categories,
+  onClose,
+  onSaved,
+}: AiChatTransactionReviewModalProps) {
+  if (!draft) {
+    return null;
+  }
+
+  return (
+    <AiChatTransactionReviewForm
+      key={draftKey(draft)}
+      draft={draft}
+      categories={categories}
+      onClose={onClose}
+      onSaved={onSaved}
+    />
   );
 }
