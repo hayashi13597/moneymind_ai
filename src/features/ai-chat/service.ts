@@ -16,7 +16,7 @@ type UserCategory = {
   type: "income" | "expense" | null;
 };
 
-const MAX_CONTEXT_TRANSACTIONS = 40;
+const MAX_CONTEXT_TRANSACTIONS = 100;
 
 function normalizeName(value: string) {
   return value.trim().toLocaleLowerCase("vi-VN");
@@ -66,21 +66,81 @@ function lastUserMessage(input: AiChatRequest) {
     .find((message) => message.role === "user");
 }
 
-async function listMonthTransactions(userId: string, month: string) {
-  const window = getMonthWindow(month);
+function parseMonthKey(input: string) {
+  const match = input.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return null;
+  return { year: Number(match[1]), monthIndex: Number(match[2]) - 1 };
+}
+
+async function listRecentTransactions(userId: string, month: string) {
+  const parts = parseMonthKey(month);
+  if (!parts) {
+    throw new Error(`Invalid month key: ${month}`);
+  }
+
+  const start = new Date(Date.UTC(parts.year, parts.monthIndex - 5, 1));
+  const end = new Date(Date.UTC(parts.year, parts.monthIndex + 1, 1));
 
   return db.transaction.findMany({
     where: {
       userId,
       transactionDate: {
-        gte: window.start,
-        lt: window.end,
+        gte: start,
+        lt: end,
       },
     },
     include: { category: true },
     orderBy: [{ transactionDate: "desc" }, { createdAt: "desc" }],
     take: MAX_CONTEXT_TRANSACTIONS,
   });
+}
+
+async function getRecentMonthlySummaries(userId: string, month: string) {
+  const parts = parseMonthKey(month);
+  if (!parts) {
+    throw new Error(`Invalid month key: ${month}`);
+  }
+
+  const start = new Date(Date.UTC(parts.year, parts.monthIndex - 5, 1));
+  const end = new Date(Date.UTC(parts.year, parts.monthIndex + 1, 1));
+
+  const transactions = await db.transaction.findMany({
+    where: {
+      userId,
+      transactionDate: {
+        gte: start,
+        lt: end,
+      },
+    },
+    select: {
+      type: true,
+      amount: true,
+      transactionDate: true,
+    },
+  });
+
+  const summaries: Record<string, { income: number; expense: number; remaining: number }> = {};
+
+  for (const tx of transactions) {
+    const date = new Date(tx.transactionDate);
+    const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+
+    if (!summaries[monthKey]) {
+      summaries[monthKey] = { income: 0, expense: 0, remaining: 0 };
+    }
+
+    if (tx.type === "income") {
+      summaries[monthKey].income += tx.amount;
+    } else {
+      summaries[monthKey].expense += tx.amount;
+    }
+  }
+
+  for (const key of Object.keys(summaries)) {
+    summaries[key].remaining = summaries[key].income - summaries[key].expense;
+  }
+
+  return summaries;
 }
 
 async function listCategories(userId: string): Promise<UserCategory[]> {
@@ -94,7 +154,7 @@ async function listCategories(userId: string): Promise<UserCategory[]> {
 function buildSystemPrompt() {
   return [
     "Bạn là trợ lý tài chính cá nhân cho người dùng Việt Nam.",
-    "Chỉ dùng dữ liệu tháng được cung cấp. Không bịa giao dịch, số dư, danh mục hoặc xu hướng.",
+    "Chỉ dùng dữ liệu giao dịch và thông tin tài chính được cung cấp. Không bịa giao dịch, số dư, danh mục hoặc xu hướng.",
     "Nếu câu hỏi nằm ngoài dữ liệu hiện có, hãy nói không đủ dữ liệu và gợi ý câu hỏi hẹp hơn.",
     "Không đưa lời khuyên đầu tư, cam kết lợi nhuận hoặc khuyến nghị sản phẩm tài chính.",
     "Trả lời bằng JSON duy nhất theo dạng:",
@@ -108,18 +168,20 @@ function buildContextPrompt({
   dashboard,
   categories,
   transactions,
+  monthlySummaries,
 }: {
   month: string;
   dashboard: Awaited<ReturnType<typeof getMonthlyDashboard>>;
   categories: UserCategory[];
-  transactions: Awaited<ReturnType<typeof listMonthTransactions>>;
+  transactions: Awaited<ReturnType<typeof listRecentTransactions>>;
+  monthlySummaries: Record<string, { income: number; expense: number; remaining: number }>;
 }) {
   return [
     `Tháng đang phân tích: ${month}`,
-    `Tổng thu nhập: ${dashboard.totals.income}`,
-    `Tổng chi tiêu: ${dashboard.totals.expense}`,
-    `Còn lại: ${dashboard.totals.remaining}`,
-    "Chi theo danh mục:",
+    `Tổng thu nhập tháng ${month}: ${dashboard.totals.income}`,
+    `Tổng chi tiêu tháng ${month}: ${dashboard.totals.expense}`,
+    `Còn lại tháng ${month}: ${dashboard.totals.remaining}`,
+    `Chi theo danh mục tháng ${month}:`,
     JSON.stringify(dashboard.categoryBreakdown),
     "Danh mục hiện có:",
     JSON.stringify(
@@ -128,7 +190,9 @@ function buildContextPrompt({
         type: category.type,
       })),
     ),
-    "Giao dịch trong tháng:",
+    "Tóm tắt thu chi các tháng gần đây:",
+    JSON.stringify(monthlySummaries),
+    "Giao dịch gần đây (tối đa 100 giao dịch trong vòng 6 tháng):",
     JSON.stringify(
       transactions.map((transaction) => ({
         date: transaction.transactionDate.toISOString().slice(0, 10),
@@ -146,11 +210,12 @@ export async function generateAiChatResponse(
   userId: string,
   input: AiChatRequest,
 ) {
-  const [setting, dashboard, categories, transactions] = await Promise.all([
+  const [setting, dashboard, categories, transactions, monthlySummaries] = await Promise.all([
     requireAiProviderSetting(userId),
     getMonthlyDashboard(userId, input.month),
     listCategories(userId),
-    listMonthTransactions(userId, input.month),
+    listRecentTransactions(userId, input.month),
+    getRecentMonthlySummaries(userId, input.month),
   ]);
 
   const providerContent = await createOpenAiCompatibleChat({
@@ -167,6 +232,7 @@ export async function generateAiChatResponse(
           dashboard,
           categories,
           transactions,
+          monthlySummaries,
         }),
       },
       ...input.messages,

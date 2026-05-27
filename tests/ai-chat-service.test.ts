@@ -104,9 +104,30 @@ describe("ai chat service", () => {
       },
     });
 
+    expect(transactionFindManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          transactionDate: {
+            gte: new Date("2025-12-01T00:00:00.000Z"),
+            lt: new Date("2026-06-01T00:00:00.000Z"),
+          },
+        }),
+      }),
+    );
+
     expect(chatMock).toHaveBeenCalledWith(
       expect.objectContaining({
         timeoutMs: 45000,
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: "system",
+            content: expect.stringContaining("Chỉ dùng dữ liệu giao dịch và thông tin tài chính được cung cấp."),
+          }),
+          expect.objectContaining({
+            role: "user",
+            content: expect.stringContaining("Tóm tắt thu chi các tháng gần đây:"),
+          }),
+        ]),
       }),
     );
   });
