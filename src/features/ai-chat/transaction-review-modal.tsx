@@ -58,6 +58,10 @@ export function AiChatTransactionReviewModal({
   }
 
   async function saveDraft() {
+    if (!draft) {
+      return;
+    }
+
     setPending(true);
     setError("");
 

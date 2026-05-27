@@ -21,6 +21,10 @@ type AiChatWidgetProps = {
   categories: Category[];
 };
 
+type ChatEntry = AiChatMessage & {
+  draft?: AiChatTransactionDraft;
+};
+
 async function readJsonError(response: Response) {
   const payload = (await response.json().catch(() => null)) as {
     error?: string;
@@ -35,7 +39,7 @@ function currentMonthKey() {
 
 export function AiChatWidget({ categories }: AiChatWidgetProps) {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<AiChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatEntry[]>([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -50,7 +54,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
       return;
     }
 
-    const nextMessages: AiChatMessage[] = [
+    const nextMessages: ChatEntry[] = [
       ...messages,
       { role: "user", content },
     ];
@@ -63,7 +67,13 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
       const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ month, messages: nextMessages }),
+        body: JSON.stringify({
+          month,
+          messages: nextMessages.map((message) => ({
+            role: message.role,
+            content: message.content,
+          })),
+        }),
       });
 
       if (!response.ok) {
@@ -73,11 +83,10 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
       }
 
       const payload = (await response.json()) as AiChatResponse;
-      setMessages((current) => [...current, payload.message]);
-
-      if (payload.transactionDraft) {
-        setReviewDraft(payload.transactionDraft);
-      }
+      setMessages((current) => [
+        ...current,
+        { ...payload.message, draft: payload.transactionDraft },
+      ]);
     } catch {
       setError("Không thể kết nối dịch vụ AI.");
     } finally {
@@ -124,7 +133,17 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                       : "mr-8 rounded-lg bg-muted px-3 py-2 text-sm"
                   }
                 >
-                  {message.content}
+                  <p>{message.content}</p>
+                  {message.draft ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setReviewDraft(message.draft ?? null)}
+                      className="mt-2"
+                    >
+                      Xem giao dịch nháp
+                    </Button>
+                  ) : null}
                 </div>
               ))}
               {pending ? (
