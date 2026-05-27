@@ -1,6 +1,7 @@
 "use client";
 
 import { Bot, MessageCircle, Send, X } from "lucide-react";
+import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,11 @@ type ChatEntry = AiChatMessage & {
   draft?: AiChatTransactionDraft;
 };
 
+type AiChatBubbleProps = {
+  entry: ChatEntry;
+  onReviewDraft: (draft: AiChatTransactionDraft) => void;
+};
+
 async function readJsonError(response: Response) {
   const payload = (await response.json().catch(() => null)) as {
     error?: string;
@@ -37,6 +43,30 @@ function currentMonthKey() {
   return new Date().toISOString().slice(0, 7);
 }
 
+export function AiChatBubble({ entry, onReviewDraft }: AiChatBubbleProps) {
+  return (
+    <div
+      className={
+        entry.role === "user"
+          ? "ml-8 rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground"
+          : "mr-8 rounded-lg bg-muted px-3 py-2 text-sm"
+      }
+    >
+      <p>{entry.content}</p>
+      {entry.draft ? (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onReviewDraft(entry.draft!)}
+          className="mt-2"
+        >
+          Xem giao dịch nháp
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
 export function AiChatWidget({ categories }: AiChatWidgetProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatEntry[]>([]);
@@ -47,7 +77,9 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
     useState<AiChatTransactionDraft | null>(null);
   const month = useMemo(() => currentMonthKey(), []);
 
-  async function sendMessage() {
+  async function sendMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
     const content = input.trim();
 
     if (!content || pending) {
@@ -125,31 +157,17 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                 </p>
               ) : null}
               {messages.map((message, index) => (
-                <div
+                <AiChatBubble
                   key={`${message.role}-${index}`}
-                  className={
-                    message.role === "user"
-                      ? "ml-8 rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground"
-                      : "mr-8 rounded-lg bg-muted px-3 py-2 text-sm"
-                  }
-                >
-                  <p>{message.content}</p>
-                  {message.draft ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setReviewDraft(message.draft ?? null)}
-                      className="mt-2"
-                    >
-                      Xem giao dịch nháp
-                    </Button>
-                  ) : null}
-                </div>
+                  entry={message}
+                  onReviewDraft={setReviewDraft}
+                />
               ))}
               {pending ? (
-                <p className="text-sm text-muted-foreground">
-                  AI đang trả lời...
-                </p>
+                <AiChatBubble
+                  entry={{ role: "assistant", content: "AI đang trả lời..." }}
+                  onReviewDraft={setReviewDraft}
+                />
               ) : null}
             </div>
             {error ? (
@@ -157,7 +175,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                 {error}
               </p>
             ) : null}
-            <form action={sendMessage} className="flex gap-2 border-t p-3">
+            <form onSubmit={sendMessage} className="flex gap-2 border-t p-3">
               <input
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
