@@ -5,6 +5,10 @@ import { createRoot, type Root } from "react-dom/client";
 import { AiChatTransactionReviewModal } from "@/features/ai-chat/transaction-review-modal";
 import type { AiChatTransactionDraft } from "@/features/ai-chat/schemas";
 
+jest.mock("@/features/transactions/actions", () => ({
+  createTransactionAction: jest.fn(),
+}));
+
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean })
   .IS_REACT_ACT_ENVIRONMENT = true;
 

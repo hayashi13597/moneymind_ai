@@ -38,6 +38,18 @@ describe("transaction schemas", () => {
     ).toBe(18000000);
   });
 
+  it("rejects amounts above the database integer range", () => {
+    expect(() =>
+      transactionCreateSchema.parse({
+        type: "income",
+        amount: 2000000000000,
+        categoryId: "cat_income",
+        note: "Đầu tư bitcoin",
+        transactionDate: "2026-05-27",
+      }),
+    ).toThrow();
+  });
+
   it("drops empty optional text fields", () => {
     expect(
       transactionCreateSchema.parse({

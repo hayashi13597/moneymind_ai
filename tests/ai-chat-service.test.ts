@@ -164,6 +164,144 @@ describe("ai chat service", () => {
     });
   });
 
+  it("accepts shorthand VND amount strings in provider transaction drafts", async () => {
+    chatMock.mockResolvedValue(
+      JSON.stringify({
+        answer: "Mình đã tạo giao dịch nháp để bạn kiểm tra.",
+        transactionDraft: {
+          type: "expense",
+          amount: "300k",
+          categoryName: "Khác",
+          note: "Sửa, vệ sinh laptop và kiểm tra quạt tản nhiệt",
+          merchant: null,
+          transactionDate: "2026-05-27",
+        },
+      }),
+    );
+
+    const response = await generateAiChatResponse("user_1", {
+      month: "2026-05",
+      messages: [
+        {
+          role: "user",
+          content:
+            "Thêm chi tiêu việc sửa đem laptop đi vệ sinh và kiểm tra vấn đề quạt tản nhiệt tốn 300k",
+        },
+      ],
+    });
+
+    expect(response.transactionDraft).toEqual({
+      type: "expense",
+      amount: 300000,
+      categoryId: "cat_other",
+      categoryName: "Khác",
+      note: "Sửa, vệ sinh laptop và kiểm tra quạt tản nhiệt",
+      merchant: null,
+      rawInput:
+        "Thêm chi tiêu việc sửa đem laptop đi vệ sinh và kiểm tra vấn đề quạt tản nhiệt tốn 300k",
+      transactionDate: "2026-05-27",
+    });
+  });
+
+  it("parses provider income drafts using Vietnamese million shorthand", async () => {
+    chatMock.mockResolvedValue(
+      JSON.stringify({
+        answer: "Mình đã tạo giao dịch nháp để bạn kiểm tra.",
+        transactionDraft: {
+          type: "income",
+          amount: "2tr",
+          categoryName: "Thu nhập",
+          note: "Đầu tư bitcoin",
+          merchant: null,
+          transactionDate: "2026-05-27",
+        },
+      }),
+    );
+
+    const response = await generateAiChatResponse("user_1", {
+      month: "2026-05",
+      messages: [
+        {
+          role: "user",
+          content: "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr",
+        },
+      ],
+    });
+
+    expect(response.transactionDraft).toEqual({
+      type: "income",
+      amount: 2000000,
+      categoryId: "cat_income",
+      categoryName: "Thu nhập",
+      note: "Đầu tư bitcoin",
+      merchant: null,
+      rawInput: "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr",
+      transactionDate: "2026-05-27",
+    });
+  });
+
+  it("prefers the user's Vietnamese shorthand amount when provider expands it incorrectly", async () => {
+    chatMock.mockResolvedValue(
+      JSON.stringify({
+        answer: "Mình đã tạo giao dịch nháp để bạn kiểm tra.",
+        transactionDraft: {
+          type: "income",
+          amount: 2000000000,
+          categoryName: "Thu nhập",
+          note: "Đầu tư bitcoin",
+          merchant: null,
+          transactionDate: "2026-05-27",
+        },
+      }),
+    );
+
+    const response = await generateAiChatResponse("user_1", {
+      month: "2026-05",
+      messages: [
+        {
+          role: "user",
+          content:
+            "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr (2 triệu)",
+        },
+      ],
+    });
+
+    expect(response.transactionDraft?.amount).toBe(2000000);
+  });
+
+  it("accepts empty provider merchant for income drafts", async () => {
+    chatMock.mockResolvedValue(
+      JSON.stringify({
+        answer: "Mình đã tạo giao dịch nháp để bạn kiểm tra.",
+        transactionDraft: {
+          type: "income",
+          amount: "2tr",
+          categoryName: "Đầu tư",
+          note: "Đầu tư bitcoin",
+          merchant: "",
+          transactionDate: "2026-05-27",
+        },
+      }),
+    );
+
+    const response = await generateAiChatResponse("user_1", {
+      month: "2026-05",
+      messages: [
+        {
+          role: "user",
+          content: "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr",
+        },
+      ],
+    });
+
+    expect(response.transactionDraft).toMatchObject({
+      type: "income",
+      amount: 2000000,
+      categoryId: "cat_income",
+      merchant: null,
+    });
+  });
+
   it("falls back to expense other category when provider category is unknown", async () => {
     chatMock.mockResolvedValue(
       JSON.stringify({

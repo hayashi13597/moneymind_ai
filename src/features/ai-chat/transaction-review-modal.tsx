@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import type { AiChatTransactionDraft } from "@/features/ai-chat/schemas";
+import { createTransactionAction } from "@/features/transactions/actions";
 
 type Category = {
   id: string;
@@ -25,14 +26,6 @@ type AiChatTransactionReviewFormProps = {
   onClose: () => void;
   onSaved: () => void;
 };
-
-async function readJsonError(response: Response) {
-  const payload = (await response.json().catch(() => null)) as {
-    error?: string;
-  } | null;
-
-  return payload?.error ?? "Không thể lưu giao dịch.";
-}
 
 function draftKey(draft: AiChatTransactionDraft) {
   return [
@@ -75,24 +68,19 @@ function AiChatTransactionReviewForm({
     setError("");
 
     try {
-      const response = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          amount,
-          categoryId: selectedCategoryId,
-          note,
-          merchant,
-          rawInput: draft.rawInput,
-          transactionDate,
-        }),
+      const result = await createTransactionAction({
+        type,
+        amount,
+        categoryId: selectedCategoryId,
+        note,
+        merchant,
+        rawInput: draft.rawInput,
+        transactionDate,
       });
 
-      if (!response.ok) {
-        const message = await readJsonError(response);
-        setError(message);
-        toast.error(message);
+      if (!result.ok) {
+        setError(result.error);
+        toast.error(result.error);
         return;
       }
 

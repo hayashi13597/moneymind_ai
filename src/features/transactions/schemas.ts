@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { parseVndInput } from "@/lib/money";
+import { MAX_TRANSACTION_AMOUNT, parseVndInput } from "@/lib/money";
 
 const transactionTypeSchema = z.enum(["income", "expense"]);
 
@@ -8,6 +8,14 @@ const amountSchema = z
   .union([z.string(), z.number().int().positive()])
   .transform((value, ctx) => {
     if (typeof value === "number") {
+      if (value > MAX_TRANSACTION_AMOUNT) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Số tiền không hợp lệ.",
+        });
+        return z.NEVER;
+      }
+
       return value;
     }
 

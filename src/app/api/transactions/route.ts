@@ -1,3 +1,4 @@
+import { revalidateTransactionViews } from "@/features/transactions/revalidation";
 import { transactionCreateSchema } from "@/features/transactions/schemas";
 import {
   createTransaction,
@@ -52,6 +53,8 @@ export async function POST(request: Request) {
   if (!result.ok) {
     return transactionDomainError(result.reason);
   }
+
+  revalidateTransactionViews();
 
   return Response.json({ transaction: result.transaction }, { status: 201 });
 }

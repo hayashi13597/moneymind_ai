@@ -3,6 +3,10 @@ import { renderToStaticMarkup } from "react-dom/server.node";
 
 import { AiChatBubble } from "@/features/ai-chat/widget";
 
+jest.mock("@/features/transactions/actions", () => ({
+  createTransactionAction: jest.fn(),
+}));
+
 describe("AiChatBubble", () => {
   it("renders pending assistant text with assistant bubble styling", () => {
     const markup = renderToStaticMarkup(

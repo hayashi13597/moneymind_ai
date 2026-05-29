@@ -1,7 +1,22 @@
 import { z } from "zod";
 
+import { parseVndInput } from "@/lib/money";
+
 const trimmedString = z.string().trim();
+const optionalNullableTrimmedString = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+  trimmedString.min(1).nullable().optional(),
+);
 const chatRoleSchema = z.enum(["user", "assistant"]);
+const vndAmountSchema = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const parsed = parseVndInput(value);
+
+  return parsed.ok ? parsed.value : value;
+}, z.number().int().positive());
 
 export const AI_CHAT_MAX_MESSAGES = 8;
 export const AI_CHAT_MAX_MESSAGE_LENGTH = 1000;
@@ -25,10 +40,10 @@ export type AiChatRequest = z.infer<typeof aiChatRequestSchema>;
 
 export const aiChatProviderDraftSchema = z.object({
   type: z.enum(["income", "expense"]),
-  amount: z.number().int().positive(),
+  amount: vndAmountSchema,
   categoryName: trimmedString.min(1),
   note: trimmedString.min(1),
-  merchant: trimmedString.min(1).nullable().optional(),
+  merchant: optionalNullableTrimmedString,
   transactionDate: trimmedString.regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 

@@ -2,6 +2,8 @@ type ParseVndResult =
   | { ok: true; value: number }
   | { ok: false; error: "Số tiền không hợp lệ." };
 
+export const MAX_TRANSACTION_AMOUNT = 2_147_483_647;
+
 const INVALID_AMOUNT: ParseVndResult = {
   ok: false,
   error: "Số tiền không hợp lệ.",
@@ -49,14 +51,21 @@ export function parseVndInput(input: string): ParseVndResult {
         : 1_000_000;
     const amount = Math.round(value * multiplier);
 
-    return Number.isSafeInteger(amount) && amount > 0
+    return Number.isSafeInteger(amount) &&
+      amount > 0 &&
+      amount <= MAX_TRANSACTION_AMOUNT
       ? { ok: true, value: amount }
       : INVALID_AMOUNT;
   }
 
   const amount = parseGroupedInteger(normalized);
 
-  if (amount === null || !Number.isSafeInteger(amount) || amount <= 0) {
+  if (
+    amount === null ||
+    !Number.isSafeInteger(amount) ||
+    amount <= 0 ||
+    amount > MAX_TRANSACTION_AMOUNT
+  ) {
     return INVALID_AMOUNT;
   }
 

@@ -6,9 +6,9 @@ import type {
   AiChatTransactionDraft,
 } from "@/features/ai-chat/schemas";
 import { aiChatProviderResponseSchema } from "@/features/ai-chat/schemas";
-import { getMonthWindow } from "@/features/dashboard/month";
 import { getMonthlyDashboard } from "@/features/dashboard/service";
 import { db } from "@/lib/db";
+import { parseVndInput } from "@/lib/money";
 
 type UserCategory = {
   id: string;
@@ -64,6 +64,26 @@ function lastUserMessage(input: AiChatRequest) {
   return [...input.messages]
     .reverse()
     .find((message) => message.role === "user");
+}
+
+function amountFromUserMessage(content: string) {
+  const matches = content.match(/\d+(?:[.,]\d+)?\s*(?:k|nghìn|ngan|tr|triệu|vnd|vnđ|đ)/giu);
+
+  if (!matches) {
+    return null;
+  }
+
+  const amounts = new Set<number>();
+
+  for (const match of matches) {
+    const parsed = parseVndInput(match);
+
+    if (parsed.ok) {
+      amounts.add(parsed.value);
+    }
+  }
+
+  return amounts.size === 1 ? [...amounts][0] : null;
 }
 
 function parseMonthKey(input: string) {
@@ -255,6 +275,7 @@ export async function generateAiChatResponse(
   };
 
   if (parsed.data.transactionDraft) {
+    const latestUserMessage = lastUserMessage(input);
     const category = resolveDraftCategory(
       categories,
       parsed.data.transactionDraft.type,
@@ -267,13 +288,15 @@ export async function generateAiChatResponse(
 
     response.transactionDraft = {
       type: parsed.data.transactionDraft.type,
-      amount: parsed.data.transactionDraft.amount,
+      amount:
+        (latestUserMessage
+          ? amountFromUserMessage(latestUserMessage.content)
+          : null) ?? parsed.data.transactionDraft.amount,
       categoryId: category.id,
       categoryName: category.name,
       note: parsed.data.transactionDraft.note,
       merchant: parsed.data.transactionDraft.merchant ?? null,
-      rawInput:
-        lastUserMessage(input)?.content ?? parsed.data.transactionDraft.note,
+      rawInput: latestUserMessage?.content ?? parsed.data.transactionDraft.note,
       transactionDate: parsed.data.transactionDraft.transactionDate,
     };
   }
