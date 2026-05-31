@@ -17,7 +17,15 @@ export async function POST(request: Request) {
     return jsonUnauthorized();
   }
 
-  const parsed = aiChatRequestSchema.safeParse(await request.json());
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return jsonBadRequest();
+  }
+
+  const parsed = aiChatRequestSchema.safeParse(body);
 
   if (!parsed.success) {
     return jsonBadRequest();

@@ -31,11 +31,13 @@ const draft: AiChatTransactionDraft = {
 function renderModal({
   root,
   draft,
+  categories: modalCategories = categories,
   onClose = jest.fn(),
   onSaved = jest.fn(),
 }: {
   root: Root;
   draft: AiChatTransactionDraft | null;
+  categories?: typeof categories;
   onClose?: () => void;
   onSaved?: () => void;
 }) {
@@ -43,7 +45,7 @@ function renderModal({
     root.render(
       React.createElement(AiChatTransactionReviewModal, {
         draft,
-        categories,
+        categories: modalCategories,
         onClose,
         onSaved,
       }),
@@ -84,5 +86,16 @@ describe("AiChatTransactionReviewModal", () => {
     expect(inputs[1]?.value).toBe("2026-05-27");
     expect(inputs[2]?.value).toBe("Quán bún bò");
     expect(inputs[3]?.value).toBe("Tiền ăn bún bò huế");
+  });
+
+  it("disables saving when no category matches the draft type", () => {
+    renderModal({ root, draft, categories: [] });
+
+    const saveButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Lưu giao dịch",
+    );
+
+    expect(container.textContent).toContain("Không có danh mục phù hợp");
+    expect(saveButton?.disabled).toBe(true);
   });
 });

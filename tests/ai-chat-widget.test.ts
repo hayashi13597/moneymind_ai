@@ -1,5 +1,8 @@
+/**
+ * @jest-environment node
+ */
 import React from "react";
-import { renderToStaticMarkup } from "react-dom/server.node";
+import { renderToStaticMarkup } from "react-dom/server";
 
 import { AiChatBubble } from "@/features/ai-chat/widget";
 

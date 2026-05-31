@@ -29,11 +29,12 @@ export const aiChatMessageSchema = z.object({
 export type AiChatMessage = z.infer<typeof aiChatMessageSchema>;
 
 export const aiChatRequestSchema = z.object({
-  month: trimmedString.regex(/^\d{4}-\d{2}$/),
+  month: trimmedString.regex(/^\d{4}-(0[1-9]|1[0-2])$/),
   messages: z
     .array(aiChatMessageSchema)
     .min(1)
-    .transform((messages) => messages.slice(-AI_CHAT_MAX_MESSAGES)),
+    .transform((messages) => messages.slice(-AI_CHAT_MAX_MESSAGES))
+    .refine((messages) => messages.some((message) => message.role === "user")),
 });
 
 export type AiChatRequest = z.infer<typeof aiChatRequestSchema>;

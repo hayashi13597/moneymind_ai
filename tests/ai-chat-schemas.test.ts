@@ -24,6 +24,15 @@ describe("ai chat schemas", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("rejects a month outside the calendar range", () => {
+    const parsed = aiChatRequestSchema.safeParse({
+      month: "2026-13",
+      messages: [{ role: "user", content: "Test" }],
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
   it("limits messages to the most recent bounded history", () => {
     const messages = Array.from({ length: 9 }, (_, index) => ({
       role: index % 2 === 0 ? ("user" as const) : ("assistant" as const),
@@ -43,6 +52,15 @@ describe("ai chat schemas", () => {
     const parsed = aiChatRequestSchema.safeParse({
       month: "2026-05",
       messages: [],
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it("rejects histories without a user message", () => {
+    const parsed = aiChatRequestSchema.safeParse({
+      month: "2026-05",
+      messages: [{ role: "assistant", content: "Xin chào." }],
     });
 
     expect(parsed.success).toBe(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -61,9 +61,31 @@ function AiChatTransactionReviewForm({
       categories.filter((category) => !category.type || category.type === type),
     [categories, type],
   );
-  const selectedCategoryId = categoryId || matchingCategories[0]?.id || "";
+  const selectedCategoryId =
+    matchingCategories.some((category) => category.id === categoryId)
+      ? categoryId
+      : matchingCategories[0]?.id || "";
+  const hasMatchingCategories = matchingCategories.length > 0;
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- Local editable form state must resync when a different AI draft is selected. */
+    setType(draft.type);
+    setAmount(String(draft.amount));
+    setCategoryId(draft.categoryId);
+    setTransactionDate(draft.transactionDate);
+    setNote(draft.note);
+    setMerchant(draft.merchant ?? "");
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [draft]);
 
   async function saveDraft() {
+    if (!hasMatchingCategories || !selectedCategoryId) {
+      const message = "Không có danh mục phù hợp để lưu giao dịch.";
+      setError(message);
+      toast.error(message);
+      return;
+    }
+
     setPending(true);
     setError("");
 
@@ -131,6 +153,7 @@ function AiChatTransactionReviewForm({
             value={selectedCategoryId}
             onChange={(event) => setCategoryId(event.target.value)}
             className="h-9 rounded-md border bg-background px-3 text-sm"
+            disabled={!hasMatchingCategories}
             required
           >
             {matchingCategories.map((category) => (
@@ -159,6 +182,11 @@ function AiChatTransactionReviewForm({
             className="h-9 rounded-md border bg-background px-3 text-sm"
             required
           />
+          {!hasMatchingCategories ? (
+            <p className="text-sm text-destructive sm:col-span-2">
+              Không có danh mục phù hợp để lưu giao dịch.
+            </p>
+          ) : null}
           {error ? (
             <p className="text-sm text-destructive sm:col-span-2">{error}</p>
           ) : null}
@@ -166,7 +194,7 @@ function AiChatTransactionReviewForm({
             <Button type="button" variant="outline" onClick={onClose}>
               Hủy
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || !hasMatchingCategories}>
               Lưu giao dịch
             </Button>
           </div>
