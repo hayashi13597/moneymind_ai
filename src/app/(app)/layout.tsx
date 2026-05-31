@@ -5,6 +5,7 @@ import { Bot } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AiChatWidget } from "@/features/ai-chat/widget";
+import { UserLocalTimeSync } from "@/features/dashboard/user-local-time-sync";
 import { getCurrentSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 
@@ -50,6 +51,7 @@ export default async function AppLayout({
       <main className="mx-auto w-full max-w-7xl px-4 py-8 md:py-10">
         {children}
       </main>
+      <UserLocalTimeSync />
       <AiChatWidget categories={categories} />
     </div>
   );
