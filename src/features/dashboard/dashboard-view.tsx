@@ -116,10 +116,36 @@ function metricTone(type: "income" | "expense" | "balance" | "savings") {
 }
 
 function formatTrendDate(date: string) {
+  const [yearPart, monthPart, dayPart] = date.split("-");
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+  const day = Number(dayPart);
+  const localDate =
+    Number.isInteger(year) &&
+    Number.isInteger(month) &&
+    Number.isInteger(day) &&
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= 31
+      ? new Date(year, month - 1, day)
+      : null;
+  const trendDate =
+    localDate &&
+    localDate.getFullYear() === year &&
+    localDate.getMonth() === month - 1 &&
+    localDate.getDate() === day
+      ? localDate
+      : new Date(date);
+
+  if (Number.isNaN(trendDate.getTime())) {
+    return date;
+  }
+
   return new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
     month: "2-digit",
-  }).format(new Date(date));
+  }).format(trendDate);
 }
 
 function shouldShowTrendDayLabel(date: string, index: number, total: number) {

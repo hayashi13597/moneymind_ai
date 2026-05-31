@@ -53,47 +53,47 @@ function resolveDraftCategory(
 }
 
 function extractJsonObject(content: string) {
-  const start = content.indexOf("{");
+  for (
+    let start = content.indexOf("{");
+    start !== -1;
+    start = content.indexOf("{", start + 1)
+  ) {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
 
-  if (start === -1) {
-    return null;
-  }
+    for (let index = start; index < content.length; index += 1) {
+      const char = content[index];
 
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
 
-  for (let index = start; index < content.length; index += 1) {
-    const char = content[index];
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
 
-    if (escaped) {
-      escaped = false;
-      continue;
-    }
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
 
-    if (char === "\\") {
-      escaped = true;
-      continue;
-    }
+      if (inString) {
+        continue;
+      }
 
-    if (char === '"') {
-      inString = !inString;
-      continue;
-    }
+      if (char === "{") {
+        depth += 1;
+      }
 
-    if (inString) {
-      continue;
-    }
+      if (char === "}") {
+        depth -= 1;
 
-    if (char === "{") {
-      depth += 1;
-    }
-
-    if (char === "}") {
-      depth -= 1;
-
-      if (depth === 0) {
-        return content.slice(start, index + 1);
+        if (depth === 0) {
+          return content.slice(start, index + 1);
+        }
       }
     }
   }
