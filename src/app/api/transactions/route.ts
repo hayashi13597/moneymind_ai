@@ -23,14 +23,19 @@ function transactionDomainError(reason: string) {
   return jsonBadRequest();
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await getRequiredApiUser();
 
   if (!user) {
     return jsonUnauthorized();
   }
 
-  const transactions = await listTransactions(user.id);
+  const monthParam = new URL(request.url).searchParams.get("month");
+  const month =
+    monthParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam)
+      ? monthParam
+      : undefined;
+  const transactions = await listTransactions(user.id, month);
 
   return Response.json({ transactions });
 }

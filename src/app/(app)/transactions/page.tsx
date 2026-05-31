@@ -1,18 +1,29 @@
 import { PageHeader } from "@/components/app-ui";
 import { listCategories } from "@/features/categories/service";
+import { getSelectedMonth } from "@/features/dashboard/month";
 import { TransactionManager } from "@/features/transactions/transaction-manager";
 import { listTransactions } from "@/features/transactions/service";
 import { getCurrentUser } from "@/lib/auth-session";
 
-export default async function TransactionsPage() {
+type TransactionsPageProps = {
+  searchParams: Promise<{ month?: string | string[] }>;
+};
+
+export default async function TransactionsPage({
+  searchParams,
+}: TransactionsPageProps) {
   const user = await getCurrentUser();
 
   if (!user) {
     return null;
   }
 
+  const monthParam = (await searchParams).month;
+  const month = getSelectedMonth(
+    Array.isArray(monthParam) ? monthParam[0] : monthParam,
+  );
   const [transactions, categories] = await Promise.all([
-    listTransactions(user.id),
+    listTransactions(user.id, month.key),
     listCategories(user.id),
   ]);
   const transactionItems = transactions.map((transaction) => ({
@@ -30,6 +41,7 @@ export default async function TransactionsPage() {
       <TransactionManager
         initialTransactions={transactionItems}
         categories={categories}
+        selectedMonth={month}
       />
     </section>
   );

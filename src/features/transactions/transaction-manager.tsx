@@ -2,19 +2,23 @@
 
 import {
   BadgeCheck,
-  Bot,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Search,
   Sparkles,
   WalletCards,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { EmptyState, InsightCard, MetricCard } from "@/components/app-ui";
 import { FormCombobox } from "@/components/form-combobox";
 import { FormDatePicker } from "@/components/form-date-picker";
+import { FormMonthPicker } from "@/components/form-month-picker";
 import { Button } from "@/components/ui/button";
+import type { DashboardMonth } from "@/features/dashboard/month";
 import { formatVnd } from "@/lib/money";
 
 type Category = {
@@ -37,6 +41,7 @@ type Transaction = {
 type TransactionManagerProps = {
   initialTransactions: Transaction[];
   categories: Category[];
+  selectedMonth: DashboardMonth;
 };
 
 async function readJsonError(response: Response) {
@@ -80,7 +85,9 @@ function categoryTone(type: "income" | "expense") {
 export function TransactionManager({
   initialTransactions,
   categories,
+  selectedMonth,
 }: TransactionManagerProps) {
+  const router = useRouter();
   const initialTransactionsKey = useMemo(
     () =>
       initialTransactions
@@ -184,9 +191,18 @@ export function TransactionManager({
     });
   }, [categoryFilter, query, transactions, typeFilter]);
 
+  function openMonth(monthKey: string) {
+    setQuery("");
+    setTypeFilter("all");
+    setCategoryFilter("all");
+    router.push(`/transactions?month=${monthKey}`);
+  }
+
   async function refreshTransactions() {
     try {
-      const response = await fetch("/api/transactions");
+      const response = await fetch(
+        `/api/transactions?month=${selectedMonth.key}`,
+      );
 
       if (!response.ok) {
         const message = await readJsonError(response);
@@ -384,7 +400,7 @@ export function TransactionManager({
         <MetricCard
           label="Dòng tiền ròng"
           value={formatVnd(summary.balance)}
-          helper={`${transactions.length} giao dịch đã ghi nhận`}
+          helper={`${transactions.length} giao dịch trong ${selectedMonth.label.toLowerCase()}`}
           tone={summary.balance >= 0 ? "positive" : "negative"}
         />
         <MetricCard
@@ -545,14 +561,41 @@ export function TransactionManager({
             <div>
               <h2 className="text-lg font-semibold">Activity feed tài chính</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Lọc nhanh theo loại, danh mục hoặc nội dung để kiểm tra nhịp
-                chi tiêu.
+                Đang xem {selectedMonth.label.toLowerCase()}. Chọn tháng và
+                năm khác để đổi activity feed.
               </p>
             </div>
-            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[#D8E1D7] bg-[#ECF3ED] px-3 py-1 text-xs font-medium text-[#2F6B4F]">
-              <Bot className="size-3.5" />
-              AI auto-categorized khi có mô tả thô
-            </span>
+            <div
+              aria-label="Điều hướng tháng giao dịch"
+              className="grid w-full max-w-[320px] grid-cols-[40px_minmax(0,1fr)_40px] items-center md:w-[320px]"
+            >
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Xem tháng trước"
+                onClick={() => openMonth(selectedMonth.previousKey)}
+                className="size-10 rounded-r-none border-[#DDD8CE]"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <FormMonthPicker
+                value={selectedMonth.key}
+                onValueChange={openMonth}
+                aria-label="Chọn tháng giao dịch"
+                className="rounded-none border-x-0 border-[#D8E1D7] bg-white"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Xem tháng sau"
+                onClick={() => openMonth(selectedMonth.nextKey)}
+                className="size-10 rounded-l-none border-[#DDD8CE]"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
           </div>
 
           <div

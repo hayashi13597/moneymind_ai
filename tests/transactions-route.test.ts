@@ -1,7 +1,10 @@
 import { revalidatePath } from "next/cache";
 
-import { POST } from "@/app/api/transactions/route";
-import { createTransaction } from "@/features/transactions/service";
+import { GET, POST } from "@/app/api/transactions/route";
+import {
+  createTransaction,
+  listTransactions,
+} from "@/features/transactions/service";
 import { getRequiredApiUser } from "@/lib/api";
 
 jest.mock("next/cache", () => ({
@@ -24,6 +27,7 @@ jest.mock("@/features/transactions/service", () => ({
 
 const getRequiredApiUserMock = getRequiredApiUser as jest.Mock;
 const createTransactionMock = createTransaction as jest.Mock;
+const listTransactionsMock = listTransactions as jest.Mock;
 const revalidatePathMock = revalidatePath as jest.Mock;
 const originalResponse = global.Response;
 
@@ -64,7 +68,19 @@ describe("transactions route", () => {
       ok: true,
       transaction: { id: "tx_ai" },
     });
+    listTransactionsMock.mockResolvedValue([]);
     revalidatePathMock.mockReset();
+  });
+
+  it("passes a valid month query to the transaction listing service", async () => {
+    const response = await GET(
+      {
+        url: "http://localhost/api/transactions?month=2026-05",
+      } as Request,
+    );
+
+    expect(response.status).toBe(200);
+    expect(listTransactionsMock).toHaveBeenCalledWith("user_1", "2026-05");
   });
 
   it("revalidates transaction-backed pages after creating a transaction", async () => {
