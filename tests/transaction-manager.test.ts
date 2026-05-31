@@ -103,6 +103,31 @@ describe("TransactionManager", () => {
     expect(hiddenDateInput?.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
+  it("defaults new transaction dates to the visible month", () => {
+    const pastSelectedMonth = {
+      key: "2026-04",
+      label: "Tháng 04/2026",
+      previousKey: "2026-03",
+      nextKey: "2026-05",
+    };
+
+    act(() => {
+      root.render(
+        React.createElement(TransactionManager, {
+          initialTransactions: [],
+          categories,
+          selectedMonth: pastSelectedMonth,
+        }),
+      );
+    });
+
+    const hiddenDateInput = container.querySelector<HTMLInputElement>(
+      'input[type="hidden"][name="transactionDate"]',
+    );
+
+    expect(hiddenDateInput?.value).toBe("2026-04-01");
+  });
+
   it("shows a month-year picker without exposing a day value", () => {
     act(() => {
       root.render(

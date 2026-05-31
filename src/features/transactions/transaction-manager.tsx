@@ -65,7 +65,32 @@ const transactionTypeFilterOptions = [
 ];
 
 function toDateInputValue(date: Date) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getMonthKeyFromDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+
+  return `${year}-${month}`;
+}
+
+function getMonthKeyFromDateInput(value: string) {
+  return value.slice(0, 7);
+}
+
+function getDefaultTransactionDate(selectedMonthKey: string) {
+  const now = new Date();
+
+  if (selectedMonthKey === getMonthKeyFromDate(now)) {
+    return toDateInputValue(now);
+  }
+
+  return `${selectedMonthKey}-01`;
 }
 
 function formatDisplayDate(date: string) {
@@ -109,9 +134,14 @@ export function TransactionManager({
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [transactionDate, setTransactionDate] = useState(
-    toDateInputValue(new Date()),
-  );
+  const [transactionDateState, setTransactionDateState] = useState({
+    sourceMonthKey: selectedMonth.key,
+    value: getDefaultTransactionDate(selectedMonth.key),
+  });
+  const transactionDate =
+    transactionDateState.sourceMonthKey === selectedMonth.key
+      ? transactionDateState.value
+      : getDefaultTransactionDate(selectedMonth.key);
   const [note, setNote] = useState("");
   const [merchant, setMerchant] = useState("");
   const [rawInput, setRawInput] = useState("");
@@ -123,6 +153,13 @@ export function TransactionManager({
     "all",
   );
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  function setTransactionDate(value: string) {
+    setTransactionDateState({
+      sourceMonthKey: selectedMonth.key,
+      value,
+    });
+  }
 
   const matchingCategories = useMemo(
     () =>
@@ -255,10 +292,17 @@ export function TransactionManager({
 
       setAmount("");
       setCategoryId("");
-      setTransactionDate(toDateInputValue(new Date()));
+      const transactionMonth = getMonthKeyFromDateInput(transactionDate);
+      setTransactionDate(getDefaultTransactionDate(selectedMonth.key));
       setNote("");
       setMerchant("");
       setRawInput("");
+      if (transactionMonth !== selectedMonth.key) {
+        openMonth(transactionMonth);
+        toast.success("Đã thêm giao dịch.");
+        return;
+      }
+
       if (await refreshTransactions()) {
         toast.success("Đã thêm giao dịch.");
       }

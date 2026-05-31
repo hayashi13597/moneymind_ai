@@ -31,10 +31,13 @@ export async function GET(request: Request) {
   }
 
   const monthParam = new URL(request.url).searchParams.get("month");
-  const month =
-    monthParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam)
-      ? monthParam
-      : undefined;
+  const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+  if (monthParam && !monthPattern.test(monthParam)) {
+    return jsonBadRequest("Tháng không hợp lệ.");
+  }
+
+  const month = monthParam ?? undefined;
   const transactions = await listTransactions(user.id, month);
 
   return Response.json({ transactions });

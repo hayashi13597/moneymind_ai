@@ -13,7 +13,8 @@ jest.mock("next/cache", () => ({
 
 jest.mock("@/lib/api", () => ({
   getRequiredApiUser: jest.fn(),
-  jsonBadRequest: () => Response.json({ error: "Bad request" }, { status: 400 }),
+  jsonBadRequest: (error = "Bad request") =>
+    Response.json({ error }, { status: 400 }),
   jsonError: (error: string, status: number) =>
     Response.json({ error }, { status }),
   jsonUnauthorized: () =>
@@ -63,6 +64,8 @@ function createRequest(type: "income" | "expense" = "expense") {
 
 describe("transactions route", () => {
   beforeEach(() => {
+    createTransactionMock.mockReset();
+    listTransactionsMock.mockReset();
     getRequiredApiUserMock.mockResolvedValue({ id: "user_1" });
     createTransactionMock.mockResolvedValue({
       ok: true,
@@ -81,6 +84,19 @@ describe("transactions route", () => {
 
     expect(response.status).toBe(200);
     expect(listTransactionsMock).toHaveBeenCalledWith("user_1", "2026-05");
+  });
+
+  it("rejects an invalid month query instead of listing every transaction", async () => {
+    const response = await GET(
+      {
+        url: "http://localhost/api/transactions?month=2026-13",
+      } as Request,
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "Tháng không hợp lệ." });
+    expect(listTransactionsMock).not.toHaveBeenCalled();
   });
 
   it("revalidates transaction-backed pages after creating a transaction", async () => {
