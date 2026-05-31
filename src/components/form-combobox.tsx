@@ -19,16 +19,16 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-export type ComboboxOption = {
-  value: string;
+export type ComboboxOption<TValue extends string = string> = {
+  value: TValue;
   label: string;
 };
 
-type FormComboboxProps = {
+type FormComboboxProps<TValue extends string = string> = {
   name?: string;
-  value: string;
-  options: ComboboxOption[];
-  onValueChange: (value: string) => void;
+  value: TValue;
+  options: ComboboxOption<TValue>[];
+  onValueChange: (value: TValue) => void;
   "aria-label"?: string;
   disabled?: boolean;
   placeholder?: string;
@@ -36,7 +36,7 @@ type FormComboboxProps = {
   required?: boolean;
 };
 
-export function FormCombobox({
+export function FormCombobox<TValue extends string = string>({
   name,
   value,
   options,
@@ -46,7 +46,7 @@ export function FormCombobox({
   placeholder = "Chọn",
   emptyMessage = "Không tìm thấy lựa chọn.",
   required = false,
-}: FormComboboxProps) {
+}: FormComboboxProps<TValue>) {
   const [open, setOpen] = useState(false);
   const selectedOption =
     options.find((option) => option.value === value) ?? null;
@@ -54,13 +54,7 @@ export function FormCombobox({
   return (
     <>
       {name ? (
-        <input
-          type="hidden"
-          name={name}
-          value={value}
-          required={required}
-          disabled={disabled}
-        />
+        <input type="hidden" name={name} value={value} disabled={disabled} />
       ) : null}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -70,8 +64,9 @@ export function FormCombobox({
             role="combobox"
             aria-label={ariaLabel}
             aria-expanded={open}
+            aria-required={required || undefined}
             disabled={disabled}
-            className="h-10 w-full justify-between rounded-xl border-[#DCD7CC] bg-[#FDFCF8] px-3 font-normal hover:bg-[#FDFCF8]"
+            className="h-10 w-full justify-between rounded-xl border-warm-border bg-surface px-3 font-normal hover:bg-surface"
           >
             <span
               className={cn(

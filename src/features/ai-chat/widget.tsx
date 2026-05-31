@@ -230,6 +230,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                 type="submit"
                 disabled={pending || !input.trim()}
                 size="icon-lg"
+                aria-label="Gửi tin nhắn"
                 className="bg-[#2F6B4F] hover:bg-[#285B43]"
               >
                 <Send className="size-4" />

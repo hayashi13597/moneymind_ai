@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import { EmptyState, InsightCard, MetricCard } from "@/components/app-ui";
 import { FormCombobox } from "@/components/form-combobox";
+import { FormDatePicker } from "@/components/form-date-picker";
 import { Button } from "@/components/ui/button";
 import { formatVnd } from "@/lib/money";
 
@@ -491,12 +492,11 @@ export function TransactionManager({
               </label>
               <label className="space-y-2 text-sm font-medium">
                 <span>Ngày</span>
-                <input
+                <FormDatePicker
                   name="transactionDate"
-                  type="date"
                   value={transactionDate}
-                  onChange={(event) => setTransactionDate(event.target.value)}
-                  className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                  onValueChange={setTransactionDate}
+                  aria-label="Chọn ngày giao dịch"
                   required
                 />
               </label>
@@ -671,7 +671,7 @@ export function TransactionManager({
             <div className="mt-5">
               <EmptyState
                 title="Chưa có giao dịch."
-                description="Start by adding your first transaction. MoneyMind AI will learn your spending habits."
+                description="Bắt đầu bằng cách thêm giao dịch đầu tiên. MoneyMind AI sẽ học thói quen chi tiêu của bạn."
               />
             </div>
           ) : null}

@@ -5,14 +5,17 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { FormCombobox } from "@/components/form-combobox";
+import { FormDatePicker } from "@/components/form-date-picker";
 import { Button } from "@/components/ui/button";
 import type { AiChatTransactionDraft } from "@/features/ai-chat/schemas";
 import { createTransactionAction } from "@/features/transactions/actions";
 
+type TransactionType = "income" | "expense";
+
 type Category = {
   id: string;
   name: string;
-  type: "income" | "expense" | null;
+  type: TransactionType | null;
 };
 
 type AiChatTransactionReviewModalProps = {
@@ -41,7 +44,7 @@ function draftKey(draft: AiChatTransactionDraft) {
   ].join("|");
 }
 
-const transactionTypeOptions = [
+const transactionTypeOptions: Array<{ value: TransactionType; label: string }> = [
   { value: "expense", label: "Chi tiêu" },
   { value: "income", label: "Thu nhập" },
 ];
@@ -52,9 +55,7 @@ function AiChatTransactionReviewForm({
   onClose,
   onSaved,
 }: AiChatTransactionReviewFormProps) {
-  const [type, setType] = useState<"income" | "expense">(
-    draft.type,
-  );
+  const [type, setType] = useState<TransactionType>(draft.type);
   const [amount, setAmount] = useState(String(draft.amount));
   const [categoryId, setCategoryId] = useState(draft.categoryId);
   const [transactionDate, setTransactionDate] = useState(draft.transactionDate);
@@ -164,7 +165,7 @@ function AiChatTransactionReviewForm({
               value={type}
               options={transactionTypeOptions}
               onValueChange={(nextType) => {
-                setType(nextType as typeof type);
+                setType(nextType);
                 setCategoryId("");
               }}
               aria-label="Loại"
@@ -196,11 +197,10 @@ function AiChatTransactionReviewForm({
           </label>
           <label className="space-y-2 text-sm font-medium">
             <span>Ngày</span>
-            <input
-              type="date"
+            <FormDatePicker
               value={transactionDate}
-              onChange={(event) => setTransactionDate(event.target.value)}
-              className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+              onValueChange={setTransactionDate}
+              aria-label="Chọn ngày"
               required
             />
           </label>

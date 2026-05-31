@@ -7,6 +7,9 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
+const INPUT_CLASS =
+  "h-11 w-full rounded-xl border border-warm-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/15";
+
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +46,7 @@ export function LoginForm() {
         <input
           required
           autoComplete="email"
-          className="h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+          className={INPUT_CLASS}
           id="email"
           name="email"
           placeholder="ban@example.com"
@@ -57,7 +60,7 @@ export function LoginForm() {
         <input
           required
           autoComplete="current-password"
-          className="h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+          className={INPUT_CLASS}
           id="password"
           name="password"
           type="password"
@@ -69,7 +72,7 @@ export function LoginForm() {
         </p>
       ) : null}
       <Button
-        className="h-11 w-full bg-[#2F6B4F] hover:bg-[#285B43]"
+        className="h-11 w-full bg-primary hover:bg-primary-hover"
         disabled={isPending}
         type="submit"
       >

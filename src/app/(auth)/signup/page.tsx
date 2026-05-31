@@ -10,14 +10,14 @@ export default function SignupPage() {
       <section className="mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-7">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold">
-            <span className="rounded-full bg-[#2F6B4F] p-2 text-white">
+            <span className="rounded-full bg-primary p-2 text-white">
               <Bot className="size-4" />
             </span>
             MoneyMind AI
           </Link>
           <div className="space-y-4">
             <h1 className="max-w-xl text-4xl font-semibold tracking-normal md:text-5xl">
-              Start calm. Let AI learn your spending habits.
+              Bắt đầu bình tĩnh. Để AI học thói quen chi tiêu của bạn.
             </h1>
             <p className="max-w-lg text-base leading-7 text-muted-foreground">
               Tạo tài khoản để bắt đầu ghi giao dịch, dùng danh mục mặc định và
@@ -26,16 +26,16 @@ export default function SignupPage() {
           </div>
           <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
             <p className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#2F6B4F]" />
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
               Có sẵn danh mục thu chi để nhập nhanh.
             </p>
             <p className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#2F6B4F]" />
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
               Chat AI giúp bạn kiểm tra quyết định chi tiêu.
             </p>
           </div>
         </div>
-        <div className="rounded-2xl border border-[#E1DDD4] bg-card p-5 shadow-[0_18px_60px_rgba(47,42,31,0.08)] md:p-6">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_18px_60px_rgba(47,42,31,0.08)] md:p-6">
           <div className="mb-5">
             <p className="text-sm font-medium text-muted-foreground">
               Thiết lập trong một phút
@@ -45,7 +45,7 @@ export default function SignupPage() {
             </h2>
           </div>
           <SignupForm />
-          <Button asChild variant="outline" className="mt-4 w-full border-[#DDD8CE]">
+          <Button asChild variant="outline" className="mt-4 w-full border-input">
             <Link href="/">Quay lại trang chủ</Link>
           </Button>
         </div>

@@ -86,8 +86,11 @@ describe("AiChatTransactionReviewModal", () => {
     const amountInput = container.querySelector<HTMLInputElement>(
       'input[value="55000"]',
     );
+    const datePickerButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Chọn ngày"]',
+    );
     const dateInput = container.querySelector<HTMLInputElement>(
-      'input[type="date"]',
+      'input[type="hidden"][value="2026-05-27"]',
     );
     const merchantInput = container.querySelector<HTMLInputElement>(
       'input[placeholder="Tùy chọn"]',
@@ -99,6 +102,7 @@ describe("AiChatTransactionReviewModal", () => {
     expect(typeCombobox?.textContent).toContain("Chi tiêu");
     expect(amountInput?.value).toBe("55000");
     expect(categoryCombobox?.textContent).toContain("Ăn uống");
+    expect(datePickerButton?.textContent).toContain("27/05/2026");
     expect(dateInput?.value).toBe("2026-05-27");
     expect(merchantInput?.value).toBe("Quán bún bò");
     expect(noteInput?.value).toBe("Tiền ăn bún bò huế");
