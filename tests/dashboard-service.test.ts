@@ -163,6 +163,56 @@ describe("getMonthlyDashboard", () => {
       delta: 1000000,
       percentage: 100,
     });
+    expect(dashboard.healthScore).toEqual({
+      score: 82,
+      level: "Đang tích lũy tốt",
+      savingsRate: 89,
+      explanation:
+        "Tỷ lệ tiết kiệm 89%, nhưng chi tiêu tăng 100% so với tháng trước.",
+    });
+    expect(dashboard.spendingTrend).toHaveLength(31);
+    expect(dashboard.spendingTrend[0]).toEqual({
+      date: "2026-05-01",
+      amount: 0,
+    });
+    expect(dashboard.spendingTrend[4]).toEqual({
+      date: "2026-05-05",
+      amount: 1200000,
+    });
+    expect(dashboard.spendingTrend[5]).toEqual({
+      date: "2026-05-06",
+      amount: 300000,
+    });
+    expect(dashboard.spendingTrend[7]).toEqual({
+      date: "2026-05-08",
+      amount: 500000,
+    });
+    expect(dashboard.spendingTrend[30]).toEqual({
+      date: "2026-05-31",
+      amount: 0,
+    });
+    expect(dashboard.categoryAnalysis).toEqual([
+      {
+        categoryId: "cat_food",
+        name: "Ăn uống",
+        color: "#f97316",
+        amount: 1700000,
+        percentage: 85,
+        previousAmount: 1000000,
+        changePercentage: 70,
+        changeKind: "increased",
+      },
+      {
+        categoryId: "cat_cafe",
+        name: "Cafe",
+        color: "#a16207",
+        amount: 300000,
+        percentage: 15,
+        previousAmount: 0,
+        changePercentage: null,
+        changeKind: "new",
+      },
+    ]);
     expect(dashboard.recentTransactions).toHaveLength(4);
     expect(dashboard.isEmpty).toBe(false);
   });
@@ -184,6 +234,17 @@ describe("getMonthlyDashboard", () => {
       remaining: { kind: "no_previous_data" },
     });
     expect(dashboard.categoryBreakdown).toEqual([]);
+    expect(dashboard.categoryAnalysis).toEqual([]);
+    expect(dashboard.spendingTrend).toHaveLength(31);
+    expect(dashboard.spendingTrend.every((point) => point.amount === 0)).toBe(
+      true,
+    );
+    expect(dashboard.healthScore).toEqual({
+      score: 0,
+      level: "Chưa đủ dữ liệu",
+      savingsRate: 0,
+      explanation: "Thêm giao dịch để MoneyMind AI tính điểm tài chính.",
+    });
     expect(dashboard.recentTransactions).toEqual([]);
     expect(dashboard.isEmpty).toBe(true);
   });

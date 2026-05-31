@@ -27,6 +27,14 @@ export default async function DashboardPage({
     getMonthlyDashboard(session.user.id, selectedMonth),
     getCachedMonthlyInsight(session.user.id, selectedMonth.key),
   ]);
+  const userName =
+    session.user.name?.trim() || session.user.email?.split("@")[0] || "Lâm";
 
-  return <DashboardView dashboard={dashboard} initialInsight={initialInsight} />;
+  return (
+    <DashboardView
+      dashboard={dashboard}
+      initialInsight={initialInsight}
+      userName={userName}
+    />
+  );
 }

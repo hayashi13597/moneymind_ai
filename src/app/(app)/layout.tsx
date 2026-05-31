@@ -7,7 +7,7 @@ import { getCurrentSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard", label: "Tổng quan" },
   { href: "/transactions", label: "Giao dịch" },
   { href: "/categories", label: "Danh mục" },
   { href: "/settings/ai", label: "AI" },
@@ -32,17 +32,17 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b bg-card">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
+      <header className="border-b border-[#E1DDD4] bg-[#FAFAF8]/95">
+        <div className="mx-auto flex min-h-16 w-full max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:py-0">
           <Link href="/dashboard" className="text-sm font-semibold">
             MoneyMind AI
           </Link>
-          <nav className="flex items-center gap-1">
+          <nav className="flex flex-wrap items-center gap-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-[#F1EEE7] hover:text-foreground"
               >
                 {item.label}
               </Link>
@@ -56,7 +56,9 @@ export default async function AppLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl px-4 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-7xl px-4 py-8 md:py-10">
+        {children}
+      </main>
       <AiChatWidget categories={categories} />
     </div>
   );
