@@ -23,14 +23,22 @@ function transactionDomainError(reason: string) {
   return jsonBadRequest();
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await getRequiredApiUser();
 
   if (!user) {
     return jsonUnauthorized();
   }
 
-  const transactions = await listTransactions(user.id);
+  const monthParam = new URL(request.url).searchParams.get("month");
+  const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+  if (monthParam && !monthPattern.test(monthParam)) {
+    return jsonBadRequest("Tháng không hợp lệ.");
+  }
+
+  const month = monthParam ?? undefined;
+  const transactions = await listTransactions(user.id, month);
 
   return Response.json({ transactions });
 }

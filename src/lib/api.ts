@@ -14,8 +14,8 @@ export function jsonError(error: string, status: number) {
   return Response.json({ error }, { status });
 }
 
-export function jsonBadRequest() {
-  return jsonError("Dữ liệu không hợp lệ.", 400);
+export function jsonBadRequest(message = "Dữ liệu không hợp lệ.") {
+  return jsonError(message, 400);
 }
 
 export function jsonUnauthorized() {

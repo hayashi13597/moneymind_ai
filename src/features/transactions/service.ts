@@ -1,3 +1,4 @@
+import { getMonthWindow } from "@/features/dashboard/month";
 import { db } from "@/lib/db";
 
 import type { TransactionCreateInput, TransactionUpdateInput } from "./schemas";
@@ -22,9 +23,21 @@ async function validateCategoryForTransaction(
   return { ok: true as const, category };
 }
 
-export async function listTransactions(userId: string) {
+export async function listTransactions(userId: string, monthKey?: string) {
+  const monthWindow = monthKey ? getMonthWindow(monthKey) : null;
+
   return db.transaction.findMany({
-    where: { userId },
+    where: {
+      userId,
+      ...(monthWindow
+        ? {
+            transactionDate: {
+              gte: monthWindow.start,
+              lt: monthWindow.end,
+            },
+          }
+        : {}),
+    },
     include: { category: true },
     orderBy: [{ transactionDate: "desc" }, { createdAt: "desc" }],
   });
