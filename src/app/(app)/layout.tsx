@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { AiChatWidget } from "@/features/ai-chat/widget";
 import { getCurrentSession } from "@/lib/auth-session";
+import { db } from "@/lib/db";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -21,6 +23,12 @@ export default async function AppLayout({
   if (!session?.user) {
     redirect("/login");
   }
+
+  const categories = await db.category.findMany({
+    where: { userId: session.user.id },
+    orderBy: [{ type: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, type: true },
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -49,6 +57,7 @@ export default async function AppLayout({
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl px-4 py-8">{children}</main>
+      <AiChatWidget categories={categories} />
     </div>
   );
 }

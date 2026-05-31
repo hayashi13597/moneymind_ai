@@ -46,7 +46,24 @@ export function TransactionManager({
   initialTransactions,
   categories,
 }: TransactionManagerProps) {
-  const [transactions, setTransactions] = useState(initialTransactions);
+  const initialTransactionsKey = useMemo(
+    () =>
+      initialTransactions
+        .map(
+          (transaction) =>
+            `${transaction.id}:${transaction.amount}:${transaction.transactionDate}:${transaction.note}`,
+        )
+        .join("|"),
+    [initialTransactions],
+  );
+  const [transactionState, setTransactionState] = useState({
+    sourceKey: initialTransactionsKey,
+    transactions: initialTransactions,
+  });
+  const transactions =
+    transactionState.sourceKey === initialTransactionsKey
+      ? transactionState.transactions
+      : initialTransactions;
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -79,12 +96,13 @@ export function TransactionManager({
       }
 
       const payload = (await response.json()) as { transactions: Transaction[] };
-      setTransactions(
-        payload.transactions.map((transaction) => ({
+      setTransactionState({
+        sourceKey: initialTransactionsKey,
+        transactions: payload.transactions.map((transaction) => ({
           ...transaction,
           transactionDate: new Date(transaction.transactionDate).toISOString(),
         })),
-      );
+      });
       return true;
     } catch {
       setError(NETWORK_ERROR_MESSAGE);
