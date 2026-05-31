@@ -1,15 +1,21 @@
+import { cookies } from "next/headers";
+
 import { PageHeader } from "@/components/app-ui";
 import { CategoryManager } from "@/features/categories/category-manager";
 import { listCategories } from "@/features/categories/service";
+import {
+  getCurrentMonthKey,
+  getPreviousMonthKey,
+  USER_TIME_ZONE_COOKIE,
+} from "@/features/dashboard/month";
 import { listTransactions } from "@/features/transactions/service";
 import { getCurrentUser } from "@/lib/auth-session";
 
 function monthKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function previousMonthKey(date: Date) {
-  return monthKey(new Date(date.getFullYear(), date.getMonth() - 1, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(
+    2,
+    "0",
+  )}`;
 }
 
 export default async function CategoriesPage() {
@@ -23,9 +29,9 @@ export default async function CategoriesPage() {
     listCategories(user.id),
     listTransactions(user.id),
   ]);
-  const now = new Date();
-  const currentMonth = monthKey(now);
-  const previousMonth = previousMonthKey(now);
+  const userTimeZone = (await cookies()).get(USER_TIME_ZONE_COOKIE)?.value;
+  const currentMonth = getCurrentMonthKey(new Date(), userTimeZone);
+  const previousMonth = getPreviousMonthKey(currentMonth);
   const categoryInsights = categories.map((category) => {
     const categoryTransactions = transactions.filter(
       (transaction) => transaction.categoryId === category.id,

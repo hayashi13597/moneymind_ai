@@ -1,6 +1,11 @@
+import { cookies } from "next/headers";
+
 import { PageHeader } from "@/components/app-ui";
 import { listCategories } from "@/features/categories/service";
-import { getSelectedMonth } from "@/features/dashboard/month";
+import {
+  getSelectedMonth,
+  USER_TIME_ZONE_COOKIE,
+} from "@/features/dashboard/month";
 import { TransactionManager } from "@/features/transactions/transaction-manager";
 import { listTransactions } from "@/features/transactions/service";
 import { getCurrentUser } from "@/lib/auth-session";
@@ -19,8 +24,11 @@ export default async function TransactionsPage({
   }
 
   const monthParam = (await searchParams).month;
+  const userTimeZone = (await cookies()).get(USER_TIME_ZONE_COOKIE)?.value;
   const month = getSelectedMonth(
     Array.isArray(monthParam) ? monthParam[0] : monthParam,
+    undefined,
+    userTimeZone,
   );
   const [transactions, categories] = await Promise.all([
     listTransactions(user.id, month.key),

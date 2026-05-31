@@ -5,6 +5,8 @@ export type DashboardMonth = {
   nextKey: string;
 };
 
+export const USER_TIME_ZONE_COOKIE = "moneymind_user_time_zone";
+
 type MonthParts = {
   year: number;
   monthIndex: number;
@@ -35,8 +37,36 @@ function parseMonthKey(input: string): MonthParts | null {
   return { year, monthIndex: month - 1 };
 }
 
-function getCurrentMonthKey(now: Date) {
-  return toMonthKey(now.getUTCFullYear(), now.getUTCMonth());
+function getMonthPartsInTimeZone(date: Date, timeZone: string): MonthParts | null {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+    }).formatToParts(date);
+    const year = Number(parts.find((part) => part.type === "year")?.value);
+    const month = Number(parts.find((part) => part.type === "month")?.value);
+
+    if (!Number.isInteger(year) || month < 1 || month > 12) {
+      return null;
+    }
+
+    return { year, monthIndex: month - 1 };
+  } catch {
+    return null;
+  }
+}
+
+export function getCurrentMonthKey(now = new Date(), timeZone?: string) {
+  const timeZoneParts = timeZone
+    ? getMonthPartsInTimeZone(now, timeZone)
+    : null;
+
+  if (timeZoneParts) {
+    return toMonthKey(timeZoneParts.year, timeZoneParts.monthIndex);
+  }
+
+  return toMonthKey(now.getFullYear(), now.getMonth());
 }
 
 function shiftMonthKey(monthKey: string, delta: number) {
@@ -74,8 +104,10 @@ export function getMonthWindow(monthKey: string) {
 export function getSelectedMonth(
   input: string | undefined,
   now = new Date(),
+  timeZone?: string,
 ): DashboardMonth {
-  const key = input && parseMonthKey(input) ? input : getCurrentMonthKey(now);
+  const key =
+    input && parseMonthKey(input) ? input : getCurrentMonthKey(now, timeZone);
   const parts = parseMonthKey(key);
 
   if (!parts) {

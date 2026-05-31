@@ -1,4 +1,5 @@
 import {
+  getCurrentMonthKey,
   getMonthWindow,
   getNextMonthKey,
   getPreviousMonthKey,
@@ -24,6 +25,16 @@ describe("dashboard month helpers", () => {
     expect(getSelectedMonth("", now).key).toBe("2026-05");
     expect(getSelectedMonth("2026-13", now).key).toBe("2026-05");
     expect(getSelectedMonth("26-05", now).key).toBe("2026-05");
+  });
+
+  it("derives the current month from the user's time zone", () => {
+    const now = new Date("2026-05-31T18:00:00.000Z");
+
+    expect(getCurrentMonthKey(now, "Asia/Bangkok")).toBe("2026-06");
+    expect(getCurrentMonthKey(now, "America/Los_Angeles")).toBe("2026-05");
+    expect(getSelectedMonth(undefined, now, "Asia/Bangkok").key).toBe(
+      "2026-06",
+    );
   });
 
   it("shifts previous and next months across year boundaries", () => {
