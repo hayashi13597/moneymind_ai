@@ -45,7 +45,7 @@ export function SignupForm() {
         <input
           required
           autoComplete="name"
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className="h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
           id="name"
           name="name"
           placeholder="Nguyễn Văn A"
@@ -59,7 +59,7 @@ export function SignupForm() {
         <input
           required
           autoComplete="email"
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className="h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
           id="email"
           name="email"
           placeholder="ban@example.com"
@@ -73,7 +73,7 @@ export function SignupForm() {
         <input
           required
           autoComplete="new-password"
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className="h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
           id="password"
           minLength={8}
           name="password"
@@ -85,7 +85,11 @@ export function SignupForm() {
           {error}
         </p>
       ) : null}
-      <Button className="w-full" disabled={isPending} type="submit">
+      <Button
+        className="h-11 w-full bg-[#2F6B4F] hover:bg-[#285B43]"
+        disabled={isPending}
+        type="submit"
+      >
         {isPending ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
       </Button>
       <p className="text-center text-sm text-muted-foreground">

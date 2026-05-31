@@ -1,8 +1,18 @@
 "use client";
 
+import {
+  BadgeCheck,
+  Bot,
+  CalendarDays,
+  Search,
+  Sparkles,
+  WalletCards,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { EmptyState, InsightCard, MetricCard } from "@/components/app-ui";
+import { FormCombobox } from "@/components/form-combobox";
 import { Button } from "@/components/ui/button";
 import { formatVnd } from "@/lib/money";
 
@@ -38,8 +48,32 @@ async function readJsonError(response: Response) {
 
 const NETWORK_ERROR_MESSAGE = "Không thể kết nối máy chủ.";
 
+const transactionTypeOptions = [
+  { value: "expense", label: "Chi tiêu" },
+  { value: "income", label: "Thu nhập" },
+];
+
+const transactionTypeFilterOptions = [
+  { value: "all", label: "Tất cả" },
+  ...transactionTypeOptions,
+];
+
 function toDateInputValue(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+function formatDisplayDate(date: string) {
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(date));
+}
+
+function categoryTone(type: "income" | "expense") {
+  return type === "income"
+    ? "border-[#D8E1D7] bg-[#ECF3ED] text-[#2F6B4F]"
+    : "border-[#E7D9D2] bg-[#FBF0EC] text-[#A2482D]";
 }
 
 export function TransactionManager({
@@ -76,6 +110,11 @@ export function TransactionManager({
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [aiPending, setAiPending] = useState(false);
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
+    "all",
+  );
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const matchingCategories = useMemo(
     () =>
@@ -83,6 +122,66 @@ export function TransactionManager({
     [categories, type],
   );
   const selectedCategoryId = categoryId || matchingCategories[0]?.id || "";
+  const summary = useMemo(() => {
+    const income = transactions
+      .filter((transaction) => transaction.type === "income")
+      .reduce((total, transaction) => total + transaction.amount, 0);
+    const expense = transactions
+      .filter((transaction) => transaction.type === "expense")
+      .reduce((total, transaction) => total + transaction.amount, 0);
+    const aiCategorizedCount = transactions.filter(
+      (transaction) => transaction.rawInput,
+    ).length;
+    const topExpenseCategory = transactions
+      .filter((transaction) => transaction.type === "expense")
+      .reduce<Record<string, { name: string; amount: number }>>(
+        (accumulator, transaction) => {
+          const current = accumulator[transaction.category.id] ?? {
+            name: transaction.category.name,
+            amount: 0,
+          };
+          accumulator[transaction.category.id] = {
+            ...current,
+            amount: current.amount + transaction.amount,
+          };
+          return accumulator;
+        },
+        {},
+      );
+    const topCategory = Object.values(topExpenseCategory).sort(
+      (a, b) => b.amount - a.amount,
+    )[0];
+
+    return {
+      income,
+      expense,
+      balance: income - expense,
+      aiCategorizedCount,
+      topCategory,
+    };
+  }, [transactions]);
+  const filteredTransactions = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return transactions.filter((transaction) => {
+      const matchesType =
+        typeFilter === "all" || transaction.type === typeFilter;
+      const matchesCategory =
+        categoryFilter === "all" || transaction.category.id === categoryFilter;
+      const haystack = [
+        transaction.note,
+        transaction.merchant ?? "",
+        transaction.rawInput ?? "",
+        transaction.category.name,
+      ]
+        .join(" ")
+        .toLowerCase();
+      const matchesQuery =
+        !normalizedQuery || haystack.includes(normalizedQuery);
+
+      return matchesType && matchesCategory && matchesQuery;
+    });
+  }, [categoryFilter, query, transactions, typeFilter]);
 
   async function refreshTransactions() {
     try {
@@ -279,152 +378,310 @@ export function TransactionManager({
   }
 
   return (
-    <div className="space-y-6">
-      <form
-        id="transaction-form"
-        action={createTransaction}
-        className="grid gap-3 rounded-lg border bg-card p-4 lg:grid-cols-6"
-      >
-        <select
-          name="type"
-          value={type}
-          onChange={(event) => {
-            setType(event.target.value as typeof type);
-            setCategoryId("");
-          }}
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-        >
-          <option value="expense">Chi tiêu</option>
-          <option value="income">Thu nhập</option>
-        </select>
-        <input
-          name="amount"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          placeholder="55k"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          required
+    <div className="space-y-8">
+      <div className="grid gap-3 md:grid-cols-4">
+        <MetricCard
+          label="Dòng tiền ròng"
+          value={formatVnd(summary.balance)}
+          helper={`${transactions.length} giao dịch đã ghi nhận`}
+          tone={summary.balance >= 0 ? "positive" : "negative"}
         />
-        <select
-          name="categoryId"
-          value={selectedCategoryId}
-          onChange={(event) => setCategoryId(event.target.value)}
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          required
-        >
-          {matchingCategories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-        <input
-          name="transactionDate"
-          type="date"
-          value={transactionDate}
-          onChange={(event) => setTransactionDate(event.target.value)}
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          required
+        <MetricCard
+          label="Thu nhập"
+          value={formatVnd(summary.income)}
+          helper="Tổng tiền vào trong danh sách hiện tại"
+          tone="positive"
         />
-        <input
-          name="note"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          placeholder="Ghi chú"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          required
+        <MetricCard
+          label="Chi tiêu"
+          value={formatVnd(summary.expense)}
+          helper={
+            summary.topCategory
+              ? `Lớn nhất: ${summary.topCategory.name}`
+              : "Chưa có danh mục chi tiêu nổi bật"
+          }
+          tone="negative"
         />
-        <Button type="submit" disabled={pending}>
-          Thêm
-        </Button>
-        <input
-          name="merchant"
-          value={merchant}
-          onChange={(event) => setMerchant(event.target.value)}
-          placeholder="Người bán"
-          className="h-9 rounded-md border bg-background px-3 text-sm lg:col-span-2"
+        <MetricCard
+          label="AI đã hỗ trợ"
+          value={`${summary.aiCategorizedCount}`}
+          helper="Giao dịch có dữ liệu nhập thô để AI học cách phân loại"
+          tone="positive"
         />
-        <input
-          name="rawInput"
-          value={rawInput}
-          onChange={(event) => setRawInput(event.target.value)}
-          placeholder="Nhập thô, ví dụ: ăn trưa 55k"
-          className="h-9 rounded-md border bg-background px-3 text-sm lg:col-span-3"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={parseRawInput}
-          disabled={aiPending}
-        >
-          AI parse
-        </Button>
-      </form>
+      </div>
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-      <div className="overflow-x-auto rounded-lg border bg-card">
-        <div className="min-w-[760px]">
-          <div className="grid grid-cols-[1fr_130px_150px_120px_130px] gap-3 border-b px-4 py-2 text-xs font-medium text-muted-foreground">
-            <span>Ghi chú</span>
-            <span>Danh mục</span>
-            <span>Số tiền</span>
-            <span>Ngày</span>
-            <span />
-          </div>
-          {transactions.map((transaction) => (
-            <div
-              key={transaction.id}
-              className="grid grid-cols-[1fr_130px_150px_120px_130px] items-center gap-3 border-b px-4 py-3 last:border-b-0"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
-                  {transaction.note}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {transaction.merchant ?? transaction.rawInput ?? ""}
-                </p>
-              </div>
-              <span className="truncate text-sm">
-                {transaction.category.name}
-              </span>
-              <span
-                className={
-                  transaction.type === "income"
-                    ? "text-sm font-medium text-green-600"
-                    : "text-sm font-medium text-red-600"
-                }
+      <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+        <InsightCard
+          title="Thêm giao dịch nhanh"
+          description="Nhập mô tả tự nhiên như 'ăn trưa 55k hôm nay'. MoneyMind AI sẽ điền số tiền, ngày và danh mục để bạn kiểm tra trước khi lưu."
+        >
+          <form id="transaction-form" action={createTransaction} className="space-y-5">
+            <div className="rounded-2xl border border-[#D8E1D7] bg-white/70 p-4">
+              <label
+                className="text-sm font-medium text-foreground"
+                htmlFor="rawInput"
               >
-                {transaction.type === "income" ? "+" : "-"}
-                {formatVnd(transaction.amount)}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {toDateInputValue(new Date(transaction.transactionDate))}
-              </span>
-              <div className="flex gap-2">
+                Mô tả nhanh cho AI
+              </label>
+              <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+                <input
+                  id="rawInput"
+                  name="rawInput"
+                  value={rawInput}
+                  onChange={(event) => setRawInput(event.target.value)}
+                  placeholder="Ví dụ: cà phê Highlands 45k sáng nay"
+                  className="h-11 rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                />
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => editTransaction(transaction)}
+                  onClick={parseRawInput}
+                  disabled={aiPending}
+                  className="h-11 border-[#D8E1D7] bg-white"
                 >
-                  Sửa
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => deleteTransactionById(transaction)}
-                >
-                  Xóa
+                  <Sparkles className="size-4" />
+                  {aiPending ? "Đang đọc" : "AI điền giúp"}
                 </Button>
               </div>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                AI chỉ chuẩn bị bản nháp. Bạn vẫn kiểm soát danh mục, số tiền và
+                ngày trước khi lưu.
+              </p>
             </div>
-          ))}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-2 text-sm font-medium">
+                <span>Loại giao dịch</span>
+                <FormCombobox
+                  name="type"
+                  value={type}
+                  options={transactionTypeOptions}
+                  onValueChange={(nextType) => {
+                    setType(nextType as typeof type);
+                    setCategoryId("");
+                  }}
+                  aria-label="Loại giao dịch"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium">
+                <span>Số tiền</span>
+                <input
+                  name="amount"
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                  placeholder="55k hoặc 1tr2"
+                  className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium">
+                <span>Danh mục</span>
+                <FormCombobox
+                  name="categoryId"
+                  value={selectedCategoryId}
+                  options={matchingCategories.map((category) => ({
+                    value: category.id,
+                    label: category.name,
+                  }))}
+                  onValueChange={setCategoryId}
+                  aria-label="Danh mục"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium">
+                <span>Ngày</span>
+                <input
+                  name="transactionDate"
+                  type="date"
+                  value={transactionDate}
+                  onChange={(event) => setTransactionDate(event.target.value)}
+                  className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium sm:col-span-2">
+                <span>Ghi chú</span>
+                <input
+                  name="note"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Ví dụ: Ăn trưa với đồng nghiệp"
+                  className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium sm:col-span-2">
+                <span>Người bán</span>
+                <input
+                  name="merchant"
+                  value={merchant}
+                  onChange={(event) => setMerchant(event.target.value)}
+                  placeholder="Tùy chọn"
+                  className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                />
+              </label>
+            </div>
+
+            {error ? (
+              <p className="rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+
+            <Button
+              type="submit"
+              disabled={pending}
+              className="h-11 w-full bg-[#2F6B4F] hover:bg-[#285B43]"
+            >
+              <WalletCards className="size-4" />
+              {pending ? "Đang lưu..." : "Lưu giao dịch"}
+            </Button>
+          </form>
+        </InsightCard>
+
+        <section className="rounded-2xl border border-[#E1DDD4] bg-card p-5 md:p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">Activity feed tài chính</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                Lọc nhanh theo loại, danh mục hoặc nội dung để kiểm tra nhịp
+                chi tiêu.
+              </p>
+            </div>
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[#D8E1D7] bg-[#ECF3ED] px-3 py-1 text-xs font-medium text-[#2F6B4F]">
+              <Bot className="size-3.5" />
+              AI auto-categorized khi có mô tả thô
+            </span>
+          </div>
+
+          <div
+            className="mt-5 grid gap-2 lg:grid-cols-[1fr_140px_180px]"
+            suppressHydrationWarning
+          >
+            <label className="relative">
+              <span className="sr-only">Tìm giao dịch</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Tìm ghi chú, người bán, danh mục..."
+                className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] pl-9 pr-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+              />
+            </label>
+            <FormCombobox
+              value={typeFilter}
+              options={transactionTypeFilterOptions}
+              onValueChange={(nextType) =>
+                setTypeFilter(nextType as typeof typeFilter)
+              }
+              aria-label="Lọc theo loại"
+            />
+            <FormCombobox
+              value={categoryFilter}
+              options={[
+                { value: "all", label: "Mọi danh mục" },
+                ...categories.map((category) => ({
+                  value: category.id,
+                  label: category.name,
+                })),
+              ]}
+              onValueChange={setCategoryFilter}
+              aria-label="Lọc theo danh mục"
+            />
+          </div>
+
+          <div className="mt-5 divide-y divide-[#E8E4DC]">
+            {filteredTransactions.map((transaction) => (
+              <article
+                key={transaction.id}
+                className="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto] sm:items-center"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-semibold">
+                      {transaction.note}
+                    </p>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${categoryTone(
+                        transaction.type,
+                      )}`}
+                    >
+                      {transaction.category.name}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays className="size-3" />
+                      {formatDisplayDate(transaction.transactionDate)}
+                    </span>
+                    {transaction.merchant ? <span>{transaction.merchant}</span> : null}
+                    {transaction.rawInput ? (
+                      <span className="inline-flex items-center gap-1 text-[#2F6B4F]">
+                        <BadgeCheck className="size-3" />
+                        AI auto-categorized
+                      </span>
+                    ) : (
+                      <span>Thủ công</span>
+                    )}
+                  </div>
+                  {transaction.rawInput ? (
+                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                      Nhập thô: {transaction.rawInput}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
+                  <span
+                    className={
+                      transaction.type === "income"
+                        ? "text-base font-semibold text-[#2F6B4F]"
+                        : "text-base font-semibold text-[#A2482D]"
+                    }
+                  >
+                    {transaction.type === "income" ? "+" : "-"}
+                    {formatVnd(transaction.amount)}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editTransaction(transaction)}
+                      className="border-[#DDD8CE]"
+                    >
+                      Sửa
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteTransactionById(transaction)}
+                      className="border-[#DDD8CE]"
+                    >
+                      Xóa
+                    </Button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
           {transactions.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
-              Chưa có giao dịch.
+            <div className="mt-5">
+              <EmptyState
+                title="Chưa có giao dịch."
+                description="Start by adding your first transaction. MoneyMind AI will learn your spending habits."
+              />
+            </div>
+          ) : null}
+
+          {transactions.length > 0 && filteredTransactions.length === 0 ? (
+            <p className="mt-5 rounded-xl border border-dashed border-[#DCD7CC] p-4 text-sm text-muted-foreground">
+              Không tìm thấy giao dịch phù hợp với bộ lọc hiện tại.
             </p>
           ) : null}
-        </div>
+        </section>
       </div>
     </div>
   );

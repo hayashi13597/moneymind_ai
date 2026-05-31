@@ -77,15 +77,31 @@ describe("AiChatTransactionReviewModal", () => {
 
     renderModal({ root, draft });
 
-    const selects = Array.from(container.querySelectorAll("select"));
-    const inputs = Array.from(container.querySelectorAll("input"));
+    const typeCombobox = container.querySelector<HTMLButtonElement>(
+      'button[role="combobox"][aria-label="Loại"]',
+    );
+    const categoryCombobox = container.querySelector<HTMLButtonElement>(
+      'button[role="combobox"][aria-label="Danh mục"]',
+    );
+    const amountInput = container.querySelector<HTMLInputElement>(
+      'input[value="55000"]',
+    );
+    const dateInput = container.querySelector<HTMLInputElement>(
+      'input[type="date"]',
+    );
+    const merchantInput = container.querySelector<HTMLInputElement>(
+      'input[placeholder="Tùy chọn"]',
+    );
+    const noteInput = container.querySelector<HTMLInputElement>(
+      'input[placeholder="Ghi chú"]',
+    );
 
-    expect(selects[0]?.value).toBe("expense");
-    expect(inputs[0]?.value).toBe("55000");
-    expect(selects[1]?.value).toBe("cat_food");
-    expect(inputs[1]?.value).toBe("2026-05-27");
-    expect(inputs[2]?.value).toBe("Quán bún bò");
-    expect(inputs[3]?.value).toBe("Tiền ăn bún bò huế");
+    expect(typeCombobox?.textContent).toContain("Chi tiêu");
+    expect(amountInput?.value).toBe("55000");
+    expect(categoryCombobox?.textContent).toContain("Ăn uống");
+    expect(dateInput?.value).toBe("2026-05-27");
+    expect(merchantInput?.value).toBe("Quán bún bò");
+    expect(noteInput?.value).toBe("Tiền ăn bún bò huế");
   });
 
   it("disables saving when no category matches the draft type", () => {
