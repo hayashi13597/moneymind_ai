@@ -16,12 +16,15 @@ export type MonthlyDashboard = {
   month: DashboardMonth;
   totals: DashboardTotals;
   previousTotals: DashboardTotals;
+  healthScore: FinancialHealthScore;
   comparison: {
     income: MonthComparison;
     expense: MonthComparison;
     remaining: MonthComparison;
   };
   categoryBreakdown: CategoryBreakdownItem[];
+  categoryAnalysis: CategoryAnalysisItem[];
+  spendingTrend: SpendingTrendPoint[];
   recentTransactions: RecentDashboardTransaction[];
   isEmpty: boolean;
 };
@@ -38,6 +41,24 @@ export type CategoryBreakdownItem = {
   color: string | null;
   amount: number;
   percentage: number;
+};
+
+export type CategoryAnalysisItem = CategoryBreakdownItem & {
+  previousAmount: number;
+  changePercentage: number | null;
+  changeKind: "new" | "increased" | "decreased" | "unchanged";
+};
+
+export type SpendingTrendPoint = {
+  date: string;
+  amount: number;
+};
+
+export type FinancialHealthScore = {
+  score: number;
+  level: string;
+  savingsRate: number;
+  explanation: string;
 };
 
 export type RecentDashboardTransaction = {
@@ -138,6 +159,146 @@ function buildCategoryBreakdown(
     .sort((a, b) => b.amount - a.amount);
 }
 
+function buildCategoryAmountMap(transactions: TransactionWithCategory[]) {
+  const amounts = new Map<string, number>();
+
+  for (const transaction of transactions) {
+    if (transaction.type !== "expense") {
+      continue;
+    }
+
+    amounts.set(
+      transaction.categoryId,
+      (amounts.get(transaction.categoryId) ?? 0) + transaction.amount,
+    );
+  }
+
+  return amounts;
+}
+
+function buildCategoryAnalysis(
+  currentBreakdown: CategoryBreakdownItem[],
+  previousTransactions: TransactionWithCategory[],
+): CategoryAnalysisItem[] {
+  const previousAmounts = buildCategoryAmountMap(previousTransactions);
+
+  return currentBreakdown.map((item) => {
+    const previousAmount = previousAmounts.get(item.categoryId) ?? 0;
+    const delta = item.amount - previousAmount;
+
+    if (previousAmount === 0) {
+      return {
+        ...item,
+        previousAmount,
+        changePercentage: null,
+        changeKind: "new",
+      };
+    }
+
+    if (delta === 0) {
+      return {
+        ...item,
+        previousAmount,
+        changePercentage: 0,
+        changeKind: "unchanged",
+      };
+    }
+
+    return {
+      ...item,
+      previousAmount,
+      changePercentage: Math.round((Math.abs(delta) / previousAmount) * 100),
+      changeKind: delta > 0 ? "increased" : "decreased",
+    };
+  });
+}
+
+function buildSpendingTrend(
+  monthKey: string,
+  transactions: TransactionWithCategory[],
+): SpendingTrendPoint[] {
+  const window = getMonthWindow(monthKey);
+  const daysInMonth = Math.round(
+    (window.end.getTime() - window.start.getTime()) / (24 * 60 * 60 * 1000),
+  );
+  const trend = new Map<string, number>();
+
+  for (const transaction of transactions) {
+    if (transaction.type !== "expense") {
+      continue;
+    }
+
+    const date = transaction.transactionDate.toISOString().slice(0, 10);
+    trend.set(date, (trend.get(date) ?? 0) + transaction.amount);
+  }
+
+  return Array.from({ length: daysInMonth }, (_, index) => {
+    const date = new Date(window.start);
+    date.setUTCDate(index + 1);
+    const dateKey = date.toISOString().slice(0, 10);
+
+    return {
+      date: dateKey,
+      amount: trend.get(dateKey) ?? 0,
+    };
+  });
+}
+
+function buildHealthScore(
+  totals: DashboardTotals,
+  expenseComparison: MonthComparison,
+): FinancialHealthScore {
+  if (totals.income <= 0) {
+    return {
+      score: 0,
+      level: "Chưa đủ dữ liệu",
+      savingsRate: 0,
+      explanation: "Thêm giao dịch để MoneyMind AI tính điểm tài chính.",
+    };
+  }
+
+  const savingsRate = Math.max(
+    0,
+    Math.round((totals.remaining / totals.income) * 100),
+  );
+  const expensePenalty =
+    expenseComparison.kind === "increased"
+      ? Math.min(18, Math.round(expenseComparison.percentage * 0.07))
+      : 0;
+  const expenseBonus =
+    expenseComparison.kind === "decreased"
+      ? Math.min(8, Math.round(expenseComparison.percentage * 0.05))
+      : 0;
+  const rawScore = 58 + savingsRate * 0.35 - expensePenalty + expenseBonus;
+  const score = Math.max(0, Math.min(100, Math.round(rawScore)));
+  const level =
+    score >= 85
+      ? "Đà rất tốt"
+      : score >= 70
+        ? "Đang tích lũy tốt"
+        : score >= 55
+          ? "Tương đối cân bằng"
+          : score >= 40
+            ? "Cần chú ý thêm"
+            : "Cần điều chỉnh sớm";
+
+  const comparisonNote =
+    expenseComparison.kind === "increased"
+      ? `nhưng chi tiêu tăng ${expenseComparison.percentage}% so với tháng trước.`
+      : expenseComparison.kind === "decreased"
+        ? `và chi tiêu giảm ${expenseComparison.percentage}% so với tháng trước.`
+        : expenseComparison.kind === "unchanged"
+          ? "và chi tiêu không đổi so với tháng trước."
+          : "chưa có dữ liệu tháng trước để so sánh.";
+
+  return {
+    score,
+    level,
+    savingsRate,
+    explanation: `Tỷ lệ tiết kiệm ${savingsRate}%, ${comparisonNote}`,
+  };
+}
+
 function buildRecentTransactions(
   transactions: TransactionWithCategory[],
 ): RecentDashboardTransaction[] {
@@ -171,17 +332,31 @@ export async function getMonthlyDashboard(
   ]);
   const totals = calculateTotals(transactions);
   const previousTotals = calculateTotals(previousTransactions);
+  const expenseComparison = compareMonth(
+    totals.expense,
+    previousTotals.expense,
+  );
+  const categoryBreakdown = buildCategoryBreakdown(
+    transactions,
+    totals.expense,
+  );
 
   return {
     month: selectedMonth,
     totals,
     previousTotals,
+    healthScore: buildHealthScore(totals, expenseComparison),
     comparison: {
       income: compareMonth(totals.income, previousTotals.income),
-      expense: compareMonth(totals.expense, previousTotals.expense),
+      expense: expenseComparison,
       remaining: compareMonth(totals.remaining, previousTotals.remaining),
     },
-    categoryBreakdown: buildCategoryBreakdown(transactions, totals.expense),
+    categoryBreakdown,
+    categoryAnalysis: buildCategoryAnalysis(
+      categoryBreakdown,
+      previousTransactions,
+    ),
+    spendingTrend: buildSpendingTrend(monthKey, transactions),
     recentTransactions: buildRecentTransactions(transactions),
     isEmpty: transactions.length === 0,
   };

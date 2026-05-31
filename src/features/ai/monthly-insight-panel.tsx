@@ -59,12 +59,12 @@ export function MonthlyInsightPanel({
   }
 
   return (
-    <section className="rounded-lg border bg-card p-4">
+    <section className="rounded-2xl border border-[#E1DDD4] bg-card p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">AI Insight</h2>
-          <p className="text-sm text-muted-foreground">
-            Gợi ý ngắn dựa trên dữ liệu tháng này.
+          <h2 className="text-lg font-semibold">Phân tích từ MoneyMind AI</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Phân tích ngắn dựa trên dữ liệu thật của tháng này.
           </p>
         </div>
         <Button
@@ -72,6 +72,9 @@ export function MonthlyInsightPanel({
           variant={insight ? "outline" : "default"}
           onClick={() => generate(Boolean(insight))}
           disabled={pending}
+          className={
+            insight ? "border-[#DDD8CE]" : "bg-[#2F6B4F] hover:bg-[#285B43]"
+          }
         >
           {insight ? "Tạo lại" : "Tạo insight"}
         </Button>

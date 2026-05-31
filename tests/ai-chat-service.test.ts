@@ -132,6 +132,54 @@ describe("ai chat service", () => {
     );
   });
 
+  it("accepts provider JSON wrapped in a markdown code fence", async () => {
+    chatMock.mockResolvedValue(
+      [
+        "```json",
+        JSON.stringify({
+          answer: "Bạn chi nhiều nhất vào Ăn uống: 1.200.000đ.",
+          transactionDraft: null,
+        }),
+        "```",
+      ].join("\n"),
+    );
+
+    await expect(
+      generateAiChatResponse("user_1", {
+        month: "2026-05",
+        messages: [
+          { role: "user", content: "Tháng này tôi đã chi quá tay ở đâu?" },
+        ],
+      }),
+    ).resolves.toEqual({
+      message: {
+        role: "assistant",
+        content: "Bạn chi nhiều nhất vào Ăn uống: 1.200.000đ.",
+      },
+    });
+  });
+
+  it("accepts provider JSON after a short text prefix", async () => {
+    chatMock.mockResolvedValue(
+      `Dưới đây là kết quả:\n${JSON.stringify({
+        answer: "Bạn đang giữ nhịp chi tiêu ổn, nhưng Ăn uống tăng mạnh.",
+        transactionDraft: null,
+      })}`,
+    );
+
+    await expect(
+      generateAiChatResponse("user_1", {
+        month: "2026-05",
+        messages: [{ role: "user", content: "Tạo kế hoạch tiết kiệm cho tôi." }],
+      }),
+    ).resolves.toEqual({
+      message: {
+        role: "assistant",
+        content: "Bạn đang giữ nhịp chi tiêu ổn, nhưng Ăn uống tăng mạnh.",
+      },
+    });
+  });
+
   it("resolves transaction draft category to a real user category", async () => {
     chatMock.mockResolvedValue(
       JSON.stringify({

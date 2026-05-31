@@ -38,7 +38,7 @@ describe("ai chat route", () => {
       json: async () => {
         throw new SyntaxError("Unexpected token");
       },
-    } as Request;
+    } as unknown as Request;
 
     const response = await POST(request);
 
