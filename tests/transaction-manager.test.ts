@@ -62,4 +62,28 @@ describe("TransactionManager", () => {
 
     expect(container.textContent).toContain("Lương tháng này");
   });
+
+  it("uses the shadcn date picker for the transaction date field", () => {
+    act(() => {
+      root.render(
+        React.createElement(TransactionManager, {
+          initialTransactions: [],
+          categories,
+        }),
+      );
+    });
+
+    const nativeDateInput =
+      container.querySelector<HTMLInputElement>('input[type="date"]');
+    const datePickerButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Chọn ngày giao dịch"]',
+    );
+    const hiddenDateInput = container.querySelector<HTMLInputElement>(
+      'input[type="hidden"][name="transactionDate"]',
+    );
+
+    expect(nativeDateInput).toBeNull();
+    expect(datePickerButton).not.toBeNull();
+    expect(hiddenDateInput?.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
 });

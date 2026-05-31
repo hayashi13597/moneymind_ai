@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/app-ui";
 import { listCategories } from "@/features/categories/service";
 import { TransactionManager } from "@/features/transactions/transaction-manager";
 import { listTransactions } from "@/features/transactions/service";
@@ -20,17 +21,12 @@ export default async function TransactionsPage() {
   }));
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-muted-foreground">Giao dịch</p>
-        <h1 className="text-2xl font-semibold tracking-normal">
-          Thu chi hằng ngày
-        </h1>
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          Ghi lại thu nhập và chi tiêu bằng VND, có hỗ trợ nhập nhanh như 55k
-          hoặc 18tr.
-        </p>
-      </div>
+    <section className="space-y-8">
+      <PageHeader
+        eyebrow="Giao dịch"
+        title="Dòng tiền hằng ngày"
+        description="Theo dõi thu chi như một activity feed. MoneyMind AI giúp đọc mô tả tự nhiên, phân loại giao dịch và học dần thói quen chi tiêu của bạn."
+      />
       <TransactionManager
         initialTransactions={transactionItems}
         categories={categories}

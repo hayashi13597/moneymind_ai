@@ -7,6 +7,9 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
+const INPUT_CLASS =
+  "h-11 w-full rounded-xl border border-warm-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/15";
+
 export function SignupForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +48,7 @@ export function SignupForm() {
         <input
           required
           autoComplete="name"
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className={INPUT_CLASS}
           id="name"
           name="name"
           placeholder="Nguyễn Văn A"
@@ -59,7 +62,7 @@ export function SignupForm() {
         <input
           required
           autoComplete="email"
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className={INPUT_CLASS}
           id="email"
           name="email"
           placeholder="ban@example.com"
@@ -73,7 +76,7 @@ export function SignupForm() {
         <input
           required
           autoComplete="new-password"
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className={INPUT_CLASS}
           id="password"
           minLength={8}
           name="password"
@@ -85,7 +88,11 @@ export function SignupForm() {
           {error}
         </p>
       ) : null}
-      <Button className="w-full" disabled={isPending} type="submit">
+      <Button
+        className="h-11 w-full bg-primary hover:bg-primary-hover"
+        disabled={isPending}
+        type="submit"
+      >
         {isPending ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
       </Button>
       <p className="text-center text-sm text-muted-foreground">

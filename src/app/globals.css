@@ -31,7 +31,12 @@
     --color-secondary-foreground: var(--secondary-foreground);
     --color-secondary: var(--secondary);
     --color-primary-foreground: var(--primary-foreground);
+    --color-primary-hover: var(--primary-hover);
     --color-primary: var(--primary);
+    --color-surface: var(--surface);
+    --color-warm-border: var(--warm-border);
+    --color-soft-border: var(--soft-border);
+    --color-soft-accent: var(--soft-accent);
     --color-popover-foreground: var(--popover-foreground);
     --color-popover: var(--popover);
     --color-card-foreground: var(--card-foreground);
@@ -55,7 +60,12 @@
     --popover: #fffefa;
     --popover-foreground: #111111;
     --primary: #2f6b4f;
+    --primary-hover: #285b43;
     --primary-foreground: #ffffff;
+    --surface: #fdfcf8;
+    --warm-border: #dcd7cc;
+    --soft-border: #d8e1d7;
+    --soft-accent: #f3f8f2;
     --secondary: #f3f0e9;
     --secondary-foreground: #111111;
     --muted: #f1eee7;
