@@ -25,6 +25,7 @@ jest.mock("@/features/transactions/service", () => ({
 const getRequiredApiUserMock = getRequiredApiUser as jest.Mock;
 const createTransactionMock = createTransaction as jest.Mock;
 const revalidatePathMock = revalidatePath as jest.Mock;
+const originalResponse = global.Response;
 
 beforeAll(() => {
   global.Response = {
@@ -33,6 +34,10 @@ beforeAll(() => {
       status: init?.status ?? 200,
     }),
   } as unknown as typeof Response;
+});
+
+afterAll(() => {
+  global.Response = originalResponse;
 });
 
 function createRequest(type: "income" | "expense" = "expense") {
@@ -66,11 +71,12 @@ describe("transactions route", () => {
     const response = await POST(createRequest());
 
     expect(response.status).toBe(201);
+    expect(revalidatePathMock).toHaveBeenCalledWith("/(app)", "layout");
     expect(revalidatePathMock).toHaveBeenCalledWith("/(app)/transactions");
     expect(revalidatePathMock).toHaveBeenCalledWith("/(app)/dashboard");
   });
 
-  it("revalidates the app layout after creating income from any app page", async () => {
+  it("revalidates the app layout after creating any transaction", async () => {
     const response = await POST(createRequest("income"));
 
     expect(response.status).toBe(201);
