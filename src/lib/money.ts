@@ -13,8 +13,8 @@ function normalizeAmountInput(input: string) {
   return input
     .trim()
     .toLowerCase()
+    .replace(/vnđ|vnd|đồng|dong|đ/g, "")
     .replace(/\s+/g, " ")
-    .replace(/đ|vnd/g, "")
     .trim();
 }
 

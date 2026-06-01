@@ -1,6 +1,21 @@
 import { z } from "zod";
 
+import { MAX_TRANSACTION_AMOUNT, parseVndInput } from "@/lib/money";
+
 const trimmedString = z.string().trim();
+const optionalNullableTrimmedString = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+  trimmedString.min(1).nullable().optional(),
+);
+const vndAmountSchema = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const parsed = parseVndInput(value);
+
+  return parsed.ok ? parsed.value : value;
+}, z.number().int().positive().max(MAX_TRANSACTION_AMOUNT));
 
 export const aiProviderSettingSchema = z.object({
   baseUrl: trimmedString.url().transform((value) => value.replace(/\/+$/, "")),
@@ -29,10 +44,10 @@ export type ParseTransactionRequest = z.infer<
 
 export const aiTransactionOutputSchema = z.object({
   type: z.enum(["income", "expense"]),
-  amount: z.number().int().positive(),
+  amount: vndAmountSchema,
   categoryName: trimmedString.min(1),
   note: trimmedString.min(1),
-  merchant: trimmedString.min(1).nullable().optional(),
+  merchant: optionalNullableTrimmedString,
   transactionDate: trimmedString.regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
