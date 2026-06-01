@@ -61,6 +61,75 @@ describe("AI transaction parser", () => {
     });
   });
 
+  it("accepts shorthand VND amounts and blank merchants from AI output", async () => {
+    findManyMock.mockResolvedValue([
+      { id: "cat_food", name: "Ăn uống", type: "expense" },
+      { id: "cat_income", name: "Thu nhập", type: "income" },
+    ]);
+    chatMock.mockResolvedValue(
+      JSON.stringify({
+        type: "expense",
+        amount: "25k",
+        categoryName: "Ăn uống",
+        note: "Uống cà phê",
+        merchant: "",
+        transactionDate: "2026-06-01",
+      }),
+    );
+
+    await expect(
+      parseTransactionWithAi(
+        "user_1",
+        "Uống cà phê hết 25k",
+        new Date("2026-06-01"),
+      ),
+    ).resolves.toEqual({
+      type: "expense",
+      amount: 25000,
+      categoryId: "cat_food",
+      categoryName: "Ăn uống",
+      note: "Uống cà phê",
+      merchant: null,
+      rawInput: "Uống cà phê hết 25k",
+      transactionDate: "2026-06-01",
+    });
+  });
+
+  it("extracts a transaction draft when the provider wraps JSON in text", async () => {
+    findManyMock.mockResolvedValue([
+      { id: "cat_food", name: "Ăn uống", type: "expense" },
+      { id: "cat_income", name: "Thu nhập", type: "income" },
+    ]);
+    chatMock.mockResolvedValue(
+      [
+        "Đây là JSON:",
+        "```json",
+        JSON.stringify({
+          type: "expense",
+          amount: "25k",
+          categoryName: "Ăn uống",
+          note: "Uống cà phê",
+          merchant: "",
+          transactionDate: "2026-06-01",
+        }),
+        "```",
+      ].join("\n"),
+    );
+
+    await expect(
+      parseTransactionWithAi(
+        "user_1",
+        "Uống cà phê hết 25k",
+        new Date("2026-06-01"),
+      ),
+    ).resolves.toMatchObject({
+      type: "expense",
+      amount: 25000,
+      categoryId: "cat_food",
+      merchant: null,
+    });
+  });
+
   it("falls back to Khác when category does not match", async () => {
     findManyMock.mockResolvedValue([
       { id: "cat_other", name: "Khác", type: "expense" },
