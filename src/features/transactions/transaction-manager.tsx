@@ -18,6 +18,7 @@ import { FormCombobox } from "@/components/form-combobox";
 import { FormDatePicker } from "@/components/form-date-picker";
 import { FormMonthPicker } from "@/components/form-month-picker";
 import { Button } from "@/components/ui/button";
+import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
 import type { DashboardMonth } from "@/features/dashboard/month";
 import { formatVnd } from "@/lib/money";
 
@@ -323,13 +324,22 @@ export function TransactionManager({
     }
 
     setAiPending(true);
-    setError("");
+      setError("");
 
     try {
+      const providerSetting = readLocalAiProviderSetting();
+
+      if (!providerSetting) {
+        const message = "Bạn cần cấu hình nhà cung cấp AI trước.";
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
       const response = await fetch("/api/ai/parse-transaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: rawInput }),
+        body: JSON.stringify({ input: rawInput, providerSetting }),
       });
 
       if (!response.ok) {

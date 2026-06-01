@@ -7,6 +7,11 @@ describe("ai chat schemas", () => {
   it("accepts a valid chat request", () => {
     const parsed = aiChatRequestSchema.safeParse({
       month: "2026-05",
+      providerSetting: {
+        baseUrl: "https://openrouter.ai/api/v1",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-test",
+      },
       messages: [
         { role: "user", content: "Tháng này tôi tiêu nhiều nhất vào đâu?" },
       ],
@@ -18,6 +23,11 @@ describe("ai chat schemas", () => {
   it("rejects an invalid month", () => {
     const parsed = aiChatRequestSchema.safeParse({
       month: "2026/05",
+      providerSetting: {
+        baseUrl: "https://openrouter.ai/api/v1",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-test",
+      },
       messages: [{ role: "user", content: "Test" }],
     });
 
@@ -27,6 +37,11 @@ describe("ai chat schemas", () => {
   it("rejects a month outside the calendar range", () => {
     const parsed = aiChatRequestSchema.safeParse({
       month: "2026-13",
+      providerSetting: {
+        baseUrl: "https://openrouter.ai/api/v1",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-test",
+      },
       messages: [{ role: "user", content: "Test" }],
     });
 
@@ -41,6 +56,11 @@ describe("ai chat schemas", () => {
 
     const parsed = aiChatRequestSchema.parse({
       month: "2026-05",
+      providerSetting: {
+        baseUrl: "https://openrouter.ai/api/v1",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-test",
+      },
       messages,
     });
 
@@ -51,6 +71,11 @@ describe("ai chat schemas", () => {
   it("rejects empty messages", () => {
     const parsed = aiChatRequestSchema.safeParse({
       month: "2026-05",
+      providerSetting: {
+        baseUrl: "https://openrouter.ai/api/v1",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-test",
+      },
       messages: [],
     });
 
@@ -60,7 +85,21 @@ describe("ai chat schemas", () => {
   it("rejects histories without a user message", () => {
     const parsed = aiChatRequestSchema.safeParse({
       month: "2026-05",
+      providerSetting: {
+        baseUrl: "https://openrouter.ai/api/v1",
+        model: "openai/gpt-4.1-mini",
+        apiKey: "sk-test",
+      },
       messages: [{ role: "assistant", content: "Xin chào." }],
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it("rejects chat requests without provider setting", () => {
+    const parsed = aiChatRequestSchema.safeParse({
+      month: "2026-05",
+      messages: [{ role: "user", content: "Test" }],
     });
 
     expect(parsed.success).toBe(false);

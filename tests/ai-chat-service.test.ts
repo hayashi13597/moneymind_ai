@@ -13,14 +13,6 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
-jest.mock("@/features/ai/settings-service", () => ({
-  requireAiProviderSetting: jest.fn().mockResolvedValue({
-    baseUrl: "https://provider.example/v1",
-    apiKey: "sk-test",
-    model: "model",
-  }),
-}));
-
 jest.mock("@/features/ai/openai-compatible", () => ({
   createOpenAiCompatibleChat: jest.fn(),
 }));
@@ -57,6 +49,11 @@ jest.mock("@/features/dashboard/service", () => ({
 const categoryFindManyMock = db.category.findMany as jest.Mock;
 const transactionFindManyMock = db.transaction.findMany as jest.Mock;
 const chatMock = createOpenAiCompatibleChat as jest.Mock;
+const providerSetting = {
+  baseUrl: "https://provider.example/v1",
+  apiKey: "sk-test",
+  model: "model",
+};
 
 describe("ai chat service", () => {
   beforeEach(() => {
@@ -93,10 +90,14 @@ describe("ai chat service", () => {
     );
 
     await expect(
-      generateAiChatResponse("user_1", {
-        month: "2026-05",
-        messages: [{ role: "user", content: "Tôi tiêu nhiều nhất vào đâu?" }],
-      }),
+      generateAiChatResponse(
+        "user_1",
+        {
+          month: "2026-05",
+          messages: [{ role: "user", content: "Tôi tiêu nhiều nhất vào đâu?" }],
+        },
+        providerSetting,
+      ),
     ).resolves.toEqual({
       message: {
         role: "assistant",
@@ -121,11 +122,15 @@ describe("ai chat service", () => {
         messages: expect.arrayContaining([
           expect.objectContaining({
             role: "system",
-            content: expect.stringContaining("Chỉ dùng dữ liệu giao dịch và thông tin tài chính được cung cấp."),
+            content: expect.stringContaining(
+              "Chỉ dùng dữ liệu giao dịch và thông tin tài chính được cung cấp.",
+            ),
           }),
           expect.objectContaining({
             role: "user",
-            content: expect.stringContaining("Tóm tắt thu chi các tháng gần đây:"),
+            content: expect.stringContaining(
+              "Tóm tắt thu chi các tháng gần đây:",
+            ),
           }),
         ]),
       }),
@@ -145,12 +150,16 @@ describe("ai chat service", () => {
     );
 
     await expect(
-      generateAiChatResponse("user_1", {
-        month: "2026-05",
-        messages: [
-          { role: "user", content: "Tháng này tôi đã chi quá tay ở đâu?" },
-        ],
-      }),
+      generateAiChatResponse(
+        "user_1",
+        {
+          month: "2026-05",
+          messages: [
+            { role: "user", content: "Tháng này tôi đã chi quá tay ở đâu?" },
+          ],
+        },
+        providerSetting,
+      ),
     ).resolves.toEqual({
       message: {
         role: "assistant",
@@ -168,10 +177,16 @@ describe("ai chat service", () => {
     );
 
     await expect(
-      generateAiChatResponse("user_1", {
-        month: "2026-05",
-        messages: [{ role: "user", content: "Tạo kế hoạch tiết kiệm cho tôi." }],
-      }),
+      generateAiChatResponse(
+        "user_1",
+        {
+          month: "2026-05",
+          messages: [
+            { role: "user", content: "Tạo kế hoạch tiết kiệm cho tôi." },
+          ],
+        },
+        providerSetting,
+      ),
     ).resolves.toEqual({
       message: {
         role: "assistant",
@@ -195,10 +210,14 @@ describe("ai chat service", () => {
       }),
     );
 
-    const response = await generateAiChatResponse("user_1", {
-      month: "2026-05",
-      messages: [{ role: "user", content: "Thêm ăn trưa 55k" }],
-    });
+    const response = await generateAiChatResponse(
+      "user_1",
+      {
+        month: "2026-05",
+        messages: [{ role: "user", content: "Thêm ăn trưa 55k" }],
+      },
+      providerSetting,
+    );
 
     expect(response.transactionDraft).toEqual({
       type: "expense",
@@ -227,16 +246,20 @@ describe("ai chat service", () => {
       }),
     );
 
-    const response = await generateAiChatResponse("user_1", {
-      month: "2026-05",
-      messages: [
-        {
-          role: "user",
-          content:
-            "Thêm chi tiêu việc sửa đem laptop đi vệ sinh và kiểm tra vấn đề quạt tản nhiệt tốn 300k",
-        },
-      ],
-    });
+    const response = await generateAiChatResponse(
+      "user_1",
+      {
+        month: "2026-05",
+        messages: [
+          {
+            role: "user",
+            content:
+              "Thêm chi tiêu việc sửa đem laptop đi vệ sinh và kiểm tra vấn đề quạt tản nhiệt tốn 300k",
+          },
+        ],
+      },
+      providerSetting,
+    );
 
     expect(response.transactionDraft).toEqual({
       type: "expense",
@@ -266,15 +289,19 @@ describe("ai chat service", () => {
       }),
     );
 
-    const response = await generateAiChatResponse("user_1", {
-      month: "2026-05",
-      messages: [
-        {
-          role: "user",
-          content: "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr",
-        },
-      ],
-    });
+    const response = await generateAiChatResponse(
+      "user_1",
+      {
+        month: "2026-05",
+        messages: [
+          {
+            role: "user",
+            content: "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr",
+          },
+        ],
+      },
+      providerSetting,
+    );
 
     expect(response.transactionDraft).toEqual({
       type: "income",
@@ -303,16 +330,20 @@ describe("ai chat service", () => {
       }),
     );
 
-    const response = await generateAiChatResponse("user_1", {
-      month: "2026-05",
-      messages: [
-        {
-          role: "user",
-          content:
-            "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr (2 triệu)",
-        },
-      ],
-    });
+    const response = await generateAiChatResponse(
+      "user_1",
+      {
+        month: "2026-05",
+        messages: [
+          {
+            role: "user",
+            content:
+              "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr (2 triệu)",
+          },
+        ],
+      },
+      providerSetting,
+    );
 
     expect(response.transactionDraft?.amount).toBe(2000000);
   });
@@ -332,15 +363,19 @@ describe("ai chat service", () => {
       }),
     );
 
-    const response = await generateAiChatResponse("user_1", {
-      month: "2026-05",
-      messages: [
-        {
-          role: "user",
-          content: "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr",
-        },
-      ],
-    });
+    const response = await generateAiChatResponse(
+      "user_1",
+      {
+        month: "2026-05",
+        messages: [
+          {
+            role: "user",
+            content: "Giúp tôi thêm thu nhập từ việc đầu tư bitcon là 2tr",
+          },
+        ],
+      },
+      providerSetting,
+    );
 
     expect(response.transactionDraft).toMatchObject({
       type: "income",
@@ -365,23 +400,61 @@ describe("ai chat service", () => {
       }),
     );
 
-    const response = await generateAiChatResponse("user_1", {
-      month: "2026-05",
-      messages: [{ role: "user", content: "Thêm mua đồ 99k" }],
-    });
+    const response = await generateAiChatResponse(
+      "user_1",
+      {
+        month: "2026-05",
+        messages: [{ role: "user", content: "Thêm mua đồ 99k" }],
+      },
+      providerSetting,
+    );
 
     expect(response.transactionDraft?.categoryId).toBe("cat_other");
     expect(response.transactionDraft?.categoryName).toBe("Khác");
+  });
+
+  it("uses the provider setting passed by the request", async () => {
+    chatMock.mockResolvedValue(
+      JSON.stringify({
+        answer: "Cấu hình local hoạt động.",
+        transactionDraft: null,
+      }),
+    );
+
+    await generateAiChatResponse(
+      "user_1",
+      {
+        month: "2026-05",
+        messages: [{ role: "user", content: "Test" }],
+      },
+      {
+        baseUrl: "https://local.example/v1",
+        apiKey: "sk-local",
+        model: "local-model",
+      },
+    );
+
+    expect(chatMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: "https://local.example/v1",
+        apiKey: "sk-local",
+        model: "local-model",
+      }),
+    );
   });
 
   it("throws controlled AI error for invalid provider JSON", async () => {
     chatMock.mockResolvedValue("Không phải JSON");
 
     await expect(
-      generateAiChatResponse("user_1", {
-        month: "2026-05",
-        messages: [{ role: "user", content: "Test" }],
-      }),
+      generateAiChatResponse(
+        "user_1",
+        {
+          month: "2026-05",
+          messages: [{ role: "user", content: "Test" }],
+        },
+        providerSetting,
+      ),
     ).rejects.toMatchObject({ code: "provider_invalid_response" });
   });
 });

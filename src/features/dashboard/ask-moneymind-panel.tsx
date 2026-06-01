@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { AiChatResponse } from "@/features/ai-chat/schemas";
+import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
 
 const PROMPTS = [
   "Tháng này tôi đã chi quá tay ở đâu?",
@@ -42,11 +43,19 @@ export function AskMoneyMindPanel({ month }: AskMoneyMindPanelProps) {
     setPending(true);
 
     try {
+      const providerSetting = readLocalAiProviderSetting();
+
+      if (!providerSetting) {
+        setError("Bạn cần cấu hình nhà cung cấp AI trước.");
+        return;
+      }
+
       const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           month,
+          providerSetting,
           messages: [{ role: "user", content: prompt }],
         }),
       });

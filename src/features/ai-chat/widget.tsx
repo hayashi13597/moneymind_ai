@@ -11,6 +11,7 @@ import type {
   AiChatTransactionDraft,
 } from "@/features/ai-chat/schemas";
 import { AiChatTransactionReviewModal } from "@/features/ai-chat/transaction-review-modal";
+import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
 
 type Category = {
   id: string;
@@ -101,6 +102,13 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
       return;
     }
 
+    const providerSetting = readLocalAiProviderSetting();
+
+    if (!providerSetting) {
+      setError("Bạn cần cấu hình nhà cung cấp AI trước.");
+      return;
+    }
+
     const nextMessages: ChatEntry[] = [
       ...messages,
       { role: "user", content },
@@ -116,6 +124,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           month,
+          providerSetting,
           messages: nextMessages.map((message) => ({
             role: message.role,
             content: message.content,
