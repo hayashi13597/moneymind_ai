@@ -1,5 +1,5 @@
 import { createOpenAiCompatibleChat } from "@/features/ai/openai-compatible";
-import { requireAiProviderSetting } from "@/features/ai/settings-service";
+import type { AiProviderSettingInput } from "@/features/ai/schemas";
 import { getMonthlyDashboard } from "@/features/dashboard/service";
 import { db } from "@/lib/db";
 
@@ -36,6 +36,7 @@ export async function generateMonthlyInsight(
   userId: string,
   month: string,
   regenerate: boolean,
+  setting: AiProviderSettingInput,
 ) {
   const cached = await getCachedMonthlyInsight(userId, month);
 
@@ -43,10 +44,7 @@ export async function generateMonthlyInsight(
     return cached;
   }
 
-  const [setting, dashboard] = await Promise.all([
-    requireAiProviderSetting(userId),
-    getMonthlyDashboard(userId, month),
-  ]);
+  const dashboard = await getMonthlyDashboard(userId, month);
   const content = await createOpenAiCompatibleChat({
     baseUrl: setting.baseUrl,
     apiKey: setting.apiKey,

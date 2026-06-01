@@ -2,9 +2,15 @@ import { z } from "zod";
 
 const trimmedString = z.string().trim();
 
-export const aiProviderSettingUpdateSchema = z.object({
+export const aiProviderSettingSchema = z.object({
   baseUrl: trimmedString.url().transform((value) => value.replace(/\/+$/, "")),
   model: trimmedString.min(1),
+  apiKey: trimmedString.min(1),
+});
+
+export type AiProviderSettingInput = z.infer<typeof aiProviderSettingSchema>;
+
+export const aiProviderSettingUpdateSchema = aiProviderSettingSchema.extend({
   apiKey: trimmedString.min(1).optional(),
 });
 
@@ -14,6 +20,7 @@ export type AiProviderSettingUpdateInput = z.infer<
 
 export const parseTransactionRequestSchema = z.object({
   input: trimmedString.min(1).max(500),
+  providerSetting: aiProviderSettingSchema,
 });
 
 export type ParseTransactionRequest = z.infer<
@@ -34,6 +41,7 @@ export type AiTransactionOutput = z.infer<typeof aiTransactionOutputSchema>;
 export const monthlyInsightRequestSchema = z.object({
   month: trimmedString.regex(/^\d{4}-\d{2}$/),
   regenerate: z.boolean().optional().default(false),
+  providerSetting: aiProviderSettingSchema,
 });
 
 export type MonthlyInsightRequest = z.infer<typeof monthlyInsightRequestSchema>;

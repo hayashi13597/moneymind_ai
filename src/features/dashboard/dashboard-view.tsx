@@ -546,11 +546,15 @@ export function DashboardView({
           </div>
         </section>
 
-        <AskMoneyMindPanel month={dashboard.month.key} />
+        <AskMoneyMindPanel
+          key={dashboard.month.key}
+          month={dashboard.month.key}
+        />
       </div>
 
       <section id="monthly-ai-analysis">
         <MonthlyInsightPanel
+          key={dashboard.month.key}
           month={dashboard.month.key}
           initialInsight={initialInsight}
         />

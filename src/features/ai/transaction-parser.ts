@@ -1,7 +1,9 @@
 import { AiDomainError } from "@/features/ai/errors";
 import { createOpenAiCompatibleChat } from "@/features/ai/openai-compatible";
-import { aiTransactionOutputSchema } from "@/features/ai/schemas";
-import { requireAiProviderSetting } from "@/features/ai/settings-service";
+import {
+  aiTransactionOutputSchema,
+  type AiProviderSettingInput,
+} from "@/features/ai/schemas";
 import { db } from "@/lib/db";
 
 type UserCategory = {
@@ -54,16 +56,14 @@ function parseJsonObject(content: string) {
 export async function parseTransactionWithAi(
   userId: string,
   input: string,
+  setting: AiProviderSettingInput,
   today = new Date(),
 ) {
-  const [setting, categories] = await Promise.all([
-    requireAiProviderSetting(userId),
-    db.category.findMany({
-      where: { userId },
-      select: { id: true, name: true, type: true },
-      orderBy: [{ isDefault: "desc" }, { name: "asc" }],
-    }),
-  ]);
+  const categories = await db.category.findMany({
+    where: { userId },
+    select: { id: true, name: true, type: true },
+    orderBy: [{ isDefault: "desc" }, { name: "asc" }],
+  });
 
   const categoryList = categories
     .map((category) => `- ${category.name} (${category.type ?? "any"})`)

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
 import type { MonthlyInsightDto } from "@/features/ai/monthly-insight";
 import { MonthlyInsightMarkdown } from "@/features/ai/monthly-insight-markdown";
 
@@ -33,10 +34,19 @@ export function MonthlyInsightPanel({
     setError("");
 
     try {
+      const providerSetting = readLocalAiProviderSetting();
+
+      if (!providerSetting) {
+        const message = "Bạn cần cấu hình nhà cung cấp AI trước.";
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
       const response = await fetch("/api/ai/monthly-insight", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ month, regenerate }),
+        body: JSON.stringify({ month, regenerate, providerSetting }),
       });
 
       if (!response.ok) {

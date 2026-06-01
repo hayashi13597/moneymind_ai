@@ -32,7 +32,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const response = await generateAiChatResponse(user.id, parsed.data);
+    const response = await generateAiChatResponse(
+      user.id,
+      parsed.data,
+      parsed.data.providerSetting,
+    );
 
     return Response.json(response);
   } catch (error) {

@@ -14,14 +14,6 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
-jest.mock("@/features/ai/settings-service", () => ({
-  requireAiProviderSetting: jest.fn().mockResolvedValue({
-    baseUrl: "https://provider.example/v1",
-    apiKey: "sk-test",
-    model: "model",
-  }),
-}));
-
 jest.mock("@/features/ai/openai-compatible", () => ({
   createOpenAiCompatibleChat: jest.fn(),
 }));
@@ -58,6 +50,11 @@ jest.mock("@/features/dashboard/service", () => ({
 const findUniqueMock = db.aiInsight.findUnique as jest.Mock;
 const upsertMock = db.aiInsight.upsert as jest.Mock;
 const chatMock = createOpenAiCompatibleChat as jest.Mock;
+const providerSetting = {
+  baseUrl: "https://provider.example/v1",
+  apiKey: "sk-test",
+  model: "model",
+};
 
 describe("monthly insight service", () => {
   beforeEach(() => {
@@ -92,7 +89,12 @@ describe("monthly insight service", () => {
       updatedAt: new Date("2026-05-26T00:00:00.000Z"),
     });
 
-    const insight = await generateMonthlyInsight("user_1", "2026-05", false);
+    const insight = await generateMonthlyInsight(
+      "user_1",
+      "2026-05",
+      false,
+      providerSetting,
+    );
 
     expect(insight.content).toBe("Insight cache");
     expect(chatMock).not.toHaveBeenCalled();
@@ -108,7 +110,12 @@ describe("monthly insight service", () => {
       updatedAt: new Date("2026-05-26T01:00:00.000Z"),
     });
 
-    const insight = await generateMonthlyInsight("user_1", "2026-05", false);
+    const insight = await generateMonthlyInsight(
+      "user_1",
+      "2026-05",
+      false,
+      providerSetting,
+    );
 
     expect(insight.content).toBe("Bạn đang chi nhiều hơn cho ăn uống.");
     expect(chatMock).toHaveBeenCalledWith(
@@ -119,6 +126,31 @@ describe("monthly insight service", () => {
     expect(upsertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId_month: { userId: "user_1", month: "2026-05" } },
+      }),
+    );
+  });
+
+  it("uses the provider setting passed by the request", async () => {
+    findUniqueMock.mockResolvedValue(null);
+    chatMock.mockResolvedValue("Insight từ local setting.");
+    upsertMock.mockResolvedValue({
+      month: "2026-05",
+      content: "Insight từ local setting.",
+      createdAt: new Date("2026-05-26T00:00:00.000Z"),
+      updatedAt: new Date("2026-05-26T01:00:00.000Z"),
+    });
+
+    await generateMonthlyInsight("user_1", "2026-05", true, {
+      baseUrl: "https://local.example/v1",
+      apiKey: "sk-local",
+      model: "local-model",
+    });
+
+    expect(chatMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: "https://local.example/v1",
+        apiKey: "sk-local",
+        model: "local-model",
       }),
     );
   });

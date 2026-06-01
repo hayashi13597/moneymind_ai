@@ -1,13 +1,7 @@
-import { getAiErrorMessage, isAiDomainError } from "@/features/ai/errors";
 import { aiProviderSettingUpdateSchema } from "@/features/ai/schemas";
-import {
-  getMaskedAiProviderSetting,
-  upsertAiProviderSetting,
-} from "@/features/ai/settings-service";
 import {
   getRequiredApiUser,
   jsonBadRequest,
-  jsonError,
   jsonUnauthorized,
 } from "@/lib/api";
 
@@ -18,7 +12,7 @@ export async function GET() {
     return jsonUnauthorized();
   }
 
-  return Response.json(await getMaskedAiProviderSetting(user.id));
+  return Response.json({ setting: null });
 }
 
 export async function PATCH(request: Request) {
@@ -34,15 +28,11 @@ export async function PATCH(request: Request) {
     return jsonBadRequest();
   }
 
-  try {
-    await upsertAiProviderSetting(user.id, parsed.data);
-
-    return Response.json(await getMaskedAiProviderSetting(user.id));
-  } catch (error) {
-    if (isAiDomainError(error)) {
-      return jsonError(getAiErrorMessage(error.code), 400);
-    }
-
-    throw error;
-  }
+  return Response.json({
+    setting: {
+      baseUrl: parsed.data.baseUrl,
+      model: parsed.data.model,
+      hasApiKey: Boolean(parsed.data.apiKey),
+    },
+  });
 }

@@ -28,6 +28,7 @@ export async function POST(request: Request) {
       user.id,
       parsed.data.month,
       parsed.data.regenerate,
+      parsed.data.providerSetting,
     );
 
     return Response.json({ insight });

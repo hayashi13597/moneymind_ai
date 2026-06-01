@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { aiProviderSettingSchema } from "@/features/ai/schemas";
 import { parseVndInput } from "@/lib/money";
 
 const trimmedString = z.string().trim();
@@ -30,6 +31,7 @@ export type AiChatMessage = z.infer<typeof aiChatMessageSchema>;
 
 export const aiChatRequestSchema = z.object({
   month: trimmedString.regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+  providerSetting: aiProviderSettingSchema,
   messages: z
     .array(aiChatMessageSchema)
     .min(1)

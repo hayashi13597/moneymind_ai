@@ -1,6 +1,6 @@
 import { AiDomainError } from "@/features/ai/errors";
 import { createOpenAiCompatibleChat } from "@/features/ai/openai-compatible";
-import { requireAiProviderSetting } from "@/features/ai/settings-service";
+import type { AiProviderSettingInput } from "@/features/ai/schemas";
 import type {
   AiChatRequest,
   AiChatTransactionDraft,
@@ -284,14 +284,15 @@ function buildContextPrompt({
 export async function generateAiChatResponse(
   userId: string,
   input: AiChatRequest,
+  setting: AiProviderSettingInput,
 ) {
-  const [setting, dashboard, categories, transactions, monthlySummaries] = await Promise.all([
-    requireAiProviderSetting(userId),
-    getMonthlyDashboard(userId, input.month),
-    listCategories(userId),
-    listRecentTransactions(userId, input.month),
-    getRecentMonthlySummaries(userId, input.month),
-  ]);
+  const [dashboard, categories, transactions, monthlySummaries] =
+    await Promise.all([
+      getMonthlyDashboard(userId, input.month),
+      listCategories(userId),
+      listRecentTransactions(userId, input.month),
+      getRecentMonthlySummaries(userId, input.month),
+    ]);
 
   const providerContent = await createOpenAiCompatibleChat({
     baseUrl: setting.baseUrl,

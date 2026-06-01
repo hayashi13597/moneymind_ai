@@ -22,7 +22,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const draft = await parseTransactionWithAi(user.id, parsed.data.input);
+    const draft = await parseTransactionWithAi(
+      user.id,
+      parsed.data.input,
+      parsed.data.providerSetting,
+    );
 
     return Response.json({ draft });
   } catch (error) {
