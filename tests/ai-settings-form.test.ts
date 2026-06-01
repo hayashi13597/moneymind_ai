@@ -111,6 +111,8 @@ describe("AiSettingsForm", () => {
 
     expect(container.textContent).toContain("OpenAI chính");
 
+    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(true);
+
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>('[aria-label="Xóa OpenAI chính"]')
@@ -119,6 +121,49 @@ describe("AiSettingsForm", () => {
 
     expect(readLocalAiProviderStore().providers).toHaveLength(1);
     expect(container.textContent).not.toContain("OpenAI chính");
+
+    confirmSpy.mockRestore();
+  });
+
+  it("does not delete a provider when confirmation is cancelled", async () => {
+    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(false);
+
+    act(() => {
+      root.render(React.createElement(AiSettingsForm));
+    });
+
+    await act(async () => {
+      changeField(
+        container.querySelector<HTMLInputElement>("#providerName")!,
+        "OpenAI",
+      );
+      changeField(
+        container.querySelector<HTMLInputElement>("#baseUrl")!,
+        "https://api.openai.com/v1",
+      );
+      changeField(
+        container.querySelector<HTMLInputElement>("#model")!,
+        "gpt-4.1-mini",
+      );
+      changeField(
+        container.querySelector<HTMLInputElement>("#apiKey")!,
+        "sk-openai",
+      );
+      container.querySelector<HTMLButtonElement>("#saveProvider")?.click();
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Xóa OpenAI"]')
+        ?.click();
+    });
+
+    expect(confirmSpy).toHaveBeenCalledWith(
+      "Provider AI và API key sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn chắc chắn muốn xóa?",
+    );
+    expect(readLocalAiProviderStore().providers).toHaveLength(1);
+
+    confirmSpy.mockRestore();
   });
 
   it("places the provider list below the info card and provider form", () => {
@@ -151,6 +196,6 @@ describe("AiSettingsForm", () => {
     const markup = renderToString(React.createElement(AiSettingsForm));
 
     expect(markup).toContain("Chưa có provider");
-    expect(markup).not.toContain('<option value="legacy-provider">Provider chính');
+    expect(markup).not.toContain("https://provider.example/v1");
   });
 });

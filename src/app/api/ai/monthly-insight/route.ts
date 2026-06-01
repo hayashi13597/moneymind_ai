@@ -1,5 +1,6 @@
 import { getAiErrorMessage, isAiDomainError } from "@/features/ai/errors";
 import { generateMonthlyInsight } from "@/features/ai/monthly-insight";
+import { assertSafeAiProviderSetting } from "@/features/ai/provider-security";
 import { monthlyInsightRequestSchema } from "@/features/ai/schemas";
 import {
   getRequiredApiUser,
@@ -24,11 +25,14 @@ export async function POST(request: Request) {
   }
 
   try {
+    const providerSetting = assertSafeAiProviderSetting(
+      parsed.data.providerSetting,
+    );
     const insight = await generateMonthlyInsight(
       user.id,
       parsed.data.month,
       parsed.data.regenerate,
-      parsed.data.providerSetting,
+      providerSetting,
     );
 
     return Response.json({ insight });

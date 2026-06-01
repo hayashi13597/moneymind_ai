@@ -156,6 +156,14 @@ export function AiSettingsForm() {
   }
 
   function deleteProvider(provider: LocalAiProvider) {
+    const confirmed = window.confirm(
+      "Provider AI và API key sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn chắc chắn muốn xóa?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     setError("");
 
     if (draftProvider?.id === provider.id) {

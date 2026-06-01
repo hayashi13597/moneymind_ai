@@ -45,4 +45,23 @@ describe("ai chat route", () => {
     expect(response.status).toBe(400);
     expect(generateAiChatResponseMock).not.toHaveBeenCalled();
   });
+
+  it("rejects private provider base URLs before calling the chat service", async () => {
+    const request = {
+      json: async () => ({
+        month: "2026-05",
+        messages: [{ role: "user", content: "Tôi chi gì nhiều nhất?" }],
+        providerSetting: {
+          baseUrl: "http://127.0.0.1:11434/v1",
+          apiKey: "sk-local",
+          model: "local-model",
+        },
+      }),
+    } as unknown as Request;
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(400);
+    expect(generateAiChatResponseMock).not.toHaveBeenCalled();
+  });
 });

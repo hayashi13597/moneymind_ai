@@ -1,4 +1,5 @@
 import { getAiErrorMessage, isAiDomainError } from "@/features/ai/errors";
+import { assertSafeAiProviderSetting } from "@/features/ai/provider-security";
 import { parseTransactionRequestSchema } from "@/features/ai/schemas";
 import { parseTransactionWithAi } from "@/features/ai/transaction-parser";
 import {
@@ -22,10 +23,13 @@ export async function POST(request: Request) {
   }
 
   try {
+    const providerSetting = assertSafeAiProviderSetting(
+      parsed.data.providerSetting,
+    );
     const draft = await parseTransactionWithAi(
       user.id,
       parsed.data.input,
-      parsed.data.providerSetting,
+      providerSetting,
     );
 
     return Response.json({ draft });

@@ -21,9 +21,18 @@ const localAiProviderSchema = aiProviderSettingSchema.extend({
   name: z.string().trim().min(1),
 });
 
+const persistedLocalAiProviderSchema = localAiProviderSchema.omit({
+  apiKey: true,
+});
+
 const localAiProviderStoreSchema = z.object({
   selectedProviderId: z.string().trim().min(1),
   providers: z.array(localAiProviderSchema),
+});
+
+const persistedLocalAiProviderStoreSchema = z.object({
+  selectedProviderId: z.string().trim().min(1),
+  providers: z.array(persistedLocalAiProviderSchema),
 });
 
 export type LocalAiProvider = z.infer<typeof localAiProviderSchema>;
@@ -36,6 +45,7 @@ export const EMPTY_AI_PROVIDER_STORE = {
 
 let cachedRawProviderStoreValue: string | null | undefined;
 let cachedProviderStore: LocalAiProviderStore = EMPTY_AI_PROVIDER_STORE;
+const apiKeyByProviderId = new Map<string, string>();
 
 export function subscribeLocalAiProviderStore(callback: () => void) {
   function handleStorage(event: StorageEvent) {
@@ -62,10 +72,19 @@ function persistStore(store: LocalAiProviderStore) {
     selectedProviderId: selectedProvider?.id ?? "",
     providers: store.providers,
   };
+  const persistedStore = {
+    selectedProviderId: normalizedStore.selectedProviderId,
+    providers: normalizedStore.providers.map((provider) => ({
+      id: provider.id,
+      name: provider.name,
+      baseUrl: provider.baseUrl,
+      model: provider.model,
+    })),
+  };
 
   window.localStorage.setItem(
     AI_PROVIDER_SETTING_STORAGE_KEY,
-    JSON.stringify(normalizedStore),
+    JSON.stringify(persistedStore),
   );
   window.dispatchEvent(new Event(AI_PROVIDER_SETTING_CHANGED_EVENT));
 
@@ -75,13 +94,14 @@ function persistStore(store: LocalAiProviderStore) {
 export function readLocalAiProviderStore(): LocalAiProviderStore {
   const rawValue = window.localStorage.getItem(AI_PROVIDER_SETTING_STORAGE_KEY);
 
-  if (rawValue === cachedRawProviderStoreValue) {
+  if (rawValue && rawValue === cachedRawProviderStoreValue) {
     return cachedProviderStore;
   }
 
   cachedRawProviderStoreValue = rawValue;
 
   if (!rawValue) {
+    apiKeyByProviderId.clear();
     cachedProviderStore = EMPTY_AI_PROVIDER_STORE;
     return cachedProviderStore;
   }
@@ -95,17 +115,37 @@ export function readLocalAiProviderStore(): LocalAiProviderStore {
     return cachedProviderStore;
   }
 
-  const store = localAiProviderStoreSchema.safeParse(parsedJson);
+  const storeWithApiKeys = localAiProviderStoreSchema.safeParse(parsedJson);
 
-  if (store.success) {
+  if (storeWithApiKeys.success) {
     const selectedProvider =
-      store.data.providers.find(
-        (provider) => provider.id === store.data.selectedProviderId,
-      ) ?? store.data.providers[0];
+      storeWithApiKeys.data.providers.find(
+        (provider) => provider.id === storeWithApiKeys.data.selectedProviderId,
+      ) ?? storeWithApiKeys.data.providers[0];
 
     cachedProviderStore = {
       selectedProviderId: selectedProvider?.id ?? "",
-      providers: store.data.providers,
+      providers: storeWithApiKeys.data.providers,
+    };
+
+    return cachedProviderStore;
+  }
+
+  const persistedStore = persistedLocalAiProviderStoreSchema.safeParse(parsedJson);
+
+  if (persistedStore.success) {
+    const providers = persistedStore.data.providers.map((provider) => ({
+      ...provider,
+      apiKey: apiKeyByProviderId.get(provider.id) ?? "",
+    }));
+    const selectedProvider =
+      providers.find(
+        (provider) => provider.id === persistedStore.data.selectedProviderId,
+      ) ?? providers[0];
+
+    cachedProviderStore = {
+      selectedProviderId: selectedProvider?.id ?? "",
+      providers,
     };
 
     return cachedProviderStore;
@@ -143,6 +183,10 @@ export function readLocalAiProviderSetting(): AiProviderSettingInput | null {
     return null;
   }
 
+  if (!selectedProvider.apiKey) {
+    return null;
+  }
+
   return {
     baseUrl: selectedProvider.baseUrl,
     model: selectedProvider.model,
@@ -170,6 +214,7 @@ export function saveLocalAiProviderSetting(setting: AiProviderSettingInput) {
 export function saveLocalAiProvider(provider: LocalAiProvider) {
   const parsed = localAiProviderSchema.parse(provider);
   const store = readLocalAiProviderStore();
+  apiKeyByProviderId.set(parsed.id, parsed.apiKey);
   const existingIndex = store.providers.findIndex(
     (item) => item.id === parsed.id,
   );
@@ -202,6 +247,7 @@ export function selectLocalAiProvider(providerId: string) {
 
 export function deleteLocalAiProvider(providerId: string) {
   const store = readLocalAiProviderStore();
+  apiKeyByProviderId.delete(providerId);
   const providers = store.providers.filter((item) => item.id !== providerId);
   const selectedProviderId =
     store.selectedProviderId === providerId

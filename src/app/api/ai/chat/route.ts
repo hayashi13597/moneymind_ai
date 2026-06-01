@@ -1,4 +1,5 @@
 import { getAiErrorMessage, isAiDomainError } from "@/features/ai/errors";
+import { assertSafeAiProviderSetting } from "@/features/ai/provider-security";
 import { aiChatRequestSchema } from "@/features/ai-chat/schemas";
 import { generateAiChatResponse } from "@/features/ai-chat/service";
 import {
@@ -32,10 +33,13 @@ export async function POST(request: Request) {
   }
 
   try {
+    const providerSetting = assertSafeAiProviderSetting(
+      parsed.data.providerSetting,
+    );
     const response = await generateAiChatResponse(
       user.id,
       parsed.data,
-      parsed.data.providerSetting,
+      providerSetting,
     );
 
     return Response.json(response);

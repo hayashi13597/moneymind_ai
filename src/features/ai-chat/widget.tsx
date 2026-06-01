@@ -102,6 +102,13 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
       return;
     }
 
+    const providerSetting = readLocalAiProviderSetting();
+
+    if (!providerSetting) {
+      setError("Bạn cần cấu hình nhà cung cấp AI trước.");
+      return;
+    }
+
     const nextMessages: ChatEntry[] = [
       ...messages,
       { role: "user", content },
@@ -112,13 +119,6 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
     setPending(true);
 
     try {
-      const providerSetting = readLocalAiProviderSetting();
-
-      if (!providerSetting) {
-        setError("Bạn cần cấu hình nhà cung cấp AI trước.");
-        return;
-      }
-
       const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

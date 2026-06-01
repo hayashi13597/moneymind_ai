@@ -1,5 +1,6 @@
 import { AiDomainError } from "@/features/ai/errors";
 import { createOpenAiCompatibleChat } from "@/features/ai/openai-compatible";
+import { assertSafeAiProviderSetting } from "@/features/ai/provider-security";
 import {
   aiTransactionOutputSchema,
   type AiProviderSettingInput,
@@ -59,6 +60,7 @@ export async function parseTransactionWithAi(
   setting: AiProviderSettingInput,
   today = new Date(),
 ) {
+  const providerSetting = assertSafeAiProviderSetting(setting);
   const categories = await db.category.findMany({
     where: { userId },
     select: { id: true, name: true, type: true },
@@ -69,9 +71,9 @@ export async function parseTransactionWithAi(
     .map((category) => `- ${category.name} (${category.type ?? "any"})`)
     .join("\n");
   const content = await createOpenAiCompatibleChat({
-    baseUrl: setting.baseUrl,
-    apiKey: setting.apiKey,
-    model: setting.model,
+    baseUrl: providerSetting.baseUrl,
+    apiKey: providerSetting.apiKey,
+    model: providerSetting.model,
     messages: [
       {
         role: "system",

@@ -4,7 +4,8 @@ export type AiErrorCode =
   | "provider_http_error"
   | "provider_timeout"
   | "provider_invalid_response"
-  | "invalid_ai_output";
+  | "invalid_ai_output"
+  | "invalid_provider_setting";
 
 const AI_ERROR_MESSAGES: Record<AiErrorCode, string> = {
   missing_api_key: "Bạn cần cấu hình API key AI trước.",
@@ -13,6 +14,7 @@ const AI_ERROR_MESSAGES: Record<AiErrorCode, string> = {
   provider_timeout: "AI phản hồi quá lâu. Vui lòng thử lại.",
   provider_invalid_response: "AI trả về phản hồi không hợp lệ.",
   invalid_ai_output: "AI chưa phân tích được dữ liệu hợp lệ.",
+  invalid_provider_setting: "Cấu hình nhà cung cấp AI không hợp lệ.",
 };
 
 export class AiDomainError extends Error {

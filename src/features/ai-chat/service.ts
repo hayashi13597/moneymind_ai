@@ -1,5 +1,6 @@
 import { AiDomainError } from "@/features/ai/errors";
 import { createOpenAiCompatibleChat } from "@/features/ai/openai-compatible";
+import { assertSafeAiProviderSetting } from "@/features/ai/provider-security";
 import type { AiProviderSettingInput } from "@/features/ai/schemas";
 import type {
   AiChatRequest,
@@ -286,6 +287,7 @@ export async function generateAiChatResponse(
   input: AiChatRequest,
   setting: AiProviderSettingInput,
 ) {
+  const providerSetting = assertSafeAiProviderSetting(setting);
   const [dashboard, categories, transactions, monthlySummaries] =
     await Promise.all([
       getMonthlyDashboard(userId, input.month),
@@ -295,9 +297,9 @@ export async function generateAiChatResponse(
     ]);
 
   const providerContent = await createOpenAiCompatibleChat({
-    baseUrl: setting.baseUrl,
-    apiKey: setting.apiKey,
-    model: setting.model,
+    baseUrl: providerSetting.baseUrl,
+    apiKey: providerSetting.apiKey,
+    model: providerSetting.model,
     timeoutMs: 45000,
     messages: [
       { role: "system", content: buildSystemPrompt() },

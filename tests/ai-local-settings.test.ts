@@ -70,6 +70,12 @@ describe("local AI provider settings", () => {
       model: "gpt-4.1-mini",
       apiKey: "sk-openai",
     });
+    expect(
+      window.localStorage.getItem(AI_PROVIDER_SETTING_STORAGE_KEY),
+    ).not.toContain("sk-openai");
+    expect(
+      window.localStorage.getItem(AI_PROVIDER_SETTING_STORAGE_KEY),
+    ).not.toContain("sk-openrouter");
   });
 
   it("keeps a valid selected provider when deleting the active provider", () => {
@@ -103,5 +109,24 @@ describe("local AI provider settings", () => {
         },
       ],
     });
+  });
+
+  it("clears the selected provider when deleting the last provider", () => {
+    saveLocalAiProvider({
+      id: "only",
+      name: "Only",
+      baseUrl: "https://only.example/v1",
+      model: "only-model",
+      apiKey: "sk-only",
+    });
+    selectLocalAiProvider("only");
+
+    deleteLocalAiProvider("only");
+
+    expect(readLocalAiProviderStore()).toEqual({
+      selectedProviderId: "",
+      providers: [],
+    });
+    expect(readLocalAiProviderSetting()).toBeNull();
   });
 });

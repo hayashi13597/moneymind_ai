@@ -11,6 +11,7 @@ import type { MonthlyDashboard } from "@/features/dashboard/service";
   .IS_REACT_ACT_ENVIRONMENT = true;
 
 const fetchMock = jest.fn();
+const originalFetch = global.fetch;
 
 function makeDashboard(monthKey: string): MonthlyDashboard {
   return {
@@ -86,6 +87,8 @@ describe("DashboardView", () => {
       root.unmount();
     });
     container.remove();
+    global.fetch = originalFetch;
+    fetchMock.mockReset();
     window.localStorage.clear();
   });
 

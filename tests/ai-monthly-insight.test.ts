@@ -3,6 +3,7 @@ import {
   getCachedMonthlyInsight,
 } from "@/features/ai/monthly-insight";
 import { createOpenAiCompatibleChat } from "@/features/ai/openai-compatible";
+import { getMonthlyDashboard } from "@/features/dashboard/service";
 import { db } from "@/lib/db";
 
 jest.mock("@/lib/db", () => ({
@@ -50,6 +51,7 @@ jest.mock("@/features/dashboard/service", () => ({
 const findUniqueMock = db.aiInsight.findUnique as jest.Mock;
 const upsertMock = db.aiInsight.upsert as jest.Mock;
 const chatMock = createOpenAiCompatibleChat as jest.Mock;
+const getMonthlyDashboardMock = getMonthlyDashboard as jest.Mock;
 const providerSetting = {
   baseUrl: "https://provider.example/v1",
   apiKey: "sk-test",
@@ -61,6 +63,7 @@ describe("monthly insight service", () => {
     findUniqueMock.mockReset();
     upsertMock.mockReset();
     chatMock.mockReset();
+    getMonthlyDashboardMock.mockClear();
   });
 
   it("returns cached insight", async () => {
@@ -97,6 +100,22 @@ describe("monthly insight service", () => {
     );
 
     expect(insight.content).toBe("Insight cache");
+    expect(chatMock).not.toHaveBeenCalled();
+    expect(getMonthlyDashboardMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsafe provider base URLs before fetching dashboard data", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    await expect(
+      generateMonthlyInsight("user_1", "2026-05", true, {
+        baseUrl: "http://127.0.0.1:11434/v1",
+        apiKey: "sk-local",
+        model: "local-model",
+      }),
+    ).rejects.toMatchObject({ code: "invalid_provider_setting" });
+
+    expect(getMonthlyDashboardMock).not.toHaveBeenCalled();
     expect(chatMock).not.toHaveBeenCalled();
   });
 
