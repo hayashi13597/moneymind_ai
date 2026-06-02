@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { MonthlyInsightDto } from "@/features/ai/monthly-insight";
 import { MonthlyInsightPanel } from "@/features/ai/monthly-insight-panel";
+import type { DashboardBudgetSummary } from "@/features/budgets/service";
 import { formatVnd } from "@/lib/money";
 
 import { AskMoneyMindPanel } from "./ask-moneymind-panel";
@@ -23,6 +24,7 @@ type DashboardViewProps = {
   dashboard: MonthlyDashboard;
   initialInsight: MonthlyInsightDto | null;
   userName: string;
+  budgetSummary: DashboardBudgetSummary;
 };
 
 function comparisonSummary(label: string, comparison: MonthComparison) {
@@ -163,10 +165,18 @@ function firstInsightLine(insight: MonthlyInsightDto | null) {
   );
 }
 
+const budgetStatusLabels = {
+  not_set: "Chưa đặt",
+  healthy: "Ổn",
+  near_limit: "Gần vượt",
+  over_limit: "Đã vượt",
+} as const;
+
 export function DashboardView({
   dashboard,
   initialInsight,
   userName,
+  budgetSummary,
 }: DashboardViewProps) {
   const topIssue = biggestIssue(dashboard.categoryAnalysis);
   const maxTrendAmount = Math.max(
@@ -362,6 +372,52 @@ export function DashboardView({
           </article>
         ))}
       </div>
+
+      <section className="rounded-2xl border border-[#DCD7CC] bg-[#FDFCF8] p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">
+              Ngân sách tháng này
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Đã chi {formatVnd(budgetSummary.summary.totalSpent)} /{" "}
+              {formatVnd(budgetSummary.summary.totalBudget)}
+            </p>
+          </div>
+          <Button asChild variant="outline" className="border-[#DDD8CE]">
+            <Link href={`/budgets?month=${dashboard.month.key}`}>
+              Xem ngân sách
+            </Link>
+          </Button>
+        </div>
+        <div className="mt-4 space-y-3">
+          {budgetSummary.items.length > 0 ? (
+            budgetSummary.items.map((item) => (
+              <div
+                key={item.categoryId}
+                className="flex items-center justify-between gap-4 border-t border-[#E8E1D6] pt-3 text-sm"
+              >
+                <div>
+                  <p className="font-medium text-foreground">
+                    {item.categoryName}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {formatVnd(item.spentAmount)} /{" "}
+                    {formatVnd(item.effectiveAmount ?? 0)}
+                  </p>
+                </div>
+                <span className="font-medium text-foreground">
+                  {budgetStatusLabels[item.status]}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Chưa có ngân sách cho tháng này.
+            </p>
+          )}
+        </div>
+      </section>
 
       {dashboard.isEmpty ? (
         <section className="rounded-2xl border border-[#E1DDD4] bg-card p-6">
