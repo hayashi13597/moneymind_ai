@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { GET, POST } from "@/app/api/transactions/route";
 import {
   createTransaction,
-  listTransactions,
+  listPaginatedTransactions,
 } from "@/features/transactions/service";
 import { getRequiredApiUser } from "@/lib/api";
 
@@ -23,12 +23,12 @@ jest.mock("@/lib/api", () => ({
 
 jest.mock("@/features/transactions/service", () => ({
   createTransaction: jest.fn(),
-  listTransactions: jest.fn(),
+  listPaginatedTransactions: jest.fn(),
 }));
 
 const getRequiredApiUserMock = getRequiredApiUser as jest.Mock;
 const createTransactionMock = createTransaction as jest.Mock;
-const listTransactionsMock = listTransactions as jest.Mock;
+const listPaginatedTransactionsMock = listPaginatedTransactions as jest.Mock;
 const revalidatePathMock = revalidatePath as jest.Mock;
 const originalResponse = global.Response;
 
@@ -65,13 +65,18 @@ function createRequest(type: "income" | "expense" = "expense") {
 describe("transactions route", () => {
   beforeEach(() => {
     createTransactionMock.mockReset();
-    listTransactionsMock.mockReset();
+    listPaginatedTransactionsMock.mockReset();
     getRequiredApiUserMock.mockResolvedValue({ id: "user_1" });
     createTransactionMock.mockResolvedValue({
       ok: true,
       transaction: { id: "tx_ai" },
     });
-    listTransactionsMock.mockResolvedValue([]);
+    listPaginatedTransactionsMock.mockResolvedValue({
+      transactions: [],
+      total: 0,
+      page: 1,
+      pageSize: 5,
+    });
     revalidatePathMock.mockReset();
   });
 
@@ -83,7 +88,35 @@ describe("transactions route", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(listTransactionsMock).toHaveBeenCalledWith("user_1", "2026-05");
+    expect(listPaginatedTransactionsMock).toHaveBeenCalledWith("user_1", {
+      monthKey: "2026-05",
+      page: 1,
+      pageSize: 5,
+    });
+  });
+
+  it("passes pagination query params to the transaction listing service", async () => {
+    const response = await GET(
+      {
+        url: "http://localhost/api/transactions?month=2026-05&page=2&pageSize=10",
+      } as Request,
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listPaginatedTransactionsMock).toHaveBeenCalledWith("user_1", {
+      monthKey: "2026-05",
+      page: 2,
+      pageSize: 10,
+    });
+    expect(payload).toEqual({
+      transactions: [],
+      pagination: {
+        total: 0,
+        page: 1,
+        pageSize: 5,
+      },
+    });
   });
 
   it("rejects an invalid month query instead of listing every transaction", async () => {
@@ -96,7 +129,7 @@ describe("transactions route", () => {
 
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: "Tháng không hợp lệ." });
-    expect(listTransactionsMock).not.toHaveBeenCalled();
+    expect(listPaginatedTransactionsMock).not.toHaveBeenCalled();
   });
 
   it("revalidates transaction-backed pages after creating a transaction", async () => {

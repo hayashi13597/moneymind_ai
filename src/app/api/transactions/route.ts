@@ -2,7 +2,7 @@ import { revalidateTransactionViews } from "@/features/transactions/revalidation
 import { transactionCreateSchema } from "@/features/transactions/schemas";
 import {
   createTransaction,
-  listTransactions,
+  listPaginatedTransactions,
 } from "@/features/transactions/service";
 import {
   getRequiredApiUser,
@@ -23,6 +23,35 @@ function transactionDomainError(reason: string) {
   return jsonBadRequest();
 }
 
+const pageSizeOptions = [5, 10, 20] as const;
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 5;
+
+function parsePositiveInteger(value: string | null, fallback: number) {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parsePaginationParams(searchParams: URLSearchParams) {
+  const page = parsePositiveInteger(searchParams.get("page"), DEFAULT_PAGE);
+  const requestedPageSize = parsePositiveInteger(
+    searchParams.get("pageSize"),
+    DEFAULT_PAGE_SIZE,
+  );
+  const pageSize = pageSizeOptions.includes(
+    requestedPageSize as (typeof pageSizeOptions)[number],
+  )
+    ? requestedPageSize
+    : DEFAULT_PAGE_SIZE;
+
+  return { page, pageSize };
+}
+
 export async function GET(request: Request) {
   const user = await getRequiredApiUser();
 
@@ -30,7 +59,8 @@ export async function GET(request: Request) {
     return jsonUnauthorized();
   }
 
-  const monthParam = new URL(request.url).searchParams.get("month");
+  const searchParams = new URL(request.url).searchParams;
+  const monthParam = searchParams.get("month");
   const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
 
   if (monthParam && !monthPattern.test(monthParam)) {
@@ -38,9 +68,19 @@ export async function GET(request: Request) {
   }
 
   const month = monthParam ?? undefined;
-  const transactions = await listTransactions(user.id, month);
+  const result = await listPaginatedTransactions(user.id, {
+    monthKey: month,
+    ...parsePaginationParams(searchParams),
+  });
 
-  return Response.json({ transactions });
+  return Response.json({
+    transactions: result.transactions,
+    pagination: {
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+    },
+  });
 }
 
 export async function POST(request: Request) {
