@@ -8,6 +8,7 @@ import {
 } from "@/features/ai/schemas";
 
 export const AI_PROVIDER_SETTING_STORAGE_KEY = "moneymind.aiProviderSetting";
+export const AI_PROVIDER_API_KEYS_STORAGE_KEY = "moneymind.aiProviderApiKeys";
 export const AI_PROVIDER_SETTING_CHANGED_EVENT = "moneymind-ai-provider-setting";
 export const LEGACY_AI_PROVIDER_ID = "legacy-provider";
 
@@ -47,6 +48,48 @@ let cachedRawProviderStoreValue: string | null | undefined;
 let cachedProviderStore: LocalAiProviderStore = EMPTY_AI_PROVIDER_STORE;
 const apiKeyByProviderId = new Map<string, string>();
 
+function readPersistedApiKeys() {
+  const rawValue = window.localStorage.getItem(AI_PROVIDER_API_KEYS_STORAGE_KEY);
+
+  if (!rawValue) {
+    return new Map<string, string>();
+  }
+
+  try {
+    const parsedJson = JSON.parse(rawValue) as unknown;
+
+    if (!parsedJson || typeof parsedJson !== "object") {
+      return new Map<string, string>();
+    }
+
+    return new Map(
+      Object.entries(parsedJson)
+        .filter(
+          (entry): entry is [string, string] =>
+            typeof entry[1] === "string" && entry[1].trim().length > 0,
+        )
+        .map(([providerId, apiKey]) => [providerId, apiKey]),
+    );
+  } catch {
+    return new Map<string, string>();
+  }
+}
+
+function persistApiKeys(providers: LocalAiProvider[]) {
+  const apiKeys = providers.reduce<Record<string, string>>((result, provider) => {
+    if (provider.apiKey) {
+      result[provider.id] = provider.apiKey;
+    }
+
+    return result;
+  }, {});
+
+  window.localStorage.setItem(
+    AI_PROVIDER_API_KEYS_STORAGE_KEY,
+    JSON.stringify(apiKeys),
+  );
+}
+
 export function subscribeLocalAiProviderStore(callback: () => void) {
   function handleStorage(event: StorageEvent) {
     if (event.key === AI_PROVIDER_SETTING_STORAGE_KEY) {
@@ -81,11 +124,12 @@ function persistStore(store: LocalAiProviderStore) {
       model: provider.model,
     })),
   };
+  const serializedStore = JSON.stringify(persistedStore);
 
-  window.localStorage.setItem(
-    AI_PROVIDER_SETTING_STORAGE_KEY,
-    JSON.stringify(persistedStore),
-  );
+  persistApiKeys(normalizedStore.providers);
+  window.localStorage.setItem(AI_PROVIDER_SETTING_STORAGE_KEY, serializedStore);
+  cachedRawProviderStoreValue = serializedStore;
+  cachedProviderStore = normalizedStore;
   window.dispatchEvent(new Event(AI_PROVIDER_SETTING_CHANGED_EVENT));
 
   return normalizedStore;
@@ -134,9 +178,13 @@ export function readLocalAiProviderStore(): LocalAiProviderStore {
   const persistedStore = persistedLocalAiProviderStoreSchema.safeParse(parsedJson);
 
   if (persistedStore.success) {
+    const persistedApiKeys = readPersistedApiKeys();
     const providers = persistedStore.data.providers.map((provider) => ({
       ...provider,
-      apiKey: apiKeyByProviderId.get(provider.id) ?? "",
+      apiKey:
+        apiKeyByProviderId.get(provider.id) ??
+        persistedApiKeys.get(provider.id) ??
+        "",
     }));
     const selectedProvider =
       providers.find(
@@ -147,6 +195,11 @@ export function readLocalAiProviderStore(): LocalAiProviderStore {
       selectedProviderId: selectedProvider?.id ?? "",
       providers,
     };
+    providers.forEach((provider) => {
+      if (provider.apiKey) {
+        apiKeyByProviderId.set(provider.id, provider.apiKey);
+      }
+    });
 
     return cachedProviderStore;
   }
@@ -168,6 +221,7 @@ export function readLocalAiProviderStore(): LocalAiProviderStore {
       },
     ],
   };
+  apiKeyByProviderId.set(LEGACY_AI_PROVIDER_ID, legacySetting.data.apiKey);
 
   return cachedProviderStore;
 }
@@ -222,9 +276,14 @@ export function saveLocalAiProvider(provider: LocalAiProvider) {
     existingIndex >= 0
       ? store.providers.map((item) => (item.id === parsed.id ? parsed : item))
       : [...store.providers, parsed];
+  const selectedProviderId = providers.some(
+    (item) => item.id === store.selectedProviderId,
+  )
+    ? store.selectedProviderId
+    : parsed.id;
 
   persistStore({
-    selectedProviderId: parsed.id,
+    selectedProviderId,
     providers,
   });
 

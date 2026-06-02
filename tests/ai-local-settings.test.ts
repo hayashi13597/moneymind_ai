@@ -78,6 +78,51 @@ describe("local AI provider settings", () => {
     ).not.toContain("sk-openrouter");
   });
 
+  it("keeps provider API keys available after the settings module reloads", () => {
+    saveLocalAiProvider({
+      id: "openai",
+      name: "OpenAI",
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4.1-mini",
+      apiKey: "sk-openai",
+    });
+
+    jest.resetModules();
+    const freshLocalSettings = jest.requireActual(
+      "@/features/ai/local-settings",
+    ) as typeof import("@/features/ai/local-settings");
+
+    expect(freshLocalSettings.readLocalAiProviderSetting()).toEqual({
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4.1-mini",
+      apiKey: "sk-openai",
+    });
+  });
+
+  it("keeps the current selected provider when adding another provider", () => {
+    saveLocalAiProvider({
+      id: "openai",
+      name: "OpenAI",
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4.1-mini",
+      apiKey: "sk-openai",
+    });
+    saveLocalAiProvider({
+      id: "openrouter",
+      name: "OpenRouter",
+      baseUrl: "https://openrouter.ai/api/v1",
+      model: "openai/gpt-4.1-mini",
+      apiKey: "sk-openrouter",
+    });
+
+    expect(readLocalAiProviderStore().selectedProviderId).toBe("openai");
+    expect(readLocalAiProviderSetting()).toEqual({
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4.1-mini",
+      apiKey: "sk-openai",
+    });
+  });
+
   it("keeps a valid selected provider when deleting the active provider", () => {
     saveLocalAiProvider({
       id: "first",
