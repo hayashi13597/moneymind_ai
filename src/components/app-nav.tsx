@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", label: "Tổng quan" },
   { href: "/transactions", label: "Giao dịch" },
+  { href: "/budgets", label: "Ngân sách" },
   { href: "/categories", label: "Danh mục" },
   { href: "/settings/ai", label: "AI Coach" },
 ] as const;
