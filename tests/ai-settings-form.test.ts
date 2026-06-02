@@ -45,6 +45,7 @@ describe("AiSettingsForm", () => {
     });
     container.remove();
     window.localStorage.clear();
+    jest.restoreAllMocks();
   });
 
   it("shows created providers in a list that can select, edit, and delete", async () => {
@@ -111,11 +112,23 @@ describe("AiSettingsForm", () => {
 
     expect(container.textContent).toContain("OpenAI chính");
 
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(true);
+    const confirmSpy = jest
+      .spyOn(window, "confirm")
+      .mockImplementation(() => false);
 
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>('[aria-label="Xóa OpenAI chính"]')
+        ?.click();
+    });
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("Xóa provider AI?");
+    expect(readLocalAiProviderStore().providers).toHaveLength(2);
+
+    await act(async () => {
+      document
+        .querySelector<HTMLButtonElement>('[aria-label="Xác nhận xóa OpenAI chính"]')
         ?.click();
     });
 
@@ -125,9 +138,7 @@ describe("AiSettingsForm", () => {
     confirmSpy.mockRestore();
   });
 
-  it("does not delete a provider when confirmation is cancelled", async () => {
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(false);
-
+  it("does not delete a provider when the alert dialog is cancelled", async () => {
     act(() => {
       root.render(React.createElement(AiSettingsForm));
     });
@@ -152,15 +163,25 @@ describe("AiSettingsForm", () => {
       container.querySelector<HTMLButtonElement>("#saveProvider")?.click();
     });
 
+    const confirmSpy = jest
+      .spyOn(window, "confirm")
+      .mockImplementation(() => false);
+
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>('[aria-label="Xóa OpenAI"]')
         ?.click();
     });
 
-    expect(confirmSpy).toHaveBeenCalledWith(
-      "Provider AI và API key sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn chắc chắn muốn xóa?",
-    );
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("Xóa provider AI?");
+
+    await act(async () => {
+      document
+        .querySelector<HTMLButtonElement>('[aria-label="Hủy xóa OpenAI"]')
+        ?.click();
+    });
+
     expect(readLocalAiProviderStore().providers).toHaveLength(1);
 
     confirmSpy.mockRestore();

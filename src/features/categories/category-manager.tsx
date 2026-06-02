@@ -6,6 +6,17 @@ import { toast } from "sonner";
 
 import { EmptyState, InsightCard, MetricCard, SectionCard } from "@/components/app-ui";
 import { FormCombobox } from "@/components/form-combobox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { formatVnd } from "@/lib/money";
 
@@ -191,12 +202,6 @@ export function CategoryManager({
   }
 
   async function deleteCategoryById(category: Category) {
-    const confirmed = window.confirm(`Xóa danh mục "${category.name}"?`);
-
-    if (!confirmed) {
-      return;
-    }
-
     setError("");
 
     try {
@@ -435,15 +440,42 @@ export function CategoryManager({
                     >
                       Sửa
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteCategoryById(category)}
-                      className="border-[#DDD8CE]"
-                    >
-                      Xóa
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          aria-label={`Xóa danh mục ${category.name}`}
+                          className="border-[#DDD8CE] text-destructive hover:text-destructive"
+                        >
+                          Xóa
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Xóa danh mục?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Danh mục &quot;{category.name}&quot; sẽ bị xóa nếu chưa có
+                            giao dịch nào đang sử dụng. Hành động này không
+                            thể khôi phục.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel
+                            aria-label={`Hủy xóa danh mục ${category.name}`}
+                          >
+                            Hủy
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            aria-label={`Xác nhận xóa danh mục ${category.name}`}
+                            onClick={() => deleteCategoryById(category)}
+                          >
+                            Xóa danh mục
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}
