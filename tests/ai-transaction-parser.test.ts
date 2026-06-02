@@ -83,6 +83,7 @@ describe("AI transaction parser", () => {
       parseTransactionWithAi(
         "user_1",
         "Uống cà phê hết 25k",
+        providerSetting,
         new Date("2026-06-01"),
       ),
     ).resolves.toEqual({
@@ -122,6 +123,7 @@ describe("AI transaction parser", () => {
       parseTransactionWithAi(
         "user_1",
         "Uống cà phê hết 25k",
+        providerSetting,
         new Date("2026-06-01"),
       ),
     ).resolves.toMatchObject({

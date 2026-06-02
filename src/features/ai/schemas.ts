@@ -25,14 +25,6 @@ export const aiProviderSettingSchema = z.object({
 
 export type AiProviderSettingInput = z.infer<typeof aiProviderSettingSchema>;
 
-export const aiProviderSettingUpdateSchema = aiProviderSettingSchema.extend({
-  apiKey: trimmedString.min(1).optional(),
-});
-
-export type AiProviderSettingUpdateInput = z.infer<
-  typeof aiProviderSettingUpdateSchema
->;
-
 export const parseTransactionRequestSchema = z.object({
   input: trimmedString.min(1).max(500),
   providerSetting: aiProviderSettingSchema,

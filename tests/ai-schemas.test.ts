@@ -1,6 +1,5 @@
 import {
   aiProviderSettingSchema,
-  aiProviderSettingUpdateSchema,
   monthlyInsightRequestSchema,
   parseTransactionRequestSchema,
 } from "@/features/ai/schemas";
@@ -12,23 +11,9 @@ describe("AI schemas", () => {
     apiKey: "sk-test",
   };
 
-  it("accepts a valid provider setting update", () => {
-    expect(
-      aiProviderSettingUpdateSchema.parse({
-        baseUrl: "https://openrouter.ai/api/v1",
-        model: "openai/gpt-4.1-mini",
-        apiKey: "sk-test",
-      }),
-    ).toEqual({
-      baseUrl: "https://openrouter.ai/api/v1",
-      model: "openai/gpt-4.1-mini",
-      apiKey: "sk-test",
-    });
-  });
-
   it("rejects an invalid base URL", () => {
     expect(() =>
-      aiProviderSettingUpdateSchema.parse({
+      aiProviderSettingSchema.parse({
         baseUrl: "not-a-url",
         model: "gpt-4.1-mini",
         apiKey: "sk-test",
