@@ -84,6 +84,11 @@ describe("AiSettingsForm", () => {
     expect(container.textContent).toContain("Danh sách provider");
     expect(container.textContent).toContain("OpenAI");
     expect(container.textContent).toContain("OpenRouter");
+    expect(readLocalAiProviderStore().selectedProviderId).toBe(
+      readLocalAiProviderStore().providers[0].id,
+    );
+    expect(container.textContent).toContain("Đang dùng: OpenAI");
+    expect(container.textContent).not.toContain("Đang dùng: OpenRouter");
 
     await act(async () => {
       container
