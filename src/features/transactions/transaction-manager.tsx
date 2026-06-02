@@ -17,6 +17,17 @@ import { EmptyState, InsightCard, MetricCard } from "@/components/app-ui";
 import { FormCombobox } from "@/components/form-combobox";
 import { FormDatePicker } from "@/components/form-date-picker";
 import { FormMonthPicker } from "@/components/form-month-picker";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
 import type { DashboardMonth } from "@/features/dashboard/month";
@@ -419,12 +430,6 @@ export function TransactionManager({
   }
 
   async function deleteTransactionById(transaction: Transaction) {
-    const confirmed = window.confirm(`Xóa giao dịch "${transaction.note}"?`);
-
-    if (!confirmed) {
-      return;
-    }
-
     setError("");
 
     try {
@@ -749,15 +754,41 @@ export function TransactionManager({
                     >
                       Sửa
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteTransactionById(transaction)}
-                      className="border-[#DDD8CE]"
-                    >
-                      Xóa
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          aria-label={`Xóa giao dịch ${transaction.note}`}
+                          className="border-[#DDD8CE] text-destructive hover:text-destructive"
+                        >
+                          Xóa
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Xóa giao dịch?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Giao dịch &quot;{transaction.note}&quot; sẽ bị xóa khỏi
+                            tháng này. Hành động này không thể khôi phục.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel
+                            aria-label={`Hủy xóa giao dịch ${transaction.note}`}
+                          >
+                            Hủy
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            aria-label={`Xác nhận xóa giao dịch ${transaction.note}`}
+                            onClick={() => deleteTransactionById(transaction)}
+                          >
+                            Xóa giao dịch
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </article>

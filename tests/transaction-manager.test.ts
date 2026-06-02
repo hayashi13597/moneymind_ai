@@ -50,6 +50,7 @@ describe("TransactionManager", () => {
       root.unmount();
     });
     container.remove();
+    jest.restoreAllMocks();
   });
 
   it("syncs the visible list when server-rendered transactions change", () => {
@@ -151,5 +152,55 @@ describe("TransactionManager", () => {
     expect(monthPickerButton).not.toBeNull();
     expect(monthPickerButton?.textContent).toContain("Tháng 05/2026");
     expect(monthPickerButton?.textContent).not.toContain("01/05/2026");
+  });
+
+  it("opens an alert dialog before deleting a transaction", async () => {
+    const confirmSpy = jest
+      .spyOn(window, "confirm")
+      .mockImplementation(() => false);
+    const fetchSpy = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          transactions: [],
+        }),
+      });
+    globalThis.fetch = fetchSpy;
+
+    act(() => {
+      root.render(
+        React.createElement(TransactionManager, {
+          initialTransactions: [incomeTransaction],
+          categories,
+          selectedMonth,
+        }),
+      );
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Xóa giao dịch Lương tháng này"]',
+        )
+        ?.click();
+    });
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("Xóa giao dịch?");
+
+    await act(async () => {
+      document
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Xác nhận xóa giao dịch Lương tháng này"]',
+        )
+        ?.click();
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith("/api/transactions/tx_income", {
+      method: "DELETE",
+    });
   });
 });

@@ -13,6 +13,17 @@ import { useState, useSyncExternalStore, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { InsightCard, SectionCard } from "@/components/app-ui";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   createLocalAiProviderId,
@@ -156,14 +167,6 @@ export function AiSettingsForm() {
   }
 
   function deleteProvider(provider: LocalAiProvider) {
-    const confirmed = window.confirm(
-      "Provider AI và API key sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn chắc chắn muốn xóa?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     setError("");
 
     if (draftProvider?.id === provider.id) {
@@ -385,16 +388,44 @@ export function AiSettingsForm() {
                           <Pencil className="size-4" />
                           Sửa
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => deleteProvider(provider)}
-                          aria-label={`Xóa ${provider.name}`}
-                          className="h-9 border-[#DDD8CE] text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="size-4" />
-                          Xóa
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              aria-label={`Xóa ${provider.name}`}
+                              className="h-9 border-[#DDD8CE] text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="size-4" />
+                              Xóa
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Xóa provider AI?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Provider &quot;{provider.name}&quot; và API key sẽ bị
+                                xóa vĩnh viễn khỏi trình duyệt này. Hành động
+                                này không thể khôi phục.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel
+                                aria-label={`Hủy xóa ${provider.name}`}
+                              >
+                                Hủy
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                aria-label={`Xác nhận xóa ${provider.name}`}
+                                onClick={() => deleteProvider(provider)}
+                              >
+                                Xóa provider
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </article>
