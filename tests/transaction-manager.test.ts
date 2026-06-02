@@ -7,11 +7,23 @@ import { TransactionManager } from "@/features/transactions/transaction-manager"
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean })
   .IS_REACT_ACT_ENVIRONMENT = true;
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+(globalThis as typeof globalThis & { ResizeObserver: typeof ResizeObserver })
+  .ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
+Element.prototype.scrollIntoView = jest.fn();
+
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: pushMock,
   }),
 }));
+
+const pushMock = jest.fn();
 
 const categories = [
   { id: "cat_income", name: "Thu nhập", type: "income" as const },
@@ -35,11 +47,22 @@ const incomeTransaction = {
   category: categories[0],
 };
 
+function makeTransaction(index: number) {
+  return {
+    ...incomeTransaction,
+    id: `tx_${index}`,
+    amount: 10000 + index,
+    note: `Giao dịch ${index}`,
+    rawInput: null,
+  };
+}
+
 describe("TransactionManager", () => {
   let container: HTMLDivElement;
   let root: Root;
 
   beforeEach(() => {
+    pushMock.mockReset();
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -152,6 +175,46 @@ describe("TransactionManager", () => {
     expect(monthPickerButton).not.toBeNull();
     expect(monthPickerButton?.textContent).toContain("Tháng 05/2026");
     expect(monthPickerButton?.textContent).not.toContain("01/05/2026");
+  });
+
+  it("renders server-paginated transactions and navigates when users change page size", async () => {
+    act(() => {
+      root.render(
+        React.createElement(TransactionManager, {
+          initialTransactions: Array.from({ length: 5 }, (_, index) =>
+            makeTransaction(index + 1),
+          ),
+          categories,
+          selectedMonth,
+          pagination: {
+            total: 6,
+            page: 1,
+            pageSize: 5,
+          },
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Giao dịch 1");
+    expect(container.textContent).toContain("Giao dịch 5");
+    expect(container.textContent).not.toContain("Giao dịch 6");
+    expect(container.textContent).toContain("1-5 / 6 giao dịch");
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Số giao dịch mỗi trang"]')
+        ?.click();
+    });
+
+    await act(async () => {
+      document
+        .querySelector<HTMLElement>('[cmdk-item][data-value="10"]')
+        ?.click();
+    });
+
+    expect(pushMock).toHaveBeenCalledWith(
+      "/transactions?month=2026-05&page=1&pageSize=10",
+    );
   });
 
   it("opens an alert dialog before deleting a transaction", async () => {

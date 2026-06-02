@@ -54,6 +54,13 @@ type TransactionManagerProps = {
   initialTransactions: Transaction[];
   categories: Category[];
   selectedMonth: DashboardMonth;
+  pagination?: TransactionPagination;
+};
+
+type TransactionPagination = {
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 async function readJsonError(response: Response) {
@@ -74,6 +81,12 @@ const transactionTypeOptions = [
 const transactionTypeFilterOptions = [
   { value: "all", label: "Tất cả" },
   ...transactionTypeOptions,
+];
+
+const pageSizeOptions = [
+  { value: "5", label: "5 / trang" },
+  { value: "10", label: "10 / trang" },
+  { value: "20", label: "20 / trang" },
 ];
 
 function toDateInputValue(date: Date) {
@@ -123,6 +136,7 @@ export function TransactionManager({
   initialTransactions,
   categories,
   selectedMonth,
+  pagination,
 }: TransactionManagerProps) {
   const router = useRouter();
   const initialTransactionsKey = useMemo(
@@ -143,6 +157,20 @@ export function TransactionManager({
     transactionState.sourceKey === initialTransactionsKey
       ? transactionState.transactions
       : initialTransactions;
+  const initialPagination = pagination ?? {
+    total: transactions.length,
+    page: 1,
+    pageSize: 5,
+  };
+  const initialPaginationKey = `${initialPagination.total}:${initialPagination.page}:${initialPagination.pageSize}`;
+  const [paginationState, setPaginationState] = useState({
+    sourceKey: initialPaginationKey,
+    pagination: initialPagination,
+  });
+  const serverPagination =
+    paginationState.sourceKey === initialPaginationKey
+      ? paginationState.pagination
+      : initialPagination;
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -239,18 +267,48 @@ export function TransactionManager({
       return matchesType && matchesCategory && matchesQuery;
     });
   }, [categoryFilter, query, transactions, typeFilter]);
+  const pageSize = String(serverPagination.pageSize);
+  const pageCount = Math.max(
+    1,
+    Math.ceil(serverPagination.total / serverPagination.pageSize),
+  );
+  const currentPage = Math.min(serverPagination.page, pageCount);
+  const pageStart = (currentPage - 1) * serverPagination.pageSize;
+  const visibleTransactions = filteredTransactions;
+  const visibleStart =
+    serverPagination.total === 0 || visibleTransactions.length === 0
+      ? 0
+      : pageStart + 1;
+  const visibleEnd =
+    visibleStart === 0 ? 0 : visibleStart + visibleTransactions.length - 1;
+
+  function openPage(nextPage: number, nextPageSize = serverPagination.pageSize) {
+    const searchParams = new URLSearchParams({
+      month: selectedMonth.key,
+      page: String(nextPage),
+      pageSize: String(nextPageSize),
+    });
+
+    router.push(`/transactions?${searchParams.toString()}`);
+  }
 
   function openMonth(monthKey: string) {
     setQuery("");
     setTypeFilter("all");
     setCategoryFilter("all");
-    router.push(`/transactions?month=${monthKey}`);
+    const searchParams = new URLSearchParams({
+      month: monthKey,
+      page: "1",
+      pageSize: String(serverPagination.pageSize),
+    });
+
+    router.push(`/transactions?${searchParams.toString()}`);
   }
 
   async function refreshTransactions() {
     try {
       const response = await fetch(
-        `/api/transactions?month=${selectedMonth.key}`,
+        `/api/transactions?month=${selectedMonth.key}&page=${currentPage}&pageSize=${serverPagination.pageSize}`,
       );
 
       if (!response.ok) {
@@ -260,13 +318,20 @@ export function TransactionManager({
         return false;
       }
 
-      const payload = (await response.json()) as { transactions: Transaction[] };
+      const payload = (await response.json()) as {
+        transactions: Transaction[];
+        pagination: TransactionPagination;
+      };
       setTransactionState({
         sourceKey: initialTransactionsKey,
         transactions: payload.transactions.map((transaction) => ({
           ...transaction,
           transactionDate: new Date(transaction.transactionDate).toISOString(),
         })),
+      });
+      setPaginationState({
+        sourceKey: initialPaginationKey,
+        pagination: payload.pagination,
       });
       return true;
     } catch {
@@ -666,7 +731,9 @@ export function TransactionManager({
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                }}
                 placeholder="Tìm ghi chú, người bán, danh mục..."
                 className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] pl-9 pr-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
               />
@@ -674,9 +741,9 @@ export function TransactionManager({
             <FormCombobox
               value={typeFilter}
               options={transactionTypeFilterOptions}
-              onValueChange={(nextType) =>
-                setTypeFilter(nextType as typeof typeFilter)
-              }
+              onValueChange={(nextType) => {
+                setTypeFilter(nextType as typeof typeFilter);
+              }}
               aria-label="Lọc theo loại"
             />
             <FormCombobox
@@ -688,13 +755,15 @@ export function TransactionManager({
                   label: category.name,
                 })),
               ]}
-              onValueChange={setCategoryFilter}
+              onValueChange={(nextCategory) => {
+                setCategoryFilter(nextCategory);
+              }}
               aria-label="Lọc theo danh mục"
             />
           </div>
 
           <div className="mt-5 divide-y divide-[#E8E4DC]">
-            {filteredTransactions.map((transaction) => (
+            {visibleTransactions.map((transaction) => (
               <article
                 key={transaction.id}
                 className="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto] sm:items-center"
@@ -794,6 +863,49 @@ export function TransactionManager({
               </article>
             ))}
           </div>
+
+          {serverPagination.total > 0 ? (
+            <div className="mt-5 flex flex-col gap-3 border-t border-[#E8E4DC] pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                {visibleStart}-{visibleEnd} / {serverPagination.total} giao
+                dịch
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="w-full sm:w-36">
+                  <FormCombobox
+                    value={pageSize}
+                    options={pageSizeOptions}
+                    onValueChange={(nextPageSize) => {
+                      openPage(1, Number(nextPageSize));
+                    }}
+                    aria-label="Số giao dịch mỗi trang"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="border-[#DDD8CE]"
+                  >
+                    Trước
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openPage(Math.min(pageCount, currentPage + 1))}
+                    disabled={currentPage === pageCount}
+                    className="border-[#DDD8CE]"
+                  >
+                    Sau
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {transactions.length === 0 ? (
             <div className="mt-5">

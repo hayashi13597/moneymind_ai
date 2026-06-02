@@ -23,6 +23,15 @@ const category = {
   isDefault: false,
 };
 
+const sharedCategory = {
+  id: "cat_shared",
+  name: "Dùng chung cũ",
+  type: null,
+  color: null,
+  icon: null,
+  isDefault: false,
+};
+
 describe("CategoryManager", () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -39,6 +48,22 @@ describe("CategoryManager", () => {
     });
     container.remove();
     jest.restoreAllMocks();
+  });
+
+  it("does not show a shared category group", () => {
+    act(() => {
+      root.render(
+        React.createElement(CategoryManager, {
+          initialCategories: [category, sharedCategory],
+          categoryInsights: [],
+        }),
+      );
+    });
+
+    expect(container.textContent).not.toContain("Dùng chung");
+    expect(container.textContent).not.toContain("Dùng chung cũ");
+    expect(container.textContent).toContain("Chi tiêu");
+    expect(container.textContent).toContain("Thu nhập");
   });
 
   it("opens an alert dialog before deleting a category", async () => {

@@ -45,7 +45,6 @@ type CategoryInsight = {
 const typeLabels = {
   income: "Thu nhập",
   expense: "Chi tiêu",
-  shared: "Dùng chung",
 } as const;
 
 async function readJsonError(response: Response) {
@@ -77,8 +76,11 @@ export function CategoryManager({
     () => ({
       income: categories.filter((category) => category.type === "income"),
       expense: categories.filter((category) => category.type === "expense"),
-      shared: categories.filter((category) => category.type === null),
     }),
+    [categories],
+  );
+  const visibleCategories = useMemo(
+    () => categories.filter((category) => category.type !== null),
     [categories],
   );
   const insightsByCategory = useMemo(
@@ -236,8 +238,8 @@ export function CategoryManager({
         />
         <MetricCard
           label="Danh mục đang dùng"
-          value={`${categories.length}`}
-          helper={`${categories.filter((category) => !category.isDefault).length} danh mục tùy chỉnh`}
+          value={`${visibleCategories.length}`}
+          helper={`${visibleCategories.filter((category) => !category.isDefault).length} danh mục tùy chỉnh`}
           tone="positive"
         />
         <MetricCard
@@ -357,12 +359,11 @@ export function CategoryManager({
         </SectionCard>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2">
         {(
           [
             ["income", groupedCategories.income],
             ["expense", groupedCategories.expense],
-            ["shared", groupedCategories.shared],
           ] as const
         ).map(([groupType, group]) => (
           <section

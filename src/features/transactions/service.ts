@@ -3,6 +3,20 @@ import { db } from "@/lib/db";
 
 import type { TransactionCreateInput, TransactionUpdateInput } from "./schemas";
 
+type TransactionListWhere = {
+  userId: string;
+  transactionDate?: {
+    gte: Date;
+    lt: Date;
+  };
+};
+
+type PaginatedTransactionInput = {
+  monthKey?: string;
+  page: number;
+  pageSize: number;
+};
+
 async function validateCategoryForTransaction(
   userId: string,
   categoryId: string,
@@ -24,23 +38,56 @@ async function validateCategoryForTransaction(
 }
 
 export async function listTransactions(userId: string, monthKey?: string) {
-  const monthWindow = monthKey ? getMonthWindow(monthKey) : null;
+  const where = getTransactionListWhere(userId, monthKey);
 
   return db.transaction.findMany({
-    where: {
-      userId,
-      ...(monthWindow
-        ? {
-            transactionDate: {
-              gte: monthWindow.start,
-              lt: monthWindow.end,
-            },
-          }
-        : {}),
-    },
+    where,
     include: { category: true },
     orderBy: [{ transactionDate: "desc" }, { createdAt: "desc" }],
   });
+}
+
+function getTransactionListWhere(
+  userId: string,
+  monthKey?: string,
+): TransactionListWhere {
+  const monthWindow = monthKey ? getMonthWindow(monthKey) : null;
+
+  return {
+    userId,
+    ...(monthWindow
+      ? {
+          transactionDate: {
+            gte: monthWindow.start,
+            lt: monthWindow.end,
+          },
+        }
+      : {}),
+  };
+}
+
+export async function listPaginatedTransactions(
+  userId: string,
+  input: PaginatedTransactionInput,
+) {
+  const where = getTransactionListWhere(userId, input.monthKey);
+  const total = await db.transaction.count({ where });
+  const page = Math.max(1, Math.min(input.page, Math.ceil(total / input.pageSize) || 1));
+
+  const transactions = await db.transaction.findMany({
+    where,
+    include: { category: true },
+    orderBy: [{ transactionDate: "desc" }, { createdAt: "desc" }],
+    skip: (page - 1) * input.pageSize,
+    take: input.pageSize,
+  });
+
+  return {
+    transactions,
+    total,
+    page,
+    pageSize: input.pageSize,
+  };
 }
 
 export async function getTransaction(userId: string, id: string) {
