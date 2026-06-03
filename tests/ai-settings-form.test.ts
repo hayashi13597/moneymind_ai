@@ -32,6 +32,15 @@ describe("AiSettingsForm", () => {
   let container: HTMLDivElement;
   let root: Root;
 
+  const getProviderNameInput = () =>
+    container.querySelector<HTMLInputElement>('input[name="name"]')!;
+  const getBaseUrlInput = () =>
+    container.querySelector<HTMLInputElement>('input[name="baseUrl"]')!;
+  const getModelInput = () =>
+    container.querySelector<HTMLInputElement>('input[name="model"]')!;
+  const getApiKeyInput = () =>
+    container.querySelector<HTMLInputElement>('input[name="apiKey"]')!;
+
   beforeEach(() => {
     window.localStorage.clear();
     container = document.createElement("div");
@@ -53,15 +62,6 @@ describe("AiSettingsForm", () => {
       root.render(React.createElement(AiSettingsForm));
     });
 
-    const getProviderNameInput = () =>
-      container.querySelector<HTMLInputElement>("#providerName")!;
-    const getBaseUrlInput = () =>
-      container.querySelector<HTMLInputElement>("#baseUrl")!;
-    const getModelInput = () =>
-      container.querySelector<HTMLInputElement>("#model")!;
-    const getApiKeyInput = () =>
-      container.querySelector<HTMLInputElement>("#apiKey")!;
-
     await act(async () => {
       changeField(getProviderNameInput(), "OpenAI");
       changeField(getBaseUrlInput(), "https://api.openai.com/v1");
@@ -72,6 +72,9 @@ describe("AiSettingsForm", () => {
 
     await act(async () => {
       container.querySelector<HTMLButtonElement>("#newProvider")?.click();
+    });
+
+    await act(async () => {
       changeField(getProviderNameInput(), "OpenRouter");
       changeField(getBaseUrlInput(), "https://openrouter.ai/api/v1");
       changeField(getModelInput(), "openai/gpt-4.1-mini");
@@ -149,22 +152,10 @@ describe("AiSettingsForm", () => {
     });
 
     await act(async () => {
-      changeField(
-        container.querySelector<HTMLInputElement>("#providerName")!,
-        "OpenAI",
-      );
-      changeField(
-        container.querySelector<HTMLInputElement>("#baseUrl")!,
-        "https://api.openai.com/v1",
-      );
-      changeField(
-        container.querySelector<HTMLInputElement>("#model")!,
-        "gpt-4.1-mini",
-      );
-      changeField(
-        container.querySelector<HTMLInputElement>("#apiKey")!,
-        "sk-openai",
-      );
+      changeField(getProviderNameInput(), "OpenAI");
+      changeField(getBaseUrlInput(), "https://api.openai.com/v1");
+      changeField(getModelInput(), "gpt-4.1-mini");
+      changeField(getApiKeyInput(), "sk-openai");
       container.querySelector<HTMLButtonElement>("#saveProvider")?.click();
     });
 

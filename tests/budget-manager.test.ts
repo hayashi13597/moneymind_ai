@@ -24,6 +24,22 @@ const selectedMonth = {
   nextKey: "2026-07",
 };
 
+function setInputValue(input: HTMLInputElement, value: string) {
+  const valueSetter = Object.getOwnPropertyDescriptor(input, "value")?.set;
+  const prototypeValueSetter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  )?.set;
+
+  if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+    prototypeValueSetter.call(input, value);
+  } else {
+    valueSetter?.call(input, value);
+  }
+
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
 const budgetData = {
   summary: {
     totalBudget: 3500000,
@@ -185,8 +201,7 @@ describe("BudgetManager", () => {
       const input =
         document.querySelector<HTMLInputElement>('input[name="amount"]');
       if (input) {
-        input.value = "4tr";
-        input.dispatchEvent(new Event("input", { bubbles: true }));
+        setInputValue(input, "4tr");
       }
     });
 
@@ -243,8 +258,7 @@ describe("BudgetManager", () => {
       const input =
         document.querySelector<HTMLInputElement>('input[name="amount"]');
       if (input) {
-        input.value = "5tr";
-        input.dispatchEvent(new Event("input", { bubbles: true }));
+        setInputValue(input, "5tr");
       }
     });
 

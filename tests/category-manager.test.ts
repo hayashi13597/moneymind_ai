@@ -7,12 +7,38 @@ import { CategoryManager } from "@/features/categories/category-manager";
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean })
   .IS_REACT_ACT_ENVIRONMENT = true;
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+(globalThis as typeof globalThis & { ResizeObserver: typeof ResizeObserver })
+  .ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
+Element.prototype.scrollIntoView = jest.fn();
+
 jest.mock("sonner", () => ({
   toast: {
     error: jest.fn(),
     success: jest.fn(),
   },
 }));
+
+function setInputValue(input: HTMLInputElement, value: string) {
+  const valueSetter = Object.getOwnPropertyDescriptor(input, "value")?.set;
+  const prototypeValueSetter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  )?.set;
+
+  if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+    prototypeValueSetter.call(input, value);
+  } else {
+    valueSetter?.call(input, value);
+  }
+
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+}
 
 const category = {
   id: "cat_food",
@@ -110,6 +136,80 @@ describe("CategoryManager", () => {
 
     expect(fetchSpy).toHaveBeenCalledWith("/api/categories/cat_food", {
       method: "DELETE",
+    });
+  });
+
+  it("edits a category name and type without using a prompt", async () => {
+    const promptSpy = jest.spyOn(window, "prompt");
+    const fetchSpy = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          categories: [
+            {
+              ...category,
+              name: "Ăn ngoài",
+              type: "income",
+            },
+          ],
+        }),
+      });
+    globalThis.fetch = fetchSpy;
+
+    act(() => {
+      root.render(
+        React.createElement(CategoryManager, {
+          initialCategories: [category],
+          categoryInsights: [],
+        }),
+      );
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Sửa danh mục Ăn uống"]')
+        ?.click();
+    });
+
+    expect(promptSpy).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("Sửa danh mục");
+
+    await act(async () => {
+      const nameInput = document.querySelector<HTMLInputElement>(
+        '[role="dialog"] input[name="name"]',
+      );
+      setInputValue(nameInput!, "Ăn ngoài");
+    });
+
+    await act(async () => {
+      document
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Loại danh mục đang sửa"]',
+        )
+        ?.click();
+    });
+
+    await act(async () => {
+      document
+        .querySelector<HTMLElement>('[cmdk-item][data-value="income"]')
+        ?.click();
+    });
+
+    await act(async () => {
+      document
+        .querySelector<HTMLButtonElement>('[aria-label="Lưu danh mục đã sửa"]')
+        ?.click();
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith("/api/categories/cat_food", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Ăn ngoài",
+        type: "income",
+      }),
     });
   });
 });

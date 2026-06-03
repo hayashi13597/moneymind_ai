@@ -1,11 +1,13 @@
 "use client";
 
-import { AlertTriangle, TrendingDown, TrendingUp } from "lucide-react";
+import { AlertTriangle, Pencil, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { EmptyState, InsightCard, MetricCard, SectionCard } from "@/components/app-ui";
-import { FormCombobox } from "@/components/form-combobox";
+import { RhfComboboxControl } from "@/components/form-rhf-controls";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,8 +19,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { formatVnd } from "@/lib/money";
+import { createZodResolver } from "@/lib/zod-form";
 
 type Category = {
   id: string;
@@ -42,10 +62,27 @@ type CategoryInsight = {
   transactionCount: number;
 };
 
+type EditingCategory = {
+  id: string;
+  name: string;
+  type: "income" | "expense";
+} | null;
+
+const categoryFormSchema = z.object({
+  name: z.string().trim().min(1, "Tên danh mục là bắt buộc."),
+  type: z.enum(["income", "expense"]),
+});
+
+type CategoryFormValues = z.infer<typeof categoryFormSchema>;
+
 const typeLabels = {
   income: "Thu nhập",
   expense: "Chi tiêu",
 } as const;
+const CONTROL_CLASS_NAME =
+  "h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15";
+const DIALOG_CONTROL_CLASS_NAME =
+  "h-11 w-full rounded-xl border border-[#DCD7CC] bg-white px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15";
 
 async function readJsonError(response: Response) {
   const payload = (await response.json().catch(() => null)) as {
@@ -68,9 +105,15 @@ export function CategoryManager({
 }: CategoryManagerProps) {
   const [categories, setCategories] = useState(initialCategories);
   const [error, setError] = useState("");
-  const [name, setName] = useState("");
-  const [type, setType] = useState<"income" | "expense">("expense");
   const [pending, setPending] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<EditingCategory>(null);
+  const createForm = useForm<CategoryFormValues>({
+    resolver: createZodResolver(categoryFormSchema),
+    defaultValues: {
+      name: "",
+      type: "expense",
+    },
+  });
 
   const groupedCategories = useMemo(
     () => ({
@@ -138,7 +181,7 @@ export function CategoryManager({
     }
   }
 
-  async function createCategory(formData: FormData) {
+  async function createCategory(values: CategoryFormValues) {
     setPending(true);
     setError("");
 
@@ -146,10 +189,7 @@ export function CategoryManager({
       const response = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: String(formData.get("name") ?? ""),
-          type: String(formData.get("type") ?? "expense"),
-        }),
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
@@ -159,7 +199,10 @@ export function CategoryManager({
         return;
       }
 
-      setName("");
+      createForm.reset({
+        name: "",
+        type: "expense",
+      });
       if (await refreshCategories()) {
         toast.success("Đã thêm danh mục.");
       }
@@ -171,20 +214,32 @@ export function CategoryManager({
     }
   }
 
-  async function renameCategory(category: Category) {
-    const nextName = window.prompt("Tên danh mục", category.name);
-
-    if (!nextName || nextName.trim() === category.name) {
+  function openEditCategory(category: Category) {
+    if (!category.type) {
       return;
     }
 
+    setEditingCategory({
+      id: category.id,
+      name: category.name,
+      type: category.type,
+    });
+    setError("");
+  }
+
+  async function updateEditingCategory(values: CategoryFormValues) {
+    if (!editingCategory) {
+      return;
+    }
+
+    setPending(true);
     setError("");
 
     try {
-      const response = await fetch(`/api/categories/${category.id}`, {
+      const response = await fetch(`/api/categories/${editingCategory.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: nextName }),
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
@@ -194,12 +249,15 @@ export function CategoryManager({
         return;
       }
 
+      setEditingCategory(null);
       if (await refreshCategories()) {
         toast.success("Đã cập nhật danh mục.");
       }
     } catch {
       setError(NETWORK_ERROR_MESSAGE);
       toast.error(NETWORK_ERROR_MESSAGE);
+    } finally {
+      setPending(false);
     }
   }
 
@@ -317,39 +375,65 @@ export function CategoryManager({
                 chia nhỏ quá mức.
               </p>
             </div>
-            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[#D8E1D7] bg-[#ECF3ED] px-3 py-1 text-xs font-medium text-[#2F6B4F]">
+            <Badge
+              variant="outline"
+              className="h-auto w-fit rounded-full border-[#D8E1D7] bg-[#ECF3ED] px-3 py-1 text-xs font-medium text-[#2F6B4F]"
+            >
               <AlertTriangle className="size-3.5" />
               Danh mục đang có giao dịch sẽ không thể xóa
-            </span>
+            </Badge>
           </div>
-          <form
-            action={createCategory}
-            className="mt-5 grid gap-3 sm:grid-cols-[1fr_160px_auto]"
-          >
-            <input
-              name="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Ví dụ: Food delivery"
-              className="h-10 rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-              required
-            />
-            <FormCombobox
-              name="type"
-              value={type}
-              options={categoryTypeOptions}
-              onValueChange={(nextType) => setType(nextType as typeof type)}
-              aria-label="Loại danh mục"
-              required
-            />
-            <Button
-              type="submit"
-              disabled={pending}
-              className="h-10 bg-[#2F6B4F] hover:bg-[#285B43]"
+          <Form {...createForm}>
+            <form
+              onSubmit={createForm.handleSubmit(createCategory)}
+              className="mt-5 grid gap-3 sm:grid-cols-[1fr_160px_auto]"
             >
-              {pending ? "Đang thêm..." : "Thêm"}
-            </Button>
-          </form>
+              <FormField
+                control={createForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tên danh mục</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Ví dụ: Food delivery"
+                        className={CONTROL_CLASS_NAME}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={createForm.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Loại danh mục</FormLabel>
+                    <RhfComboboxControl
+                      name={field.name}
+                      value={field.value}
+                      options={categoryTypeOptions}
+                      onValueChange={field.onChange}
+                      onBlur={field.onBlur}
+                      aria-label="Loại danh mục"
+                      className="h-11"
+                      required
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                disabled={pending}
+                className="h-11 self-end bg-[#2F6B4F] hover:bg-[#285B43]"
+              >
+                {pending ? "Đang thêm..." : "Thêm"}
+              </Button>
+            </form>
+          </Form>
 
           {error ? (
             <p className="mt-4 rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -366,132 +450,259 @@ export function CategoryManager({
             ["expense", groupedCategories.expense],
           ] as const
         ).map(([groupType, group]) => (
-          <section
+          <Card
             key={groupType}
-            className="overflow-hidden rounded-2xl border border-[#E1DDD4] bg-card"
+            className="gap-0 overflow-hidden rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none"
           >
-            <div className="border-b border-[#E8E4DC] bg-[#FDFCF8] px-4 py-3">
-              <h2 className="text-sm font-semibold">{typeLabels[groupType]}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {group.length} danh mục
-              </p>
-            </div>
-            <div className="divide-y divide-[#E8E4DC]">
-              {group.map((category) => (
-                <div
-                  key={category.id}
-                  className="flex items-center justify-between gap-3 p-4"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="size-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: category.color ?? "#2F6B4F" }}
-                      />
-                      <p className="truncate text-sm font-medium">
-                        {category.name}
-                      </p>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {category.isDefault ? "Mặc định" : "Tùy chỉnh"} ·{" "}
-                      {insightsByCategory.get(category.id)?.transactionCount ?? 0}{" "}
-                      giao dịch
-                    </p>
-                    {category.type === "expense" ? (
-                      <div className="mt-3 max-w-64 space-y-1">
-                        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                          <div
-                            className="h-full rounded-full bg-[#2F6B4F]"
-                            style={{
-                              width: `${Math.max(
-                                0,
-                                ((insightsByCategory.get(category.id)
-                                  ?.currentAmount ?? 0) /
-                                  maxCurrentExpense) *
-                                  100,
-                              )}%`,
-                            }}
-                          />
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          {(insightsByCategory.get(category.id)
-                            ?.changePercentage ?? 0) > 0 ? (
-                            <TrendingUp className="size-3 text-[#A2482D]" />
-                          ) : (
-                            <TrendingDown className="size-3 text-[#2F6B4F]" />
-                          )}
-                          <span>
-                            {formatVnd(
-                              insightsByCategory.get(category.id)
-                                ?.currentAmount ?? 0,
-                            )}{" "}
-                            tháng này
-                          </span>
-                        </div>
+            <CardContent className="p-0">
+              <div className="border-b border-[#E8E4DC] bg-[#FDFCF8] px-4 py-3">
+                <h2 className="text-sm font-semibold">{typeLabels[groupType]}</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {group.length} danh mục
+                </p>
+              </div>
+              <div className="divide-y divide-[#E8E4DC]">
+                {group.map((category) => (
+                  <div
+                    key={category.id}
+                    className="flex items-center justify-between gap-3 p-4"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="size-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: category.color ?? "#2F6B4F" }}
+                        />
+                        <p className="truncate text-sm font-medium">
+                          {category.name}
+                        </p>
                       </div>
-                    ) : null}
-                  </div>
-                  <div className="flex shrink-0 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => renameCategory(category)}
-                      className="border-[#DDD8CE]"
-                    >
-                      Sửa
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          aria-label={`Xóa danh mục ${category.name}`}
-                          className="border-[#DDD8CE] text-destructive hover:text-destructive"
-                        >
-                          Xóa
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Xóa danh mục?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Danh mục &quot;{category.name}&quot; sẽ bị xóa nếu chưa có
-                            giao dịch nào đang sử dụng. Hành động này không
-                            thể khôi phục.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel
-                            aria-label={`Hủy xóa danh mục ${category.name}`}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {category.isDefault ? "Mặc định" : "Tùy chỉnh"} ·{" "}
+                        {insightsByCategory.get(category.id)?.transactionCount ?? 0}{" "}
+                        giao dịch
+                      </p>
+                      {category.type === "expense" ? (
+                        <div className="mt-3 max-w-64 space-y-1">
+                          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full rounded-full bg-[#2F6B4F]"
+                              style={{
+                                width: `${Math.max(
+                                  0,
+                                  ((insightsByCategory.get(category.id)
+                                    ?.currentAmount ?? 0) /
+                                    maxCurrentExpense) *
+                                    100,
+                                )}%`,
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            {(insightsByCategory.get(category.id)
+                              ?.changePercentage ?? 0) > 0 ? (
+                              <TrendingUp className="size-3 text-[#A2482D]" />
+                            ) : (
+                              <TrendingDown className="size-3 text-[#2F6B4F]" />
+                            )}
+                            <span>
+                              {formatVnd(
+                                insightsByCategory.get(category.id)
+                                  ?.currentAmount ?? 0,
+                              )}{" "}
+                              tháng này
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        aria-label={`Sửa danh mục ${category.name}`}
+                        onClick={() => openEditCategory(category)}
+                        className="border-[#DDD8CE]"
+                      >
+                        <Pencil className="size-4" />
+                        Sửa
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            aria-label={`Xóa danh mục ${category.name}`}
+                            className="border-[#DDD8CE] text-destructive hover:text-destructive"
                           >
-                            Hủy
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            aria-label={`Xác nhận xóa danh mục ${category.name}`}
-                            onClick={() => deleteCategoryById(category)}
-                          >
-                            Xóa danh mục
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                            Xóa
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Xóa danh mục?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Danh mục &quot;{category.name}&quot; sẽ bị xóa nếu chưa có
+                              giao dịch nào đang sử dụng. Hành động này không
+                              thể khôi phục.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel
+                              aria-label={`Hủy xóa danh mục ${category.name}`}
+                            >
+                              Hủy
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              aria-label={`Xác nhận xóa danh mục ${category.name}`}
+                              onClick={() => deleteCategoryById(category)}
+                            >
+                              Xóa danh mục
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
-                </div>
-              ))}
-              {group.length === 0 ? (
-                <div className="p-4">
-                  <EmptyState
-                    title="Chưa có danh mục"
-                    description="Tạo danh mục đầu tiên để MoneyMind AI có bối cảnh phân tích chính xác hơn."
-                  />
-                </div>
-              ) : null}
-            </div>
-          </section>
+                ))}
+                {group.length === 0 ? (
+                  <div className="p-4">
+                    <EmptyState
+                      title="Chưa có danh mục"
+                      description="Tạo danh mục đầu tiên để MoneyMind AI có bối cảnh phân tích chính xác hơn."
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
+
+      {editingCategory ? (
+        <CategoryEditDialog
+          key={editingCategory.id}
+          category={editingCategory}
+          pending={pending}
+          onClose={() => setEditingCategory(null)}
+          onSubmit={updateEditingCategory}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function CategoryEditDialog({
+  category,
+  pending,
+  onClose,
+  onSubmit,
+}: {
+  category: Exclude<EditingCategory, null>;
+  pending: boolean;
+  onClose: () => void;
+  onSubmit: (values: CategoryFormValues) => void;
+}) {
+  const form = useForm<CategoryFormValues>({
+    resolver: createZodResolver(categoryFormSchema),
+    defaultValues: {
+      name: category.name,
+      type: category.type,
+    },
+  });
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent
+        aria-describedby={undefined}
+        aria-labelledby="category-edit-dialog-title"
+        showCloseButton={false}
+        className="w-full max-w-md rounded-2xl border-[#DCD7CC] bg-[#FDFCF8] p-5 shadow-[0_24px_80px_rgba(47,42,31,0.18)]"
+      >
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
+          <DialogHeader>
+            <p className="text-sm font-medium text-muted-foreground">
+              Cập nhật tên và loại danh mục
+            </p>
+            <DialogTitle className="sr-only">Sửa danh mục</DialogTitle>
+            <h3
+              id="category-edit-dialog-title"
+              className="mt-1 text-xl font-semibold text-foreground"
+            >
+              Sửa danh mục
+            </h3>
+          </DialogHeader>
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tên danh mục</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    className={DIALOG_CONTROL_CLASS_NAME}
+                    placeholder="Ví dụ: Ăn ngoài"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Loại danh mục</FormLabel>
+                <RhfComboboxControl
+                  name={field.name}
+                  value={field.value}
+                  options={categoryTypeOptions}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                  aria-label="Loại danh mục đang sửa"
+                  className="h-11"
+                  required
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#DDD8CE]"
+              onClick={onClose}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              aria-label="Lưu danh mục đã sửa"
+              disabled={pending}
+              className="bg-[#2F6B4F] hover:bg-[#285B43]"
+            >
+              Lưu danh mục
+            </Button>
+          </div>
+        </form>
+      </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
