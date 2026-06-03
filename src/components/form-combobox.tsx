@@ -25,27 +25,37 @@ export type ComboboxOption<TValue extends string = string> = {
 };
 
 type FormComboboxProps<TValue extends string = string> = {
+  id?: string;
   name?: string;
   value: TValue;
   options: ComboboxOption<TValue>[];
   onValueChange: (value: TValue) => void;
+  onBlur?: () => void;
   "aria-label"?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
   disabled?: boolean;
   placeholder?: string;
   emptyMessage?: string;
   required?: boolean;
+  className?: string;
 };
 
 export function FormCombobox<TValue extends string = string>({
+  id,
   name,
   value,
   options,
   onValueChange,
+  onBlur,
   "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
   disabled = false,
   placeholder = "Chọn",
   emptyMessage = "Không tìm thấy lựa chọn.",
   required = false,
+  className,
 }: FormComboboxProps<TValue>) {
   const [open, setOpen] = useState(false);
   const selectedOption =
@@ -60,13 +70,20 @@ export function FormCombobox<TValue extends string = string>({
         <PopoverTrigger asChild>
           <Button
             type="button"
+            id={id}
             variant="outline"
             role="combobox"
             aria-label={ariaLabel}
+            aria-describedby={ariaDescribedBy}
             aria-expanded={open}
+            aria-invalid={ariaInvalid}
             aria-required={required || undefined}
             disabled={disabled}
-            className="h-10 w-full justify-between rounded-xl border-warm-border bg-surface px-3 font-normal hover:bg-surface"
+            onBlur={onBlur}
+            className={cn(
+              "h-11 w-full justify-between rounded-xl border-warm-border bg-surface px-3 font-normal hover:bg-surface",
+              className,
+            )}
           >
             <span
               className={cn(

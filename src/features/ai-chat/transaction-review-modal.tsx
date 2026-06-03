@@ -1,14 +1,35 @@
 "use client";
 
 import { BadgeCheck, Bot } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
-import { FormCombobox } from "@/components/form-combobox";
-import { FormDatePicker } from "@/components/form-date-picker";
+import {
+  RhfComboboxControl,
+  RhfDatePickerControl,
+} from "@/components/form-rhf-controls";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import type { AiChatTransactionDraft } from "@/features/ai-chat/schemas";
 import { createTransactionAction } from "@/features/transactions/actions";
+import { createZodResolver } from "@/lib/zod-form";
 
 type TransactionType = "income" | "expense";
 
@@ -48,6 +69,20 @@ const transactionTypeOptions: Array<{ value: TransactionType; label: string }> =
   { value: "expense", label: "Chi tiêu" },
   { value: "income", label: "Thu nhập" },
 ];
+const CONTROL_CLASS_NAME =
+  "h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15";
+const transactionReviewFormSchema = z.object({
+  type: z.enum(["income", "expense"]),
+  amount: z.string().trim().min(1, "Số tiền là bắt buộc."),
+  categoryId: z.string().trim().min(1, "Danh mục là bắt buộc."),
+  transactionDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày không hợp lệ."),
+  note: z.string().trim().min(1, "Ghi chú là bắt buộc."),
+  merchant: z.string(),
+});
+
+type TransactionReviewFormValues = z.infer<typeof transactionReviewFormSchema>;
 
 function AiChatTransactionReviewForm({
   draft,
@@ -55,15 +90,28 @@ function AiChatTransactionReviewForm({
   onClose,
   onSaved,
 }: AiChatTransactionReviewFormProps) {
-  const [type, setType] = useState<TransactionType>(draft.type);
-  const [amount, setAmount] = useState(String(draft.amount));
-  const [categoryId, setCategoryId] = useState(draft.categoryId);
-  const [transactionDate, setTransactionDate] = useState(draft.transactionDate);
-  const [note, setNote] = useState(draft.note);
-  const [merchant, setMerchant] = useState(draft.merchant ?? "");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-
+  const defaultMatchingCategories = categories.filter(
+    (category) => !category.type || category.type === draft.type,
+  );
+  const form = useForm<TransactionReviewFormValues>({
+    resolver: createZodResolver(transactionReviewFormSchema),
+    defaultValues: {
+      type: draft.type,
+      amount: String(draft.amount),
+      categoryId: defaultMatchingCategories.some(
+        (category) => category.id === draft.categoryId,
+      )
+        ? draft.categoryId
+        : (defaultMatchingCategories[0]?.id ?? ""),
+      transactionDate: draft.transactionDate,
+      note: draft.note,
+      merchant: draft.merchant ?? "",
+    },
+  });
+  const type = useWatch({ control: form.control, name: "type" });
+  const categoryId = useWatch({ control: form.control, name: "categoryId" });
   const matchingCategories = useMemo(
     () =>
       categories.filter((category) => !category.type || category.type === type),
@@ -75,18 +123,7 @@ function AiChatTransactionReviewForm({
       : matchingCategories[0]?.id || "";
   const hasMatchingCategories = matchingCategories.length > 0;
 
-  useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- Local editable form state must resync when a different AI draft is selected. */
-    setType(draft.type);
-    setAmount(String(draft.amount));
-    setCategoryId(draft.categoryId);
-    setTransactionDate(draft.transactionDate);
-    setNote(draft.note);
-    setMerchant(draft.merchant ?? "");
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [draft]);
-
-  async function saveDraft() {
+  async function saveDraft(values: TransactionReviewFormValues) {
     if (!hasMatchingCategories || !selectedCategoryId) {
       const message = "Không có danh mục phù hợp để lưu giao dịch.";
       setError(message);
@@ -99,13 +136,13 @@ function AiChatTransactionReviewForm({
 
     try {
       const result = await createTransactionAction({
-        type,
-        amount,
+        type: values.type,
+        amount: values.amount,
         categoryId: selectedCategoryId,
-        note,
-        merchant,
+        note: values.note,
+        merchant: values.merchant,
         rawInput: draft.rawInput,
-        transactionDate,
+        transactionDate: values.transactionDate,
       });
 
       if (!result.ok) {
@@ -126,18 +163,28 @@ function AiChatTransactionReviewForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/35 p-4 sm:items-center sm:justify-center">
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[#DCD7CC] bg-card shadow-[0_18px_60px_rgba(47,42,31,0.2)]">
-        <div className="flex items-start justify-between gap-3 border-b border-[#E8E4DC] bg-[#FDFCF8] p-5">
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[calc(100vh-2rem)] w-full max-w-2xl gap-0 overflow-y-auto rounded-2xl border-[#DCD7CC] bg-card p-0 shadow-[0_18px_60px_rgba(47,42,31,0.2)]"
+      >
+        <DialogHeader className="flex-row items-start justify-between gap-3 border-b border-[#E8E4DC] bg-[#FDFCF8] p-5 text-left">
           <div className="flex items-start gap-3">
             <div className="rounded-full bg-[#2F6B4F] p-2 text-white">
               <Bot className="size-4" />
             </div>
             <div>
-              <h2 className="text-base font-semibold">Giao dịch AI nháp</h2>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              <DialogTitle>Giao dịch AI nháp</DialogTitle>
+              <DialogDescription className="mt-1 leading-6">
                 Kiểm tra số tiền, danh mục và ngày trước khi lưu vào sổ thu chi.
-              </p>
+              </DialogDescription>
             </div>
           </div>
           <Button
@@ -148,8 +195,12 @@ function AiChatTransactionReviewForm({
           >
             Đóng
           </Button>
-        </div>
-        <form action={saveDraft} className="grid gap-4 p-5 sm:grid-cols-2">
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(saveDraft)}
+            className="grid gap-4 p-5 sm:grid-cols-2"
+          >
           <div className="rounded-2xl border border-[#D8E1D7] bg-[#F3F8F2] p-4 sm:col-span-2">
             <p className="inline-flex items-center gap-2 text-sm font-medium text-[#2F6B4F]">
               <BadgeCheck className="size-4" />
@@ -159,70 +210,124 @@ function AiChatTransactionReviewForm({
               {draft.rawInput}
             </p>
           </div>
-          <label className="space-y-2 text-sm font-medium">
-            <span>Loại</span>
-            <FormCombobox
-              value={type}
-              options={transactionTypeOptions}
-              onValueChange={(nextType) => {
-                setType(nextType);
-                setCategoryId("");
-              }}
-              aria-label="Loại"
-              required
-            />
-          </label>
-          <label className="space-y-2 text-sm font-medium">
-            <span>Số tiền</span>
-            <input
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-              className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-              required
-            />
-          </label>
-          <label className="space-y-2 text-sm font-medium">
-            <span>Danh mục</span>
-            <FormCombobox
-              value={selectedCategoryId}
-              options={matchingCategories.map((category) => ({
-                value: category.id,
-                label: category.name,
-              }))}
-              onValueChange={setCategoryId}
-              aria-label="Danh mục"
-              disabled={!hasMatchingCategories}
-              required
-            />
-          </label>
-          <label className="space-y-2 text-sm font-medium">
-            <span>Ngày</span>
-            <FormDatePicker
-              value={transactionDate}
-              onValueChange={setTransactionDate}
-              aria-label="Chọn ngày"
-              required
-            />
-          </label>
-          <label className="space-y-2 text-sm font-medium">
-            <span>Người bán</span>
-            <input
-              value={merchant}
-              onChange={(event) => setMerchant(event.target.value)}
-              placeholder="Tùy chọn"
-              className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-            />
-          </label>
-          <label className="space-y-2 text-sm font-medium">
-            <span>Ghi chú</span>
-            <input
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="Ghi chú"
-              className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-              required
-            />
-          </label>
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Loại</FormLabel>
+                <RhfComboboxControl
+                  name={field.name}
+                  value={field.value}
+                  options={transactionTypeOptions}
+                  onValueChange={(nextType) => {
+                    field.onChange(nextType);
+                    const nextCategory = categories.find(
+                      (category) => !category.type || category.type === nextType,
+                    );
+                    form.setValue("categoryId", nextCategory?.id ?? "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                  onBlur={field.onBlur}
+                  aria-label="Loại"
+                  className="h-11"
+                  required
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Số tiền</FormLabel>
+                <FormControl>
+                  <Input {...field} className={CONTROL_CLASS_NAME} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Danh mục</FormLabel>
+                <RhfComboboxControl
+                  name={field.name}
+                  value={selectedCategoryId}
+                  options={matchingCategories.map((category) => ({
+                    value: category.id,
+                    label: category.name,
+                  }))}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                  aria-label="Danh mục"
+                  disabled={!hasMatchingCategories}
+                  className="h-11"
+                  required
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="transactionDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ngày</FormLabel>
+                <RhfDatePickerControl
+                  name={field.name}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                  aria-label="Chọn ngày"
+                  className="h-11"
+                  required
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="merchant"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Người bán</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Tùy chọn"
+                    className={CONTROL_CLASS_NAME}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="note"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ghi chú</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Ghi chú"
+                    className={CONTROL_CLASS_NAME}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           {!hasMatchingCategories ? (
             <p className="text-sm text-destructive sm:col-span-2">
               Không có danh mục phù hợp để lưu giao dịch.
@@ -248,9 +353,10 @@ function AiChatTransactionReviewForm({
               {pending ? "Đang lưu..." : "Lưu giao dịch"}
             </Button>
           </div>
-        </form>
-      </div>
-    </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

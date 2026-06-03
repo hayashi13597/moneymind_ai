@@ -17,7 +17,7 @@ export function AppNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-1 overflow-x-auto rounded-full border border-[#E1DDD4] bg-[#F3F0E9] p-1 md:overflow-visible">
+    <nav className="flex items-center gap-1 overflow-x-auto rounded-xl border border-[#DED7CA] bg-[#EEE8DC]/82 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur md:overflow-visible">
       {navItems.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -28,8 +28,9 @@ export function AppNav() {
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "shrink-0 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[#FDFCF8] hover:text-foreground",
-              isActive && "bg-[#FDFCF8] font-medium text-foreground shadow-sm",
+              "shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFFDF7] hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/20 focus-visible:outline-none active:translate-y-0",
+              isActive &&
+                "bg-[#FFFDF7] text-foreground shadow-[0_8px_22px_rgba(47,42,31,0.08)]",
             )}
           >
             {item.label}

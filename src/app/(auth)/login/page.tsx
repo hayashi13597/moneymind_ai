@@ -6,17 +6,17 @@ import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-background px-6 py-8 text-foreground">
-      <section className="mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+    <main className="min-h-dvh bg-transparent px-6 py-8 text-foreground">
+      <section className="mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[0.92fr_1.08fr]">
         <div className="space-y-7">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold">
-            <span className="rounded-full bg-primary p-2 text-white">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold">
+            <span className="rounded-lg bg-primary p-2 text-white shadow-[0_10px_24px_rgba(47,107,79,0.22)]">
               <Bot className="size-4" />
             </span>
             MoneyMind AI
           </Link>
           <div className="space-y-4">
-            <h1 className="max-w-xl text-4xl font-semibold tracking-normal md:text-5xl">
+            <h1 className="max-w-xl text-4xl font-extrabold leading-tight md:text-5xl">
               Hiểu rõ tài chính của bạn. Xây dựng thói quen tốt hơn với AI.
             </h1>
             <p className="max-w-lg text-base leading-7 text-muted-foreground">
@@ -35,12 +35,12 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_18px_60px_rgba(47,42,31,0.08)] md:p-6">
+        <div className="rounded-xl border border-border bg-card/92 p-5 shadow-[0_24px_80px_rgba(47,42,31,0.10)] md:p-6">
           <div className="mb-5">
             <p className="text-sm font-medium text-muted-foreground">
               Chào mừng trở lại
             </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-normal">
+            <h2 className="mt-2 text-2xl font-bold">
               Đăng nhập
             </h2>
           </div>

@@ -2,11 +2,31 @@
 
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import type { DashboardMonth } from "@/features/dashboard/month";
 import { formatVnd } from "@/lib/money";
+import { createZodResolver } from "@/lib/zod-form";
 import { cn } from "@/lib/utils";
 
 import type { CategoryBudgetList, CategoryBudgetRow } from "./service";
@@ -27,6 +47,13 @@ const statusLabels = {
   near_limit: "Gần vượt",
   over_limit: "Đã vượt",
 } as const;
+const DIALOG_CONTROL_CLASS_NAME =
+  "h-11 w-full rounded-xl border border-[#DCD7CC] bg-white px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15";
+const budgetFormSchema = z.object({
+  amount: z.string().trim().min(1, "Số tiền ngân sách là bắt buộc."),
+});
+
+type BudgetFormValues = z.infer<typeof budgetFormSchema>;
 
 function statusTone(status: CategoryBudgetRow["status"]) {
   if (status === "over_limit") {
@@ -68,29 +95,11 @@ export function BudgetManager({
   const [editing, setEditing] = useState<EditingState>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const amountInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (editing) {
-      amountInputRef.current?.focus();
-    }
-  }, [editing]);
-
-  function closeDialogOnEscape(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
-      setEditing(null);
-    }
-  }
-
-  async function submitBudget(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  async function submitBudget(values: BudgetFormValues) {
     if (!editing) {
       return;
     }
-
-    const formData = new FormData(event.currentTarget);
-    const amount = String(formData.get("amount") ?? "").trim();
 
     setIsSubmitting(true);
     setError(null);
@@ -103,7 +112,7 @@ export function BudgetManager({
           categoryId: editing.row.categoryId,
           scope: editing.scope,
           ...(editing.scope === "month" ? { month: selectedMonth.key } : {}),
-          amount,
+          amount: values.amount,
         }),
       });
 
@@ -163,12 +172,12 @@ export function BudgetManager({
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-4 rounded-2xl border border-[#DCD7CC] bg-[#FDFCF8] p-5 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 rounded-xl border border-[#DCD7CC] bg-[#FFFDF7]/90 p-5 shadow-[0_14px_48px_rgba(47,42,31,0.055)] md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
             {selectedMonth.label}
           </p>
-          <h2 className="mt-1 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1 text-2xl font-bold text-foreground">
             Bảng ngân sách tháng
           </h2>
         </div>
@@ -223,115 +232,176 @@ export function BudgetManager({
         </p>
       ) : null}
 
-      <div className="overflow-hidden rounded-2xl border border-[#DCD7CC] bg-[#FDFCF8]">
-        <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] gap-3 border-b border-[#E8E1D6] px-4 py-3 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-          <span>Danh mục</span>
-          <span>Ngân sách</span>
-          <span>Đã chi</span>
-          <span>Còn lại</span>
-          <span className="text-right">Thao tác</span>
-        </div>
-        {initialData.rows.map((row) => (
-          <BudgetRow
-            key={row.categoryId}
-            row={row}
-            isSubmitting={isSubmitting}
-            onEdit={setEditing}
-            onDelete={deleteBudget}
-          />
-        ))}
-      </div>
+      <Card className="gap-0 overflow-hidden rounded-xl border-[#DCD7CC] bg-[#FFFDF7]/92 py-0 shadow-[0_14px_48px_rgba(47,42,31,0.055)]">
+        <CardContent className="p-0">
+          <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] gap-3 border-b border-[#E8E1D6] bg-[#F7F3EA] px-4 py-3 text-xs font-semibold tracking-[0.08em] text-muted-foreground">
+            <span>Danh mục</span>
+            <span>Ngân sách</span>
+            <span>Đã chi</span>
+            <span>Còn lại</span>
+            <span className="text-right">Thao tác</span>
+          </div>
+          {initialData.rows.map((row) => (
+            <BudgetRow
+              key={row.categoryId}
+              row={row}
+              isSubmitting={isSubmitting}
+              onEdit={setEditing}
+              onDelete={deleteBudget}
+            />
+          ))}
+        </CardContent>
+      </Card>
 
       {editing ? (
-        <div
-          aria-modal="true"
-          aria-labelledby="budget-edit-dialog-title"
-          onKeyDown={closeDialogOnEscape}
-          role="dialog"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-        >
-          <form
-            onSubmit={submitBudget}
-            className="w-full max-w-md space-y-4 rounded-2xl border border-[#DCD7CC] bg-[#FDFCF8] p-5 shadow-[0_24px_80px_rgba(47,42,31,0.18)]"
-          >
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                {editing.scope === "month"
-                  ? `Riêng ${selectedMonth.label}`
-                  : "Mặc định hằng tháng"}
-              </p>
-              <h3
-                id="budget-edit-dialog-title"
-                className="mt-1 text-xl font-semibold text-foreground"
-              >
-                {editing.row.categoryName}
-              </h3>
-            </div>
-            <div className="grid grid-cols-2 gap-2 rounded-xl border border-[#DDD8CE] bg-white p-1">
-              <Button
-                type="button"
-                variant={editing.scope === "month" ? "default" : "ghost"}
-                aria-label="Sửa ngân sách tháng này"
-                onClick={() => setEditing({ ...editing, scope: "month" })}
-              >
-                Riêng tháng này
-              </Button>
-              <Button
-                type="button"
-                variant={editing.scope === "default" ? "default" : "ghost"}
-                aria-label="Sửa ngân sách mặc định"
-                onClick={() => setEditing({ ...editing, scope: "default" })}
-              >
-                Mặc định
-              </Button>
-            </div>
-            <label className="block space-y-2 text-sm font-medium text-foreground">
-              <span>Số tiền ngân sách</span>
-              <input
-                key={`${editing.row.categoryId}-${editing.scope}`}
-                ref={amountInputRef}
-                name="amount"
-                defaultValue={
-                  editing.scope === "month"
-                    ? (editing.row.monthAmount ?? editing.row.effectiveAmount ?? "")
-                    : (editing.row.defaultAmount ?? "")
-                }
-                className="w-full rounded-lg border border-[#DDD8CE] bg-white px-3 py-2 text-sm outline-none focus:border-[#2F6B4F]"
-                placeholder="Ví dụ: 3tr"
-              />
-            </label>
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="border-[#DDD8CE]"
-                onClick={() => setEditing(null)}
-              >
-                Hủy
-              </Button>
-              <Button
-                type="submit"
-                aria-label="Lưu ngân sách"
-                disabled={isSubmitting}
-              >
-                Lưu ngân sách
-              </Button>
-            </div>
-          </form>
-        </div>
+        <BudgetEditDialog
+          key={`${editing.row.categoryId}-${editing.scope}`}
+          editing={editing}
+          selectedMonth={selectedMonth}
+          isSubmitting={isSubmitting}
+          onClose={() => setEditing(null)}
+          onScopeChange={(scope) => setEditing({ ...editing, scope })}
+          onSubmit={submitBudget}
+        />
       ) : null}
     </section>
   );
 }
 
+function getBudgetAmountDefaultValue(editing: Exclude<EditingState, null>) {
+  return String(
+    editing.scope === "month"
+      ? (editing.row.monthAmount ?? editing.row.effectiveAmount ?? "")
+      : (editing.row.defaultAmount ?? ""),
+  );
+}
+
+function BudgetEditDialog({
+  editing,
+  selectedMonth,
+  isSubmitting,
+  onClose,
+  onScopeChange,
+  onSubmit,
+}: {
+  editing: Exclude<EditingState, null>;
+  selectedMonth: DashboardMonth;
+  isSubmitting: boolean;
+  onClose: () => void;
+  onScopeChange: (scope: "default" | "month") => void;
+  onSubmit: (values: BudgetFormValues) => void;
+}) {
+  const form = useForm<BudgetFormValues>({
+    resolver: createZodResolver(budgetFormSchema),
+    defaultValues: {
+      amount: getBudgetAmountDefaultValue(editing),
+    },
+  });
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent
+        aria-describedby={undefined}
+        aria-labelledby="budget-edit-dialog-title"
+        showCloseButton={false}
+        className="w-full max-w-md rounded-2xl border-[#DCD7CC] bg-[#FDFCF8] p-5 shadow-[0_24px_80px_rgba(47,42,31,0.18)]"
+      >
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
+          <DialogHeader>
+            <p className="text-sm font-medium text-muted-foreground">
+              {editing.scope === "month"
+                ? `Riêng ${selectedMonth.label}`
+                : "Mặc định hằng tháng"}
+            </p>
+            <DialogTitle className="sr-only">Sửa ngân sách</DialogTitle>
+            <h3
+              id="budget-edit-dialog-title"
+              className="mt-1 text-xl font-semibold text-foreground"
+            >
+              {editing.row.categoryName}
+            </h3>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2 rounded-xl border border-[#DDD8CE] bg-white p-1">
+            <Button
+              type="button"
+              variant={editing.scope === "month" ? "default" : "ghost"}
+              aria-label="Sửa ngân sách tháng này"
+              onClick={() => onScopeChange("month")}
+            >
+              Riêng tháng này
+            </Button>
+            <Button
+              type="button"
+              variant={editing.scope === "default" ? "default" : "ghost"}
+              aria-label="Sửa ngân sách mặc định"
+              onClick={() => onScopeChange("default")}
+            >
+              Mặc định
+            </Button>
+          </div>
+          <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Số tiền ngân sách</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    autoFocus
+                    className={DIALOG_CONTROL_CLASS_NAME}
+                    placeholder="Ví dụ: 3tr"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#DDD8CE]"
+              onClick={onClose}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              aria-label="Lưu ngân sách"
+              disabled={isSubmitting}
+            >
+              Lưu ngân sách
+            </Button>
+          </div>
+        </form>
+      </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] p-4">
-      <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
-    </div>
+    <Card className="gap-0 rounded-xl border-[#DCD7CC] bg-[#FDFCF8] py-0 shadow-none">
+      <CardContent className="p-4">
+        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          {label}
+        </p>
+        <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -359,14 +429,15 @@ function BudgetRow({
             {row.categoryName}
           </p>
         </div>
-        <span
+        <Badge
+          variant="outline"
           className={cn(
-            "mt-2 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium",
+            "mt-2 h-auto rounded-full px-2 py-0.5 text-xs font-medium",
             statusTone(row.status),
           )}
         >
           {statusLabels[row.status]}
-        </span>
+        </Badge>
       </div>
       <div>
         <p className="font-medium text-foreground">

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Roboto } from "next/font/google";
+import { Be_Vietnam_Pro, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const roboto = Roboto({
-  variable: "--font-roboto",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700", "900"],
+const beVietnam = Be_Vietnam_Pro({
+  variable: "--font-be-vietnam",
+  subsets: ["latin", "latin-ext", "vietnamese"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 const geistMono = Geist_Mono({
@@ -15,8 +15,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MoneyMind AI",
+  title: {
+    default: "MoneyMind AI",
+    template: "%s | MoneyMind AI",
+  },
   description: "Ứng dụng quản lý thu chi cá nhân với phân tích tài chính bằng AI.",
+  openGraph: {
+    title: "MoneyMind AI",
+    description:
+      "Quản lý thu chi VND, ngân sách theo danh mục và phân tích tài chính bằng AI.",
+    siteName: "MoneyMind AI",
+    locale: "vi_VN",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +38,7 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${roboto.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${beVietnam.variable} ${geistMono.variable} h-full scroll-smooth antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

@@ -77,25 +77,25 @@ describe("AiChatTransactionReviewModal", () => {
 
     renderModal({ root, draft });
 
-    const typeCombobox = container.querySelector<HTMLButtonElement>(
+    const typeCombobox = document.body.querySelector<HTMLButtonElement>(
       'button[role="combobox"][aria-label="Loại"]',
     );
-    const categoryCombobox = container.querySelector<HTMLButtonElement>(
+    const categoryCombobox = document.body.querySelector<HTMLButtonElement>(
       'button[role="combobox"][aria-label="Danh mục"]',
     );
-    const amountInput = container.querySelector<HTMLInputElement>(
+    const amountInput = document.body.querySelector<HTMLInputElement>(
       'input[value="55000"]',
     );
-    const datePickerButton = container.querySelector<HTMLButtonElement>(
+    const datePickerButton = document.body.querySelector<HTMLButtonElement>(
       'button[aria-label="Chọn ngày"]',
     );
-    const dateInput = container.querySelector<HTMLInputElement>(
+    const dateInput = document.body.querySelector<HTMLInputElement>(
       'input[type="hidden"][value="2026-05-27"]',
     );
-    const merchantInput = container.querySelector<HTMLInputElement>(
+    const merchantInput = document.body.querySelector<HTMLInputElement>(
       'input[placeholder="Tùy chọn"]',
     );
-    const noteInput = container.querySelector<HTMLInputElement>(
+    const noteInput = document.body.querySelector<HTMLInputElement>(
       'input[placeholder="Ghi chú"]',
     );
 
@@ -111,11 +111,11 @@ describe("AiChatTransactionReviewModal", () => {
   it("disables saving when no category matches the draft type", () => {
     renderModal({ root, draft, categories: [] });
 
-    const saveButton = Array.from(container.querySelectorAll("button")).find(
+    const saveButton = Array.from(document.body.querySelectorAll("button")).find(
       (button) => button.textContent === "Lưu giao dịch",
     );
 
-    expect(container.textContent).toContain("Không có danh mục phù hợp");
+    expect(document.body.textContent).toContain("Không có danh mục phù hợp");
     expect(saveButton?.disabled).toBe(true);
   });
 });

@@ -1,5 +1,8 @@
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
 function SkeletonBlock({ className }: { className: string }) {
-  return <div className={`rounded-xl bg-[#E9E4DA] ${className}`} />;
+  return <Skeleton className={cn("rounded-lg bg-[#E4DED3]", className)} />;
 }
 
 export default function Loading() {
@@ -20,7 +23,7 @@ export default function Loading() {
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}
-            className="rounded-2xl border border-[#E1DDD4] bg-card p-5"
+            className="rounded-xl border border-[#E1DDD4] bg-card/90 p-5 shadow-[0_12px_36px_rgba(47,42,31,0.045)]"
           >
             <SkeletonBlock className="h-4 w-20" />
             <SkeletonBlock className="mt-4 h-8 w-28" />
@@ -30,7 +33,7 @@ export default function Loading() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <div className="rounded-2xl border border-[#E1DDD4] bg-card p-5 md:p-6">
+        <div className="rounded-xl border border-[#E1DDD4] bg-card/90 p-5 shadow-[0_12px_36px_rgba(47,42,31,0.045)] md:p-6">
           <SkeletonBlock className="h-5 w-36" />
           <div className="mt-6 space-y-4">
             {Array.from({ length: 6 }).map((_, index) => (
@@ -48,7 +51,7 @@ export default function Loading() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#D8E1D7] bg-[#F3F8F2] p-5 md:p-6">
+        <div className="rounded-xl border border-[#C8DCC9] bg-[#EFF7EF] p-5 shadow-[0_16px_54px_rgba(47,107,79,0.08)] md:p-6">
           <SkeletonBlock className="h-9 w-9 rounded-full" />
           <SkeletonBlock className="mt-5 h-5 w-40" />
           <SkeletonBlock className="mt-3 h-4 w-full" />
