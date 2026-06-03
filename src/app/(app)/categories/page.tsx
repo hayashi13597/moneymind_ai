@@ -70,8 +70,8 @@ export default async function CategoriesPage() {
     <section className="space-y-8">
       <PageHeader
         eyebrow="Danh mục"
-        title="Quản lý bản đồ chi tiêu"
-        description="Tổ chức danh mục thu chi để nhập giao dịch nhanh hơn và giúp AI đọc đúng thói quen theo tháng."
+        title="Quản lý danh mục thu chi"
+        description="Sắp xếp các nhóm thu nhập và chi tiêu để nhập giao dịch nhanh hơn, đồng thời giúp MoneyMind hiểu đúng thói quen từng tháng."
       />
       <CategoryManager
         initialCategories={categories}

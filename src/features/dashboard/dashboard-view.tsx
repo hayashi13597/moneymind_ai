@@ -92,7 +92,7 @@ function changeLabel(item: CategoryAnalysisItem) {
 
   const direction = item.changeKind === "increased" ? "+" : "-";
 
-  return `${direction}${item.changePercentage}% vs tháng trước`;
+  return `${direction}${item.changePercentage}% so với tháng trước`;
 }
 
 function changeTone(item: CategoryAnalysisItem) {
@@ -163,7 +163,7 @@ function firstInsightLine(insight: MonthlyInsightDto | null) {
     insight?.content
       .split("\n")
       .map((line) => line.replace(/^[-*#\s]+/, "").trim())
-      .find(Boolean) ?? "Tạo phân tích AI để nhận nhận xét cá nhân hóa hơn."
+      .find(Boolean) ?? "Tạo nhận xét AI để có gợi ý sát với tháng này hơn."
   );
 }
 
@@ -206,8 +206,9 @@ export function DashboardView({
             {balanceSummary.label}{" "}
             <span className="font-medium text-foreground">
               {balanceSummary.value}
-            </span>{" "}
-            . {comparisonSummary("Chi tiêu", dashboard.comparison.expense)}.
+            </span>
+            {". "}
+            {comparisonSummary("Chi tiêu", dashboard.comparison.expense)}.
           </p>
         </div>
         <nav
@@ -244,7 +245,7 @@ export function DashboardView({
                 className="h-auto rounded-full border-[#D8E1D7] bg-[#ECF3ED] px-3 py-1 text-xs font-medium text-[#2F6B4F]"
               >
                 <Bot className="size-3.5" />
-                Huấn luyện viên MoneyMind
+                Cố vấn MoneyMind
               </Badge>
               <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Tóm tắt cá nhân
@@ -253,7 +254,7 @@ export function DashboardView({
 
             <div className="space-y-4">
               <h2 className="max-w-3xl text-2xl font-semibold leading-tight text-foreground md:text-4xl">
-                Tổng quan tài chính tháng này: {dashboard.healthScore.score}/100
+                Tình hình tài chính tháng này: {dashboard.healthScore.score}/100
               </h2>
               <p className="max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
                 {dashboard.healthScore.explanation}
@@ -274,7 +275,7 @@ export function DashboardView({
                   Tiến độ tiết kiệm
                 </p>
                 <p className="mt-2 text-sm font-medium text-foreground">
-                  Dự kiến giữ lại {formatVnd(savingsProjection(dashboard))}
+                  Dự kiến còn lại {formatVnd(savingsProjection(dashboard))}
                 </p>
               </div>
               <div className="border-l border-[#DCD7CC] pl-4">
@@ -290,7 +291,7 @@ export function DashboardView({
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild className="bg-[#2F6B4F] hover:bg-[#285B43]">
                 <a href="#monthly-ai-analysis">
-                  Xem phân tích
+                  Xem nhận xét
                   <ArrowRight className="size-4" />
                 </a>
               </Button>
@@ -326,8 +327,8 @@ export function DashboardView({
                   />
                 </div>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Điểm ưu tiên tỷ lệ tiết kiệm, nhịp chi tiêu và thay đổi so với
-                  tháng trước.
+                  Điểm này dựa trên tỷ lệ tiết kiệm, nhịp chi tiêu và thay đổi
+                  so với tháng trước.
                 </p>
               </div>
             </div>
@@ -358,7 +359,7 @@ export function DashboardView({
           {
             label: "Tỷ lệ tiết kiệm",
             value: `${dashboard.healthScore.savingsRate}%`,
-            helper: "Còn lại trên thu nhập",
+            helper: "Phần còn lại sau khi trừ chi tiêu",
             tone: "savings" as const,
           },
         ].map((metric) => (
@@ -391,7 +392,7 @@ export function DashboardView({
                 Ngân sách tháng này
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Đã chi {formatVnd(budgetSummary.summary.totalSpent)} /{" "}
+                Đã chi {formatVnd(budgetSummary.summary.totalSpent)} trên{" "}
                 {formatVnd(budgetSummary.summary.totalBudget)}
               </p>
             </div>
@@ -441,8 +442,8 @@ export function DashboardView({
               Chưa có giao dịch trong tháng này
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Thêm giao dịch đầu tiên để MoneyMind AI có dữ liệu tổng hợp, nhận
-              diện xu hướng và tạo phân tích cá nhân hóa.
+              Thêm giao dịch đầu tiên để MoneyMind có dữ liệu tổng hợp, nhận
+              diện xu hướng và đưa ra nhận xét sát hơn.
             </p>
             <Button asChild className="mt-5 bg-[#2F6B4F] hover:bg-[#285B43]">
               <Link href="/transactions">Thêm giao dịch</Link>
@@ -457,7 +458,7 @@ export function DashboardView({
                 <div>
                   <h2 className="text-lg font-semibold">Xu hướng chi tiêu</h2>
                   <p className="text-sm text-muted-foreground">
-                    Nhịp chi tiêu theo ngày, tập trung vào biến động thực tế.
+                    Nhịp chi tiêu theo ngày để bạn thấy ngày nào phát sinh mạnh.
                   </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -577,7 +578,7 @@ export function DashboardView({
               <div>
                 <h2 className="text-lg font-semibold">Giao dịch gần đây</h2>
                 <p className="text-sm text-muted-foreground">
-                  Hiển thị phân loại tự động của AI để bạn kiểm tra nhanh.
+                  Hiển thị danh mục đã gắn để bạn kiểm tra nhanh.
                 </p>
               </div>
               <Link

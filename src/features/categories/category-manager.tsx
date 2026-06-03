@@ -94,7 +94,7 @@ const typeLabels = {
 
 const typeDescriptions = {
   income: "Nguồn tiền vào, lương, thưởng hoặc hoàn tiền.",
-  expense: "Các khoản chi để AI đọc thói quen tháng này.",
+  expense: "Các khoản chi thường gặp trong sinh hoạt hằng tháng.",
 } as const;
 
 const CONTROL_CLASS_NAME =
@@ -351,7 +351,7 @@ export function CategoryManager({
             helper={
               topExpense
                 ? `${formatVnd(topExpense.insight.currentAmount)} trong tháng này.`
-                : "Thêm giao dịch để MoneyMind đọc xu hướng."
+                : "Thêm giao dịch để thấy xu hướng chi tiêu."
             }
           />
         </div>
@@ -363,8 +363,8 @@ export function CategoryManager({
                 Tạo danh mục mới
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Đặt tên đủ cụ thể để AI nhận diện thói quen, nhưng vẫn dễ nhớ
-                khi nhập giao dịch thủ công.
+                Đặt tên rõ ràng, dễ nhớ để nhập giao dịch nhanh và xem báo cáo
+                dễ hơn.
               </p>
             </div>
             <Badge
@@ -372,7 +372,7 @@ export function CategoryManager({
               className="h-auto w-fit rounded-full border-[#D8E1D7] bg-[#ECF3ED] px-3 py-1 text-xs font-medium text-[#2F6B4F]"
             >
               <AlertTriangle className="size-3.5" />
-              Có giao dịch thì không thể xóa
+              Danh mục đã dùng sẽ được giữ lại
             </Badge>
           </div>
 
@@ -441,8 +441,8 @@ export function CategoryManager({
         title="Tín hiệu danh mục"
         description={
           unusualGrowth
-            ? `${unusualGrowth.category.name} tăng ${unusualGrowth.insight.changePercentage}% so với tháng trước. MoneyMind sẽ ưu tiên theo dõi danh mục này trong phân tích tiếp theo.`
-            : "Chưa có tăng trưởng bất thường. Khi một danh mục tăng mạnh, MoneyMind sẽ đưa nó lên đầu để bạn xử lý sớm."
+            ? `${unusualGrowth.category.name} tăng ${unusualGrowth.insight.changePercentage}% so với tháng trước. MoneyMind sẽ ưu tiên nhắc lại danh mục này trong lần nhận xét tiếp theo.`
+            : "Chưa có danh mục nào tăng mạnh. Khi một nhóm chi tiêu tăng bất thường, MoneyMind sẽ đưa lên đầu để bạn xem sớm."
         }
         className="bg-[#F2F7F1]/95"
       >
@@ -497,7 +497,7 @@ export function CategoryManager({
             <div className="md:col-span-2 xl:col-span-5">
               <EmptyState
                 title="Chưa có dữ liệu chi tiêu tháng này"
-                description="Khi có giao dịch chi tiêu, trang này sẽ hiển thị nhóm danh mục đáng chú ý để bạn chỉnh cách phân loại."
+                description="Khi có giao dịch chi tiêu, trang này sẽ hiển thị các nhóm đáng chú ý để bạn kiểm tra cách phân loại."
               />
             </div>
           ) : null}
@@ -625,7 +625,7 @@ function CategoryGroupCard({
             <div className="p-5">
               <EmptyState
                 title="Chưa có danh mục"
-                description="Tạo danh mục đầu tiên để MoneyMind AI có bối cảnh phân tích chính xác hơn."
+                description="Tạo danh mục đầu tiên để nhập giao dịch và xem báo cáo rõ ràng hơn."
               />
             </div>
           ) : null}

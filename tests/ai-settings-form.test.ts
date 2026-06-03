@@ -84,7 +84,7 @@ describe("AiSettingsForm", () => {
 
     expect(readLocalAiProviderStore().providers).toHaveLength(2);
     expect(container.querySelector("#selectedProvider")).toBeNull();
-    expect(container.textContent).toContain("Danh sách provider");
+    expect(container.textContent).toContain("Cấu hình đã lưu");
     expect(container.textContent).toContain("OpenAI");
     expect(container.textContent).toContain("OpenRouter");
     expect(readLocalAiProviderStore().selectedProviderId).toBe(
@@ -131,7 +131,7 @@ describe("AiSettingsForm", () => {
     });
 
     expect(confirmSpy).not.toHaveBeenCalled();
-    expect(document.body.textContent).toContain("Xóa provider AI?");
+    expect(document.body.textContent).toContain("Xóa cấu hình AI?");
     expect(readLocalAiProviderStore().providers).toHaveLength(2);
 
     await act(async () => {
@@ -170,7 +170,7 @@ describe("AiSettingsForm", () => {
     });
 
     expect(confirmSpy).not.toHaveBeenCalled();
-    expect(document.body.textContent).toContain("Xóa provider AI?");
+    expect(document.body.textContent).toContain("Xóa cấu hình AI?");
 
     await act(async () => {
       document
@@ -194,10 +194,10 @@ describe("AiSettingsForm", () => {
 
     expect(layout.className).toContain("space-y-5");
     expect(topRow.className).toContain("grid");
-    expect(topRow.textContent).toContain("AI chỉ hiệu quả khi dữ liệu rõ ràng");
-    expect(topRow.textContent).toContain("Thêm provider AI");
-    expect(topRow.textContent).not.toContain("Danh sách provider");
-    expect(providerList.textContent).toContain("Danh sách provider");
+    expect(topRow.textContent).toContain("AI cần cấu hình ổn định");
+    expect(topRow.textContent).toContain("Thêm cấu hình AI");
+    expect(topRow.textContent).not.toContain("Cấu hình đã lưu");
+    expect(providerList.textContent).toContain("Cấu hình đã lưu");
   });
 
   it("uses a stable server snapshot before reading localStorage on the client", () => {
@@ -212,7 +212,7 @@ describe("AiSettingsForm", () => {
 
     const markup = renderToString(React.createElement(AiSettingsForm));
 
-    expect(markup).toContain("Chưa có provider");
+    expect(markup).toContain("Chưa có cấu hình AI");
     expect(markup).not.toContain("https://provider.example/v1");
   });
 });
