@@ -172,12 +172,12 @@ export function BudgetManager({
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-4 rounded-2xl border border-[#DCD7CC] bg-[#FDFCF8] p-5 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 rounded-xl border border-[#DCD7CC] bg-[#FFFDF7]/90 p-5 shadow-[0_14px_48px_rgba(47,42,31,0.055)] md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
             {selectedMonth.label}
           </p>
-          <h2 className="mt-1 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1 text-2xl font-bold text-foreground">
             Bảng ngân sách tháng
           </h2>
         </div>
@@ -232,9 +232,9 @@ export function BudgetManager({
         </p>
       ) : null}
 
-      <Card className="gap-0 overflow-hidden rounded-2xl border-[#DCD7CC] bg-[#FDFCF8] py-0 shadow-none">
+      <Card className="gap-0 overflow-hidden rounded-xl border-[#DCD7CC] bg-[#FFFDF7]/92 py-0 shadow-[0_14px_48px_rgba(47,42,31,0.055)]">
         <CardContent className="p-0">
-          <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] gap-3 border-b border-[#E8E1D6] px-4 py-3 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+          <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] gap-3 border-b border-[#E8E1D6] bg-[#F7F3EA] px-4 py-3 text-xs font-semibold tracking-[0.08em] text-muted-foreground">
             <span>Danh mục</span>
             <span>Ngân sách</span>
             <span>Đã chi</span>

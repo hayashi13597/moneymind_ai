@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-roboto);
-    --font-sans: var(--font-roboto);
+    --font-heading: var(--font-be-vietnam);
+    --font-sans: var(--font-be-vietnam);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -53,37 +53,37 @@
 }
 
 :root {
-    --background: #fafaf8;
-    --foreground: #111111;
-    --card: #fffefa;
-    --card-foreground: #111111;
-    --popover: #fffefa;
-    --popover-foreground: #111111;
+    --background: #fbfaf5;
+    --foreground: #16140f;
+    --card: #fffdf7;
+    --card-foreground: #16140f;
+    --popover: #fffdf7;
+    --popover-foreground: #16140f;
     --primary: #2f6b4f;
-    --primary-hover: #285b43;
+    --primary-hover: #25563f;
     --primary-foreground: #ffffff;
-    --surface: #fdfcf8;
-    --warm-border: #dcd7cc;
-    --soft-border: #d8e1d7;
-    --soft-accent: #f3f8f2;
-    --secondary: #f3f0e9;
-    --secondary-foreground: #111111;
-    --muted: #f1eee7;
-    --muted-foreground: #6e6a62;
-    --accent: #e9f1ea;
+    --surface: #f7f3ea;
+    --warm-border: #ded7ca;
+    --soft-border: #cbdacb;
+    --soft-accent: #eef6ee;
+    --secondary: #eee8dc;
+    --secondary-foreground: #1d1a14;
+    --muted: #f0eadf;
+    --muted-foreground: #6b665c;
+    --accent: #e7f0e6;
     --accent-foreground: #234f3b;
     --destructive: oklch(0.577 0.245 27.325);
-    --border: #e1ddd4;
-    --input: #ddd8ce;
+    --border: #e2dbcf;
+    --input: #d9d1c4;
     --ring: #2f6b4f;
     --chart-1: #2f6b4f;
     --chart-2: #6f8f78;
     --chart-3: #9c7f4f;
     --chart-4: #a2482d;
     --chart-5: #6e6a62;
-    --radius: 0.75rem;
-    --sidebar: #f3f0e9;
-    --sidebar-foreground: #111111;
+    --radius: 0.625rem;
+    --sidebar: #f0eadf;
+    --sidebar-foreground: #16140f;
     --sidebar-primary: #2f6b4f;
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: #e9f1ea;
@@ -132,8 +132,39 @@
     }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgb(47 107 79 / 0.08), transparent 28rem),
+      radial-gradient(circle at 86% 2%, rgb(156 127 79 / 0.10), transparent 24rem),
+      linear-gradient(180deg, rgb(255 253 247 / 0.82), rgb(247 243 234 / 0.42));
+    font-feature-settings: "tnum" 1, "ss01" 1;
+    font-variant-numeric: tabular-nums;
     }
   html {
     @apply font-sans;
     }
+  body::before {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    content: "";
+    opacity: 0.42;
+    background-image:
+      linear-gradient(rgb(22 20 15 / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(22 20 15 / 0.028) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(to bottom, black, transparent 72%);
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p,
+  li {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: rgb(47 107 79 / 0.18);
+  }
 }

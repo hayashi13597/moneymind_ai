@@ -252,7 +252,7 @@ export function AiSettingsForm() {
                 return (
                   <Card
                     key={provider.id}
-                    className="gap-0 rounded-xl border-[#E4DED3] bg-[#FDFCF8] py-0 shadow-none"
+                    className="gap-0 rounded-lg border-[#E4DED3] bg-[#FFFDF7]/88 py-0 shadow-[0_10px_30px_rgba(47,42,31,0.045)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(47,42,31,0.065)]"
                   >
                     <CardContent className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="min-w-0 space-y-2">

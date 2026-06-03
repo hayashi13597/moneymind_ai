@@ -28,11 +28,11 @@ export function PageHeader({
   return (
     <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
       <div className="space-y-2">
-        <p className="text-sm font-medium text-muted-foreground">{eyebrow}</p>
-        <h1 className="text-3xl font-semibold tracking-normal text-foreground md:text-4xl">
+        <p className="text-sm font-semibold text-primary">{eyebrow}</p>
+        <h1 className="max-w-3xl text-3xl font-bold leading-tight text-foreground md:text-5xl">
           {title}
         </h1>
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+        <p className="max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
           {description}
         </p>
       </div>
@@ -51,8 +51,8 @@ export function SectionCard({ children, className, muted }: SectionCardProps) {
   return (
     <Card
       className={cn(
-        "gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none",
-        muted && "bg-[#F6F3EC]",
+        "gap-0 rounded-xl border-[#E1DDD4] bg-card/92 py-0 shadow-[0_14px_48px_rgba(47,42,31,0.055)] transition-shadow duration-300 hover:shadow-[0_18px_58px_rgba(47,42,31,0.075)]",
+        muted && "bg-[#F4EFE4]",
         className,
       )}
     >
@@ -75,12 +75,12 @@ export function MetricCard({
   tone = "default",
 }: MetricCardProps) {
   return (
-    <Card className="gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none">
+    <Card className="gap-0 rounded-xl border-[#E1DDD4] bg-card/92 py-0 shadow-[0_12px_36px_rgba(47,42,31,0.045)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_54px_rgba(47,42,31,0.07)]">
       <CardContent className="p-5">
-        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
         <p
           className={cn(
-            "mt-3 text-2xl font-semibold tracking-normal text-foreground",
+            "mt-3 text-2xl font-bold leading-none text-foreground",
             tone === "positive" && "text-[#2F6B4F]",
             tone === "negative" && "text-[#A2482D]",
           )}
@@ -109,13 +109,13 @@ export function InsightCard({
   return (
     <Card
       className={cn(
-        "gap-0 rounded-2xl border-[#D8E1D7] bg-[#F3F8F2] py-0 shadow-none",
+        "gap-0 rounded-xl border-[#C8DCC9] bg-[#EFF7EF]/95 py-0 shadow-[0_16px_54px_rgba(47,107,79,0.08)]",
         className,
       )}
     >
       <CardHeader className="p-5 pb-0 md:p-6 md:pb-0">
         <div className="flex items-start gap-3">
-          <Badge className="h-auto rounded-full bg-[#2F6B4F] p-2 text-white hover:bg-[#2F6B4F]">
+          <Badge className="h-auto rounded-lg bg-[#2F6B4F] p-2 text-white shadow-[0_8px_24px_rgba(47,107,79,0.22)] hover:bg-[#2F6B4F]">
             <Sparkles className="size-4" />
           </Badge>
           <div className="min-w-0">
@@ -141,11 +141,11 @@ type EmptyStateProps = {
 
 export function EmptyState({ title, description, children }: EmptyStateProps) {
   return (
-    <Empty className="rounded-2xl border border-dashed border-[#DCD7CC] bg-[#FDFCF8] p-6 text-center">
+    <Empty className="rounded-xl border border-dashed border-[#DCD7CC] bg-[#FFFDF7]/88 p-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
       <EmptyHeader className="max-w-lg gap-0">
         <EmptyMedia
           variant="icon"
-          className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#ECF3ED] text-[#2F6B4F]"
+          className="mx-auto flex size-10 items-center justify-center rounded-lg bg-[#ECF3ED] text-[#2F6B4F]"
         >
           <Bot className="size-5" />
         </EmptyMedia>

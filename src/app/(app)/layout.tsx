@@ -27,14 +27,14 @@ export default async function AppLayout({
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-[#E1DDD4] bg-[#FAFAF8]/95 backdrop-blur">
+    <div className="min-h-screen bg-transparent text-foreground">
+      <header className="sticky top-0 z-30 border-b border-[#DED7CA]/85 bg-[#FBFAF5]/88 backdrop-blur-xl">
         <div className="mx-auto flex min-h-16 w-full max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:py-0">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm font-semibold"
+            className="inline-flex items-center gap-2 text-sm font-bold"
           >
-            <span className="rounded-full bg-[#2F6B4F] p-1.5 text-white">
+            <span className="rounded-lg bg-[#2F6B4F] p-1.5 text-white shadow-[0_8px_20px_rgba(47,107,79,0.22)]">
               <Bot className="size-3.5" />
             </span>
             MoneyMind AI
