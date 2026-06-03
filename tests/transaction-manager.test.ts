@@ -25,8 +25,26 @@ jest.mock("next/navigation", () => ({
 
 const pushMock = jest.fn();
 
+function setInputValue(input: HTMLInputElement, value: string) {
+  const valueSetter = Object.getOwnPropertyDescriptor(input, "value")?.set;
+  const prototypeValueSetter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  )?.set;
+
+  if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+    prototypeValueSetter.call(input, value);
+  } else {
+    valueSetter?.call(input, value);
+  }
+
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
 const categories = [
   { id: "cat_income", name: "Thu nhập", type: "income" as const },
+  { id: "cat_bonus", name: "Thưởng", type: "income" as const },
+  { id: "cat_food", name: "Ăn uống", type: "expense" as const },
 ];
 
 const selectedMonth = {
@@ -264,6 +282,88 @@ describe("TransactionManager", () => {
 
     expect(fetchSpy).toHaveBeenCalledWith("/api/transactions/tx_income", {
       method: "DELETE",
+    });
+  });
+
+  it("edits a transaction with the same fields as the create form", async () => {
+    const promptSpy = jest.spyOn(window, "prompt");
+    const fetchSpy = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          transactions: [],
+          pagination: {
+            total: 0,
+            page: 1,
+            pageSize: 5,
+          },
+        }),
+      });
+    globalThis.fetch = fetchSpy;
+
+    act(() => {
+      root.render(
+        React.createElement(TransactionManager, {
+          initialTransactions: [incomeTransaction],
+          categories,
+          selectedMonth,
+          pagination: {
+            total: 1,
+            page: 1,
+            pageSize: 5,
+          },
+        }),
+      );
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Sửa giao dịch Lương tháng này"]',
+        )
+        ?.click();
+    });
+
+    expect(promptSpy).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("Sửa giao dịch");
+
+    await act(async () => {
+      const amountInput = document.querySelector<HTMLInputElement>(
+        '[role="dialog"] input[name="amount"]',
+      );
+      setInputValue(amountInput!, "120k");
+
+      const noteInput = document.querySelector<HTMLInputElement>(
+        '[role="dialog"] input[name="note"]',
+      );
+      setInputValue(noteInput!, "Lương và thưởng");
+
+      const merchantInput = document.querySelector<HTMLInputElement>(
+        '[role="dialog"] input[name="merchant"]',
+      );
+      setInputValue(merchantInput!, "Công ty");
+    });
+
+    await act(async () => {
+      document
+        .querySelector<HTMLButtonElement>('[aria-label="Lưu giao dịch đã sửa"]')
+        ?.click();
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith("/api/transactions/tx_income", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "income",
+        amount: "120k",
+        categoryId: "cat_income",
+        note: "Lương và thưởng",
+        merchant: "Công ty",
+        rawInput: "Thêm thu nhập lương tháng này 55k",
+        transactionDate: "2026-05-27",
+      }),
     });
   });
 });

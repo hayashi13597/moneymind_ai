@@ -13,10 +13,14 @@ import {
 import { cn } from "@/lib/utils";
 
 type FormDatePickerProps = {
+  id?: string;
   name?: string;
   value: string;
   onValueChange: (value: string) => void;
+  onBlur?: () => void;
   "aria-label": string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
   placeholder?: string;
   required?: boolean;
   className?: string;
@@ -60,10 +64,14 @@ function formatDate(date: Date | undefined) {
 }
 
 export function FormDatePicker({
+  id,
   name,
   value,
   onValueChange,
+  onBlur,
   "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
   placeholder = "Chọn ngày",
   required = false,
   className,
@@ -82,12 +90,16 @@ export function FormDatePicker({
         <PopoverTrigger asChild>
           <Button
             type="button"
+            id={id}
             variant="outline"
             aria-label={ariaLabel}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={ariaInvalid}
             aria-required={required || undefined}
+            onBlur={onBlur}
             data-empty={!date}
             className={cn(
-              "h-10 w-full justify-between rounded-xl border-warm-border bg-surface px-3 font-normal hover:bg-surface data-[empty=true]:text-muted-foreground",
+              "h-11 w-full justify-between rounded-xl border-warm-border bg-surface px-3 font-normal hover:bg-surface data-[empty=true]:text-muted-foreground",
               className,
             )}
           >

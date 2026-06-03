@@ -5,18 +5,24 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Pencil,
   Search,
   Sparkles,
   WalletCards,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { EmptyState, InsightCard, MetricCard } from "@/components/app-ui";
 import { FormCombobox } from "@/components/form-combobox";
-import { FormDatePicker } from "@/components/form-date-picker";
 import { FormMonthPicker } from "@/components/form-month-picker";
+import {
+  RhfComboboxControl,
+  RhfDatePickerControl,
+} from "@/components/form-rhf-controls";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,10 +34,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
 import type { DashboardMonth } from "@/features/dashboard/month";
 import { formatVnd } from "@/lib/money";
+import { createZodResolver } from "@/lib/zod-form";
 
 type Category = {
   id: string;
@@ -63,6 +82,17 @@ type TransactionPagination = {
   pageSize: number;
 };
 
+type EditingTransaction = {
+  id: string;
+  type: "income" | "expense";
+  amount: string;
+  categoryId: string;
+  note: string;
+  merchant: string;
+  rawInput: string;
+  transactionDate: string;
+};
+
 async function readJsonError(response: Response) {
   const payload = (await response.json().catch(() => null)) as {
     error?: string;
@@ -72,6 +102,24 @@ async function readJsonError(response: Response) {
 }
 
 const NETWORK_ERROR_MESSAGE = "Không thể kết nối máy chủ.";
+const FIELD_CLASS_NAME = "space-y-2 text-sm font-medium";
+const CONTROL_CLASS_NAME =
+  "h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15";
+const DIALOG_CONTROL_CLASS_NAME =
+  "h-11 w-full rounded-xl border border-[#DCD7CC] bg-white px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15";
+const transactionFormSchema = z.object({
+  type: z.enum(["income", "expense"]),
+  amount: z.string().trim().min(1, "Số tiền là bắt buộc."),
+  categoryId: z.string().trim().min(1, "Danh mục là bắt buộc."),
+  transactionDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày không hợp lệ."),
+  note: z.string().trim().min(1, "Ghi chú là bắt buộc."),
+  merchant: z.string(),
+  rawInput: z.string(),
+});
+
+type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 const transactionTypeOptions = [
   { value: "expense", label: "Chi tiêu" },
@@ -106,6 +154,10 @@ function getMonthKeyFromDate(date: Date) {
 
 function getMonthKeyFromDateInput(value: string) {
   return value.slice(0, 7);
+}
+
+function getDateInputFromTransaction(value: string) {
+  return value.slice(0, 10);
 }
 
 function getDefaultTransactionDate(selectedMonthKey: string) {
@@ -171,35 +223,36 @@ export function TransactionManager({
     paginationState.sourceKey === initialPaginationKey
       ? paginationState.pagination
       : initialPagination;
-  const [type, setType] = useState<"income" | "expense">("expense");
-  const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [transactionDateState, setTransactionDateState] = useState({
-    sourceMonthKey: selectedMonth.key,
-    value: getDefaultTransactionDate(selectedMonth.key),
+  const createForm = useForm<TransactionFormValues>({
+    resolver: createZodResolver(transactionFormSchema),
+    defaultValues: {
+      type: "expense",
+      amount: "",
+      categoryId:
+        categories.find((category) => !category.type || category.type === "expense")
+          ?.id ?? "",
+      transactionDate: getDefaultTransactionDate(selectedMonth.key),
+      note: "",
+      merchant: "",
+      rawInput: "",
+    },
   });
-  const transactionDate =
-    transactionDateState.sourceMonthKey === selectedMonth.key
-      ? transactionDateState.value
-      : getDefaultTransactionDate(selectedMonth.key);
-  const [note, setNote] = useState("");
-  const [merchant, setMerchant] = useState("");
-  const [rawInput, setRawInput] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [aiPending, setAiPending] = useState(false);
+  const [editingTransaction, setEditingTransaction] =
+    useState<EditingTransaction | null>(null);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
     "all",
   );
   const [categoryFilter, setCategoryFilter] = useState("all");
-
-  function setTransactionDate(value: string) {
-    setTransactionDateState({
-      sourceMonthKey: selectedMonth.key,
-      value,
-    });
-  }
+  const type = useWatch({ control: createForm.control, name: "type" });
+  const categoryId = useWatch({
+    control: createForm.control,
+    name: "categoryId",
+  });
+  const rawInput = useWatch({ control: createForm.control, name: "rawInput" });
 
   const matchingCategories = useMemo(
     () =>
@@ -207,6 +260,21 @@ export function TransactionManager({
     [categories, type],
   );
   const selectedCategoryId = categoryId || matchingCategories[0]?.id || "";
+
+  useEffect(() => {
+    const currentValues = createForm.getValues();
+
+    if (
+      getMonthKeyFromDateInput(currentValues.transactionDate) !==
+      selectedMonth.key
+    ) {
+      createForm.setValue(
+        "transactionDate",
+        getDefaultTransactionDate(selectedMonth.key),
+      );
+    }
+  }, [createForm, selectedMonth.key]);
+
   const summary = useMemo(() => {
     const income = transactions
       .filter((transaction) => transaction.type === "income")
@@ -341,7 +409,7 @@ export function TransactionManager({
     }
   }
 
-  async function createTransaction() {
+  async function createTransaction(values: TransactionFormValues) {
     setPending(true);
     setError("");
 
@@ -350,13 +418,13 @@ export function TransactionManager({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type,
-          amount,
+          type: values.type,
+          amount: values.amount,
           categoryId: selectedCategoryId,
-          note,
-          merchant,
-          rawInput,
-          transactionDate,
+          note: values.note,
+          merchant: values.merchant,
+          rawInput: values.rawInput,
+          transactionDate: values.transactionDate,
         }),
       });
 
@@ -367,13 +435,19 @@ export function TransactionManager({
         return;
       }
 
-      setAmount("");
-      setCategoryId("");
-      const transactionMonth = getMonthKeyFromDateInput(transactionDate);
-      setTransactionDate(getDefaultTransactionDate(selectedMonth.key));
-      setNote("");
-      setMerchant("");
-      setRawInput("");
+      const transactionMonth = getMonthKeyFromDateInput(values.transactionDate);
+      const nextCategoryId =
+        categories.find((category) => !category.type || category.type === values.type)
+          ?.id ?? "";
+      createForm.reset({
+        type: values.type,
+        amount: "",
+        categoryId: nextCategoryId,
+        transactionDate: getDefaultTransactionDate(selectedMonth.key),
+        note: "",
+        merchant: "",
+        rawInput: "",
+      });
       if (transactionMonth !== selectedMonth.key) {
         openMonth(transactionMonth);
         toast.success("Đã thêm giao dịch.");
@@ -437,13 +511,15 @@ export function TransactionManager({
         };
       };
 
-      setType(payload.draft.type);
-      setAmount(String(payload.draft.amount));
-      setCategoryId(payload.draft.categoryId);
-      setNote(payload.draft.note);
-      setMerchant(payload.draft.merchant ?? "");
-      setRawInput(payload.draft.rawInput);
-      setTransactionDate(payload.draft.transactionDate);
+      createForm.reset({
+        type: payload.draft.type,
+        amount: String(payload.draft.amount),
+        categoryId: payload.draft.categoryId,
+        note: payload.draft.note,
+        merchant: payload.draft.merchant ?? "",
+        rawInput: payload.draft.rawInput,
+        transactionDate: payload.draft.transactionDate,
+      });
       toast.success("AI đã phân tích giao dịch.");
     } catch {
       setError(NETWORK_ERROR_MESSAGE);
@@ -453,28 +529,44 @@ export function TransactionManager({
     }
   }
 
-  async function editTransaction(transaction: Transaction) {
-    const nextNote = window.prompt("Ghi chú", transaction.note);
+  function openEditTransaction(transaction: Transaction) {
+    setEditingTransaction({
+      id: transaction.id,
+      type: transaction.type,
+      amount: String(transaction.amount),
+      categoryId: transaction.category.id,
+      note: transaction.note,
+      merchant: transaction.merchant ?? "",
+      rawInput: transaction.rawInput ?? "",
+      transactionDate: getDateInputFromTransaction(transaction.transactionDate),
+    });
+    setError("");
+  }
 
-    if (!nextNote) {
+  async function updateEditingTransaction(values: TransactionFormValues) {
+    if (!editingTransaction) {
       return;
     }
 
-    const nextAmount = window.prompt("Số tiền", String(transaction.amount));
+    const transactionMonth = getMonthKeyFromDateInput(
+      values.transactionDate,
+    );
 
-    if (!nextAmount) {
-      return;
-    }
-
+    setPending(true);
     setError("");
 
     try {
-      const response = await fetch(`/api/transactions/${transaction.id}`, {
+      const response = await fetch(`/api/transactions/${editingTransaction.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          note: nextNote,
-          amount: nextAmount,
+          type: values.type,
+          amount: values.amount,
+          categoryId: values.categoryId,
+          note: values.note,
+          merchant: values.merchant,
+          rawInput: values.rawInput,
+          transactionDate: values.transactionDate,
         }),
       });
 
@@ -485,12 +577,21 @@ export function TransactionManager({
         return;
       }
 
+      setEditingTransaction(null);
+      if (transactionMonth !== selectedMonth.key) {
+        openMonth(transactionMonth);
+        toast.success("Đã cập nhật giao dịch.");
+        return;
+      }
+
       if (await refreshTransactions()) {
         toast.success("Đã cập nhật giao dịch.");
       }
     } catch {
       setError(NETWORK_ERROR_MESSAGE);
       toast.error(NETWORK_ERROR_MESSAGE);
+    } finally {
+      setPending(false);
     }
   }
 
@@ -556,34 +657,42 @@ export function TransactionManager({
           title="Thêm giao dịch nhanh"
           description="Nhập mô tả tự nhiên như 'ăn trưa 55k hôm nay'. MoneyMind AI sẽ điền số tiền, ngày và danh mục để bạn kiểm tra trước khi lưu."
         >
-          <form id="transaction-form" action={createTransaction} className="space-y-5">
+          <Form {...createForm}>
+          <form
+            id="transaction-form"
+            onSubmit={createForm.handleSubmit(createTransaction)}
+            className="space-y-5"
+          >
             <div className="rounded-2xl border border-[#D8E1D7] bg-white/70 p-4">
-              <label
-                className="text-sm font-medium text-foreground"
-                htmlFor="rawInput"
-              >
-                Mô tả nhanh cho AI
-              </label>
-              <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
-                <input
-                  id="rawInput"
-                  name="rawInput"
-                  value={rawInput}
-                  onChange={(event) => setRawInput(event.target.value)}
-                  placeholder="Ví dụ: cà phê Highlands 45k sáng nay"
-                  className="h-11 rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={parseRawInput}
-                  disabled={aiPending}
-                  className="h-11 border-[#D8E1D7] bg-white"
-                >
-                  <Sparkles className="size-4" />
-                  {aiPending ? "Đang đọc" : "AI điền giúp"}
-                </Button>
-              </div>
+              <FormField
+                control={createForm.control}
+                name="rawInput"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mô tả nhanh cho AI</FormLabel>
+                    <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Ví dụ: cà phê Highlands 45k sáng nay"
+                          className="h-11 rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={parseRawInput}
+                        disabled={aiPending}
+                        className="h-11 border-[#D8E1D7] bg-white"
+                      >
+                        <Sparkles className="size-4" />
+                        {aiPending ? "Đang đọc" : "AI điền giúp"}
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <p className="mt-2 text-xs leading-5 text-muted-foreground">
                 AI chỉ chuẩn bị bản nháp. Bạn vẫn kiểm soát danh mục, số tiền và
                 ngày trước khi lưu.
@@ -591,76 +700,128 @@ export function TransactionManager({
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium">
-                <span>Loại giao dịch</span>
-                <FormCombobox
-                  name="type"
-                  value={type}
-                  options={transactionTypeOptions}
-                  onValueChange={(nextType) => {
-                    setType(nextType as typeof type);
-                    setCategoryId("");
-                  }}
-                  aria-label="Loại giao dịch"
-                  required
-                />
-              </label>
-              <label className="space-y-2 text-sm font-medium">
-                <span>Số tiền</span>
-                <input
-                  name="amount"
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                  placeholder="55k hoặc 1tr2"
-                  className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-                  required
-                />
-              </label>
-              <label className="space-y-2 text-sm font-medium">
-                <span>Danh mục</span>
-                <FormCombobox
-                  name="categoryId"
-                  value={selectedCategoryId}
-                  options={matchingCategories.map((category) => ({
-                    value: category.id,
-                    label: category.name,
-                  }))}
-                  onValueChange={setCategoryId}
-                  aria-label="Danh mục"
-                  required
-                />
-              </label>
-              <label className="space-y-2 text-sm font-medium">
-                <span>Ngày</span>
-                <FormDatePicker
-                  name="transactionDate"
-                  value={transactionDate}
-                  onValueChange={setTransactionDate}
-                  aria-label="Chọn ngày giao dịch"
-                  required
-                />
-              </label>
-              <label className="space-y-2 text-sm font-medium sm:col-span-2">
-                <span>Ghi chú</span>
-                <input
-                  name="note"
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder="Ví dụ: Ăn trưa với đồng nghiệp"
-                  className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-                  required
-                />
-              </label>
-              <label className="space-y-2 text-sm font-medium sm:col-span-2">
-                <span>Người bán</span>
-                <input
-                  name="merchant"
-                  value={merchant}
-                  onChange={(event) => setMerchant(event.target.value)}
-                  placeholder="Tùy chọn"
-                  className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-                />
-              </label>
+              <FormField
+                control={createForm.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Loại giao dịch</FormLabel>
+                    <RhfComboboxControl
+                      name={field.name}
+                      value={field.value}
+                      options={transactionTypeOptions}
+                      onValueChange={(nextType) => {
+                        field.onChange(nextType);
+                        const nextCategory = categories.find(
+                          (category) =>
+                            !category.type || category.type === nextType,
+                        );
+                        createForm.setValue("categoryId", nextCategory?.id ?? "", {
+                          shouldValidate: true,
+                        });
+                      }}
+                      onBlur={field.onBlur}
+                      aria-label="Loại giao dịch"
+                      className="h-11"
+                      required
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={createForm.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Số tiền</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="55k hoặc 1tr2"
+                        className={CONTROL_CLASS_NAME}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={createForm.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Danh mục</FormLabel>
+                    <RhfComboboxControl
+                      name={field.name}
+                      value={selectedCategoryId}
+                      options={matchingCategories.map((category) => ({
+                        value: category.id,
+                        label: category.name,
+                      }))}
+                      onValueChange={field.onChange}
+                      onBlur={field.onBlur}
+                      aria-label="Danh mục"
+                      className="h-11"
+                      required
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={createForm.control}
+                name="transactionDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ngày</FormLabel>
+                    <RhfDatePickerControl
+                      name={field.name}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onBlur={field.onBlur}
+                      aria-label="Chọn ngày giao dịch"
+                      className="h-11"
+                      required
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={createForm.control}
+                name="note"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Ghi chú</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Ví dụ: Ăn trưa với đồng nghiệp"
+                        className={CONTROL_CLASS_NAME}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={createForm.control}
+                name="merchant"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Người bán</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Tùy chọn"
+                        className={CONTROL_CLASS_NAME}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {error ? (
@@ -678,66 +839,68 @@ export function TransactionManager({
               {pending ? "Đang lưu..." : "Lưu giao dịch"}
             </Button>
           </form>
+          </Form>
         </InsightCard>
 
-        <section className="rounded-2xl border border-[#E1DDD4] bg-card p-5 md:p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">Activity feed tài chính</h2>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Đang xem {selectedMonth.label.toLowerCase()}. Chọn tháng và
-                năm khác để đổi activity feed.
-              </p>
-            </div>
-            <div
-              aria-label="Điều hướng tháng giao dịch"
-              className="grid w-full max-w-[320px] grid-cols-[40px_minmax(0,1fr)_40px] items-center md:w-[320px]"
-            >
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label="Xem tháng trước"
-                onClick={() => openMonth(selectedMonth.previousKey)}
-                className="size-10 rounded-r-none border-[#DDD8CE]"
+        <Card className="gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none">
+          <CardContent className="p-5 md:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Activity feed tài chính</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Đang xem {selectedMonth.label.toLowerCase()}. Chọn tháng và
+                  năm khác để đổi activity feed.
+                </p>
+              </div>
+              <div
+                aria-label="Điều hướng tháng giao dịch"
+                className="grid w-full max-w-[320px] grid-cols-[40px_minmax(0,1fr)_40px] items-center md:w-[320px]"
               >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <FormMonthPicker
-                value={selectedMonth.key}
-                onValueChange={openMonth}
-                aria-label="Chọn tháng giao dịch"
-                className="rounded-none border-x-0 border-[#D8E1D7] bg-white"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label="Xem tháng sau"
-                onClick={() => openMonth(selectedMonth.nextKey)}
-                className="size-10 rounded-l-none border-[#DDD8CE]"
-              >
-                <ChevronRight className="size-4" />
-              </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="Xem tháng trước"
+                  onClick={() => openMonth(selectedMonth.previousKey)}
+                  className="size-10 rounded-r-none border-[#DDD8CE]"
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <FormMonthPicker
+                  value={selectedMonth.key}
+                  onValueChange={openMonth}
+                  aria-label="Chọn tháng giao dịch"
+                  className="rounded-none border-x-0 border-[#D8E1D7] bg-white"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="Xem tháng sau"
+                  onClick={() => openMonth(selectedMonth.nextKey)}
+                  className="size-10 rounded-l-none border-[#DDD8CE]"
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
             </div>
-          </div>
 
-          <div
-            className="mt-5 grid gap-2 lg:grid-cols-[1fr_140px_180px]"
-            suppressHydrationWarning
-          >
-            <label className="relative">
+            <div
+              className="mt-5 grid gap-2 lg:grid-cols-[1fr_140px_180px]"
+              suppressHydrationWarning
+            >
+            <Label className={`${FIELD_CLASS_NAME} relative`}>
               <span className="sr-only">Tìm giao dịch</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <input
+              <Input
                 value={query}
                 onChange={(event) => {
                   setQuery(event.target.value);
                 }}
                 placeholder="Tìm ghi chú, người bán, danh mục..."
-                className="h-10 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] pl-9 pr-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                className="h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] pl-9 pr-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
               />
-            </label>
+            </Label>
             <FormCombobox
               value={typeFilter}
               options={transactionTypeFilterOptions}
@@ -760,26 +923,27 @@ export function TransactionManager({
               }}
               aria-label="Lọc theo danh mục"
             />
-          </div>
+            </div>
 
-          <div className="mt-5 divide-y divide-[#E8E4DC]">
-            {visibleTransactions.map((transaction) => (
-              <article
-                key={transaction.id}
-                className="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto] sm:items-center"
-              >
+            <div className="mt-5 divide-y divide-[#E8E4DC]">
+              {visibleTransactions.map((transaction) => (
+                <article
+                  key={transaction.id}
+                  className="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto] sm:items-center"
+                >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-semibold">
                       {transaction.note}
                     </p>
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${categoryTone(
+                    <Badge
+                      variant="outline"
+                      className={`h-auto rounded-full px-2 py-0.5 text-xs font-medium ${categoryTone(
                         transaction.type,
                       )}`}
                     >
                       {transaction.category.name}
-                    </span>
+                    </Badge>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
@@ -818,9 +982,11 @@ export function TransactionManager({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => editTransaction(transaction)}
+                      aria-label={`Sửa giao dịch ${transaction.note}`}
+                      onClick={() => openEditTransaction(transaction)}
                       className="border-[#DDD8CE]"
                     >
+                      <Pencil className="size-4" />
                       Sửa
                     </Button>
                     <AlertDialog>
@@ -860,12 +1026,12 @@ export function TransactionManager({
                     </AlertDialog>
                   </div>
                 </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
 
-          {serverPagination.total > 0 ? (
-            <div className="mt-5 flex flex-col gap-3 border-t border-[#E8E4DC] pt-4 sm:flex-row sm:items-center sm:justify-between">
+            {serverPagination.total > 0 ? (
+              <div className="mt-5 flex flex-col gap-3 border-t border-[#E8E4DC] pt-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
                 {visibleStart}-{visibleEnd} / {serverPagination.total} giao
                 dịch
@@ -904,25 +1070,277 @@ export function TransactionManager({
                   </Button>
                 </div>
               </div>
-            </div>
-          ) : null}
+              </div>
+            ) : null}
 
-          {transactions.length === 0 ? (
-            <div className="mt-5">
-              <EmptyState
-                title="Chưa có giao dịch."
-                description="Bắt đầu bằng cách thêm giao dịch đầu tiên. MoneyMind AI sẽ học thói quen chi tiêu của bạn."
-              />
-            </div>
-          ) : null}
+            {transactions.length === 0 ? (
+              <div className="mt-5">
+                <EmptyState
+                  title="Chưa có giao dịch."
+                  description="Bắt đầu bằng cách thêm giao dịch đầu tiên. MoneyMind AI sẽ học thói quen chi tiêu của bạn."
+                />
+              </div>
+            ) : null}
 
-          {transactions.length > 0 && filteredTransactions.length === 0 ? (
-            <p className="mt-5 rounded-xl border border-dashed border-[#DCD7CC] p-4 text-sm text-muted-foreground">
-              Không tìm thấy giao dịch phù hợp với bộ lọc hiện tại.
-            </p>
-          ) : null}
-        </section>
+            {transactions.length > 0 && filteredTransactions.length === 0 ? (
+              <p className="mt-5 rounded-xl border border-dashed border-[#DCD7CC] p-4 text-sm text-muted-foreground">
+                Không tìm thấy giao dịch phù hợp với bộ lọc hiện tại.
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
       </div>
+
+      {editingTransaction ? (
+        <TransactionEditDialog
+          key={editingTransaction.id}
+          transaction={editingTransaction}
+          categories={categories}
+          pending={pending}
+          onClose={() => setEditingTransaction(null)}
+          onSubmit={updateEditingTransaction}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function TransactionEditDialog({
+  transaction,
+  categories,
+  pending,
+  onClose,
+  onSubmit,
+}: {
+  transaction: EditingTransaction;
+  categories: Category[];
+  pending: boolean;
+  onClose: () => void;
+  onSubmit: (values: TransactionFormValues) => void;
+}) {
+  const matchingDefaultCategories = categories.filter(
+    (category) => !category.type || category.type === transaction.type,
+  );
+  const form = useForm<TransactionFormValues>({
+    resolver: createZodResolver(transactionFormSchema),
+    defaultValues: {
+      type: transaction.type,
+      amount: transaction.amount,
+      categoryId: matchingDefaultCategories.some(
+        (category) => category.id === transaction.categoryId,
+      )
+        ? transaction.categoryId
+        : (matchingDefaultCategories[0]?.id ?? ""),
+      note: transaction.note,
+      merchant: transaction.merchant,
+      rawInput: transaction.rawInput,
+      transactionDate: transaction.transactionDate,
+    },
+  });
+  const type = useWatch({ control: form.control, name: "type" });
+  const categoryId = useWatch({ control: form.control, name: "categoryId" });
+  const matchingCategories = useMemo(
+    () =>
+      categories.filter((category) => !category.type || category.type === type),
+    [categories, type],
+  );
+  const selectedCategoryId =
+    matchingCategories.some((category) => category.id === categoryId)
+      ? categoryId
+      : matchingCategories[0]?.id || "";
+
+  return (
+    <div
+      aria-modal="true"
+      aria-labelledby="transaction-edit-dialog-title"
+      role="dialog"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          onClose();
+        }
+      }}
+    >
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit((values) =>
+            onSubmit({ ...values, categoryId: selectedCategoryId }),
+          )}
+          className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#DCD7CC] bg-[#FDFCF8] p-5 shadow-[0_24px_80px_rgba(47,42,31,0.18)]"
+        >
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Cập nhật đầy đủ thông tin giao dịch
+            </p>
+            <h3
+              id="transaction-edit-dialog-title"
+              className="mt-1 text-xl font-semibold text-foreground"
+            >
+              Sửa giao dịch
+            </h3>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Loại giao dịch</FormLabel>
+                  <RhfComboboxControl
+                    name={field.name}
+                    value={field.value}
+                    options={transactionTypeOptions}
+                    onValueChange={(nextType) => {
+                      field.onChange(nextType);
+                      const nextCategory = categories.find(
+                        (category) => !category.type || category.type === nextType,
+                      );
+                      form.setValue("categoryId", nextCategory?.id ?? "", {
+                        shouldValidate: true,
+                      });
+                    }}
+                    onBlur={field.onBlur}
+                    aria-label="Loại giao dịch đang sửa"
+                    className="h-11"
+                    required
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Số tiền</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="55k hoặc 1tr2"
+                      className={DIALOG_CONTROL_CLASS_NAME}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Danh mục</FormLabel>
+                  <RhfComboboxControl
+                    name={field.name}
+                    value={selectedCategoryId}
+                    options={matchingCategories.map((category) => ({
+                      value: category.id,
+                      label: category.name,
+                    }))}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    aria-label="Danh mục đang sửa"
+                    className="h-11"
+                    required
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="transactionDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ngày</FormLabel>
+                  <RhfDatePickerControl
+                    name={field.name}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    aria-label="Ngày giao dịch đang sửa"
+                    className="h-11"
+                    required
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="note"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-2">
+                  <FormLabel>Ghi chú</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ví dụ: Ăn trưa với đồng nghiệp"
+                      className={DIALOG_CONTROL_CLASS_NAME}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="merchant"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-2">
+                  <FormLabel>Người bán</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Tùy chọn"
+                      className={DIALOG_CONTROL_CLASS_NAME}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="rawInput"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-2">
+                  <FormLabel>Mô tả AI</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Tùy chọn"
+                      className={DIALOG_CONTROL_CLASS_NAME}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="mt-5 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#DDD8CE]"
+              onClick={onClose}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              aria-label="Lưu giao dịch đã sửa"
+              disabled={pending}
+              className="bg-[#2F6B4F] hover:bg-[#285B43]"
+            >
+              Lưu giao dịch
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }
