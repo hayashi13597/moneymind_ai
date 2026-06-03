@@ -16,12 +16,12 @@ export default function PublicHomePage() {
           </Link>
           <div className="space-y-5">
             <h1 className="max-w-3xl text-5xl font-semibold tracking-normal sm:text-6xl">
-              Huấn luyện viên tài chính AI cho chi tiêu hàng ngày.
+              Quản lý thu chi VND với dashboard và AI hỗ trợ.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Ghi lại giao dịch, hiểu thói quen chi tiêu và hỏi AI trước các
-              quyết định tài chính. Bình tĩnh, rõ ràng, dành cho tiền cá nhân
-              bằng VND.
+              Ghi giao dịch thủ công hoặc nhờ AI đọc mô tả nhanh như
+              &quot;ăn trưa 55k&quot;, duyệt lại trước khi lưu, rồi xem tổng quan
+              thu chi theo từng tháng.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -41,15 +41,15 @@ export default function PublicHomePage() {
           <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
             <p className="flex items-start gap-2">
               <BadgeCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-              Nhập nhanh bằng ngôn ngữ tự nhiên.
+              Nhập thu chi thủ công hoặc bằng mô tả tự nhiên.
             </p>
             <p className="flex items-start gap-2">
               <BadgeCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-              Dashboard tháng đọc được ngay.
+              Dashboard tháng có thu nhập, chi tiêu và so sánh.
             </p>
             <p className="flex items-start gap-2">
               <BadgeCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-              Chat AI theo dữ liệu của bạn.
+              AI tạo insight, chat và nháp giao dịch để bạn duyệt.
             </p>
           </div>
         </div>
@@ -63,21 +63,21 @@ export default function PublicHomePage() {
               <div>
                 <p className="text-sm font-semibold">MoneyMind Coach</p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  “Tháng này tôi đã chi quá tay ở đâu?”
+                  “Tháng này tôi tiêu nhiều nhất vào đâu?”
                 </p>
               </div>
             </div>
             <div className="mt-5 rounded-2xl border border-soft-border bg-white/80 p-4 text-sm leading-6">
-              Chi tiêu ăn uống đang tăng nhanh hơn tháng trước. Nếu muốn giữ tỷ
-              lệ tiết kiệm ổn định, hãy đặt giới hạn tuần cho food delivery và
-              kiểm tra lại các khoản lặp lại.
+              MoneyMind dùng giao dịch trong tháng để tóm tắt dòng tiền, chỉ ra
+              danh mục nổi bật và gợi ý bước tiếp theo. Kết quả AI luôn để bạn
+              kiểm tra trước khi lưu giao dịch mới.
             </div>
           </div>
           <div className="mt-5 grid gap-3">
             {[
-              ["Dòng tiền tháng", "Tóm tắt ròng và xu hướng"],
-              ["Danh mục cần chú ý", "Nổi bật khi tăng bất thường"],
-              ["Giao dịch AI phân loại", "Có nhãn để bạn kiểm tra lại"],
+              ["Dòng tiền tháng", "Thu nhập, chi tiêu, số dư"],
+              ["Danh mục", "Tạo, sửa, xóa và theo dõi biến động"],
+              ["AI giao dịch", "Điền nháp để bạn kiểm tra rồi lưu"],
             ].map(([label, value]) => (
               <div
                 key={label}

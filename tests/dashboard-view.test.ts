@@ -42,6 +42,17 @@ function makeDashboard(monthKey: string): MonthlyDashboard {
   };
 }
 
+const emptyBudgetSummary = {
+  rows: [],
+  items: [],
+  summary: {
+    totalBudget: 0,
+    totalSpent: 0,
+    remaining: 0,
+    overAmount: 0,
+  },
+};
+
 function renderDashboard({
   root,
   monthKey,
@@ -57,6 +68,7 @@ function renderDashboard({
         dashboard: makeDashboard(monthKey),
         initialInsight,
         userName: "Hayashi",
+        budgetSummary: emptyBudgetSummary,
       }),
     );
   });

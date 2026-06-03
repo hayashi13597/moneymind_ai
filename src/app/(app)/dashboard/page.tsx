@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { getCachedMonthlyInsight } from "@/features/ai/monthly-insight";
+import { listDashboardBudgetSummary } from "@/features/budgets/service";
 import { DashboardView } from "@/features/dashboard/dashboard-view";
 import {
   getSelectedMonth,
@@ -29,9 +30,10 @@ export default async function DashboardPage({
 
   const userTimeZone = (await cookies()).get(USER_TIME_ZONE_COOKIE)?.value;
   const selectedMonth = getSelectedMonth(month, undefined, userTimeZone);
-  const [dashboard, initialInsight] = await Promise.all([
+  const [dashboard, initialInsight, budgetSummary] = await Promise.all([
     getMonthlyDashboard(session.user.id, selectedMonth),
     getCachedMonthlyInsight(session.user.id, selectedMonth.key),
+    listDashboardBudgetSummary(session.user.id, selectedMonth.key),
   ]);
   const userName =
     session.user.name?.trim() || session.user.email?.split("@")[0] || "Lâm";
@@ -41,6 +43,7 @@ export default async function DashboardPage({
       dashboard={dashboard}
       initialInsight={initialInsight}
       userName={userName}
+      budgetSummary={budgetSummary}
     />
   );
 }
