@@ -7,7 +7,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import type { MonthlyInsightDto } from "@/features/ai/monthly-insight";
 import { MonthlyInsightPanel } from "@/features/ai/monthly-insight-panel";
 import type { DashboardBudgetSummary } from "@/features/budgets/service";
@@ -218,9 +220,12 @@ export function DashboardView({
               <span className="sr-only md:not-sr-only">Tháng trước</span>
             </Link>
           </Button>
-          <span className="rounded-full border border-[#DDD8CE] bg-[#F3F0E9] px-4 py-2 text-sm font-medium text-foreground">
+          <Badge
+            variant="outline"
+            className="h-auto rounded-full border-[#DDD8CE] bg-[#F3F0E9] px-4 py-2 text-sm font-medium text-foreground"
+          >
             {dashboard.month.key}
-          </span>
+          </Badge>
           <Button asChild variant="outline" className="border-[#DDD8CE]">
             <Link href={`/dashboard?month=${dashboard.month.nextKey}`}>
               <span className="sr-only md:not-sr-only">Tháng sau</span>
@@ -230,14 +235,17 @@ export function DashboardView({
         </nav>
       </header>
 
-      <section className="overflow-hidden rounded-2xl border border-[#DCD7CC] bg-[#FDFCF8] shadow-[0_18px_60px_rgba(47,42,31,0.08)]">
+      <Card className="gap-0 overflow-hidden rounded-2xl border-[#DCD7CC] bg-[#FDFCF8] py-0 shadow-[0_18px_60px_rgba(47,42,31,0.08)]">
         <div className="grid gap-0 lg:grid-cols-[1.35fr_0.65fr]">
           <div className="space-y-7 p-6 md:p-8">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#D8E1D7] bg-[#ECF3ED] px-3 py-1 text-xs font-medium text-[#2F6B4F]">
+              <Badge
+                variant="outline"
+                className="h-auto rounded-full border-[#D8E1D7] bg-[#ECF3ED] px-3 py-1 text-xs font-medium text-[#2F6B4F]"
+              >
                 <Bot className="size-3.5" />
                 Huấn luyện viên MoneyMind
-              </span>
+              </Badge>
               <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Tóm tắt cá nhân
               </span>
@@ -325,7 +333,7 @@ export function DashboardView({
             </div>
           </aside>
         </div>
-      </section>
+      </Card>
 
       <div className="grid gap-3 md:grid-cols-4">
         {[
@@ -354,253 +362,276 @@ export function DashboardView({
             tone: "savings" as const,
           },
         ].map((metric) => (
-          <article
+          <Card
             key={metric.label}
-            className="rounded-2xl border border-[#E1DDD4] bg-card p-5"
+            className="gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none"
           >
-            <p className="text-sm text-muted-foreground">{metric.label}</p>
-            <p
-              className={`mt-3 text-2xl font-semibold tracking-normal ${metricTone(
-                metric.tone,
-              )}`}
-            >
-              {metric.value}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              {metric.helper}
-            </p>
-          </article>
+            <CardContent className="p-5">
+              <p className="text-sm text-muted-foreground">{metric.label}</p>
+              <p
+                className={`mt-3 text-2xl font-semibold tracking-normal ${metricTone(
+                  metric.tone,
+                )}`}
+              >
+                {metric.value}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                {metric.helper}
+              </p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <section className="rounded-2xl border border-[#DCD7CC] bg-[#FDFCF8] p-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">
-              Ngân sách tháng này
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Đã chi {formatVnd(budgetSummary.summary.totalSpent)} /{" "}
-              {formatVnd(budgetSummary.summary.totalBudget)}
-            </p>
+      <Card className="gap-0 rounded-2xl border-[#DCD7CC] bg-[#FDFCF8] py-0 shadow-none">
+        <CardContent className="p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                Ngân sách tháng này
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Đã chi {formatVnd(budgetSummary.summary.totalSpent)} /{" "}
+                {formatVnd(budgetSummary.summary.totalBudget)}
+              </p>
+            </div>
+            <Button asChild variant="outline" className="border-[#DDD8CE]">
+              <Link href={`/budgets?month=${dashboard.month.key}`}>
+                Xem ngân sách
+              </Link>
+            </Button>
           </div>
-          <Button asChild variant="outline" className="border-[#DDD8CE]">
-            <Link href={`/budgets?month=${dashboard.month.key}`}>
-              Xem ngân sách
-            </Link>
-          </Button>
-        </div>
-        <div className="mt-4 space-y-3">
-          {budgetSummary.items.length > 0 ? (
-            budgetSummary.items.map((item) => (
-              <div
-                key={item.categoryId}
-                className="flex items-center justify-between gap-4 border-t border-[#E8E1D6] pt-3 text-sm"
-              >
-                <div>
-                  <p className="font-medium text-foreground">
-                    {item.categoryName}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {formatVnd(item.spentAmount)} /{" "}
-                    {formatVnd(item.effectiveAmount ?? 0)}
-                  </p>
+          <div className="mt-4 space-y-3">
+            {budgetSummary.items.length > 0 ? (
+              budgetSummary.items.map((item) => (
+                <div
+                  key={item.categoryId}
+                  className="flex items-center justify-between gap-4 border-t border-[#E8E1D6] pt-3 text-sm"
+                >
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {item.categoryName}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {formatVnd(item.spentAmount)} /{" "}
+                      {formatVnd(item.effectiveAmount ?? 0)}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="h-auto rounded-full border-[#DDD8CE] bg-card px-2 py-0.5 font-medium text-foreground"
+                  >
+                    {budgetStatusLabels[item.status]}
+                  </Badge>
                 </div>
-                <span className="font-medium text-foreground">
-                  {budgetStatusLabels[item.status]}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Chưa có ngân sách cho tháng này.
-            </p>
-          )}
-        </div>
-      </section>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Chưa có ngân sách cho tháng này.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {dashboard.isEmpty ? (
-        <section className="rounded-2xl border border-[#E1DDD4] bg-card p-6">
-          <h2 className="text-lg font-semibold">
-            Chưa có giao dịch trong tháng này
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Thêm giao dịch đầu tiên để MoneyMind AI có dữ liệu tổng hợp, nhận
-            diện xu hướng và tạo phân tích cá nhân hóa.
-          </p>
-          <Button asChild className="mt-5 bg-[#2F6B4F] hover:bg-[#285B43]">
-            <Link href="/transactions">Thêm giao dịch</Link>
-          </Button>
-        </section>
+        <Card className="gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold">
+              Chưa có giao dịch trong tháng này
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Thêm giao dịch đầu tiên để MoneyMind AI có dữ liệu tổng hợp, nhận
+              diện xu hướng và tạo phân tích cá nhân hóa.
+            </p>
+            <Button asChild className="mt-5 bg-[#2F6B4F] hover:bg-[#285B43]">
+              <Link href="/transactions">Thêm giao dịch</Link>
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-          <section className="rounded-2xl border border-[#E1DDD4] bg-card p-5 md:p-6">
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Xu hướng chi tiêu</h2>
+          <Card className="gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none">
+            <CardContent className="p-5 md:p-6">
+              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Xu hướng chi tiêu</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Nhịp chi tiêu theo ngày, tập trung vào biến động thực tế.
+                  </p>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Nhịp chi tiêu theo ngày, tập trung vào biến động thực tế.
+                  Trung bình {formatVnd(dailyAverage)} / ngày trong tháng
                 </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Trung bình {formatVnd(dailyAverage)} / ngày trong tháng
-              </p>
-            </div>
-            {dashboard.spendingTrend.length > 0 ? (
-              <div className="mt-6 overflow-x-auto pb-1">
-                <div className="flex h-56 min-w-[760px] items-end gap-1.5 border-b border-[#E1DDD4] pb-3 md:min-w-0">
-                  {dashboard.spendingTrend.map((point, index) => (
-                    <div
-                      key={point.date}
-                      className="flex min-w-5 flex-1 flex-col items-center gap-2"
-                    >
+              {dashboard.spendingTrend.length > 0 ? (
+                <div className="mt-6 overflow-x-auto pb-1">
+                  <div className="flex h-56 min-w-[760px] items-end gap-1.5 border-b border-[#E1DDD4] pb-3 md:min-w-0">
+                    {dashboard.spendingTrend.map((point, index) => (
                       <div
-                        className={
-                          point.amount > 0
-                            ? "w-full rounded-t-md bg-[#2F6B4F]"
-                            : "w-full rounded-t-sm bg-[#DCD7CC]"
-                        }
-                        style={{
-                          height:
+                        key={point.date}
+                        className="flex min-w-5 flex-1 flex-col items-center gap-2"
+                      >
+                        <div
+                          className={
                             point.amount > 0
-                              ? `${Math.max(
-                                  10,
-                                  (point.amount / maxTrendAmount) * 180,
-                                )}px`
-                              : "4px",
-                        }}
-                        title={`${formatTrendDate(point.date)}: ${formatVnd(
-                          point.amount,
-                        )}`}
-                      />
-                      <span className="h-4 text-[11px] text-muted-foreground">
-                        {shouldShowTrendDayLabel(
-                          point.date,
-                          index,
-                          dashboard.spendingTrend.length,
-                        )
-                          ? point.date.slice(8, 10)
-                          : ""}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="mt-6 flex h-56 items-center justify-center rounded-xl border border-dashed border-[#DCD7CC] text-sm text-muted-foreground">
-                Chưa có chi tiêu để hiển thị xu hướng.
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-2xl border border-[#E1DDD4] bg-card p-5 md:p-6">
-            <div className="mb-5">
-              <h2 className="text-lg font-semibold">Phân tích danh mục</h2>
-              <p className="text-sm text-muted-foreground">
-                Danh mục lớn nhất và tín hiệu bất thường.
-              </p>
-            </div>
-            <div className="space-y-4">
-              {topCategories.length > 0 ? (
-                topCategories.map((item) => (
-                  <article key={item.categoryId} className="space-y-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span
-                          className="size-2.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: item.color ?? "#2F6B4F" }}
+                              ? "w-full rounded-t-md bg-[#2F6B4F]"
+                              : "w-full rounded-t-sm bg-[#DCD7CC]"
+                          }
+                          style={{
+                            height:
+                              point.amount > 0
+                                ? `${Math.max(
+                                    10,
+                                    (point.amount / maxTrendAmount) * 180,
+                                  )}px`
+                                : "4px",
+                          }}
+                          title={`${formatTrendDate(point.date)}: ${formatVnd(
+                            point.amount,
+                          )}`}
                         />
-                        <span className="truncate text-sm font-medium">
-                          {item.name}
+                        <span className="h-4 text-[11px] text-muted-foreground">
+                          {shouldShowTrendDayLabel(
+                            point.date,
+                            index,
+                            dashboard.spendingTrend.length,
+                          )
+                            ? point.date.slice(8, 10)
+                            : ""}
                         </span>
                       </div>
-                      <span className="text-sm font-medium">
-                        {formatVnd(item.amount)}
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-[#111111]"
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="text-muted-foreground">
-                        {item.percentage}% tổng chi tiêu
-                      </span>
-                      <span className={changeTone(item)}>
-                        {changeLabel(item)}
-                      </span>
-                    </div>
-                  </article>
-                ))
+                    ))}
+                  </div>
+                </div>
               ) : (
-                <p className="rounded-xl border border-dashed border-[#DCD7CC] p-4 text-sm text-muted-foreground">
-                  Chưa có danh mục chi tiêu để phân tích.
-                </p>
+                <div className="mt-6 flex h-56 items-center justify-center rounded-xl border border-dashed border-[#DCD7CC] text-sm text-muted-foreground">
+                  Chưa có chi tiêu để hiển thị xu hướng.
+                </div>
               )}
-            </div>
-          </section>
+            </CardContent>
+          </Card>
+
+          <Card className="gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none">
+            <CardContent className="p-5 md:p-6">
+              <div className="mb-5">
+                <h2 className="text-lg font-semibold">Phân tích danh mục</h2>
+                <p className="text-sm text-muted-foreground">
+                  Danh mục lớn nhất và tín hiệu bất thường.
+                </p>
+              </div>
+              <div className="space-y-4">
+                {topCategories.length > 0 ? (
+                  topCategories.map((item) => (
+                    <article key={item.categoryId} className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span
+                            className="size-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: item.color ?? "#2F6B4F" }}
+                          />
+                          <span className="truncate text-sm font-medium">
+                            {item.name}
+                          </span>
+                        </div>
+                        <span className="text-sm font-medium">
+                          {formatVnd(item.amount)}
+                        </span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-[#111111]"
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="text-muted-foreground">
+                          {item.percentage}% tổng chi tiêu
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`h-auto rounded-full px-2 py-0.5 ${changeTone(
+                            item,
+                          )}`}
+                        >
+                          {changeLabel(item)}
+                        </Badge>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <p className="rounded-xl border border-dashed border-[#DCD7CC] p-4 text-sm text-muted-foreground">
+                    Chưa có danh mục chi tiêu để phân tích.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-        <section className="rounded-2xl border border-[#E1DDD4] bg-card p-5 md:p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">Giao dịch gần đây</h2>
-              <p className="text-sm text-muted-foreground">
-                Hiển thị phân loại tự động của AI để bạn kiểm tra nhanh.
-              </p>
-            </div>
-            <Link
-              href="/transactions"
-              className="text-sm font-medium text-[#2F6B4F] hover:underline"
-            >
-              Xem tất cả
-            </Link>
-          </div>
-          <div className="divide-y divide-[#E8E4DC]">
-            {dashboard.recentTransactions.map((transaction) => (
-              <article
-                key={transaction.id}
-                className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+        <Card className="gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none">
+          <CardContent className="p-5 md:p-6">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Giao dịch gần đây</h2>
+                <p className="text-sm text-muted-foreground">
+                  Hiển thị phân loại tự động của AI để bạn kiểm tra nhanh.
+                </p>
+              </div>
+              <Link
+                href="/transactions"
+                className="text-sm font-medium text-[#2F6B4F] hover:underline"
               >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {transaction.note}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span>{transaction.transactionDate.slice(0, 10)}</span>
-                    <span className="rounded-full border border-[#D8E1D7] bg-[#ECF3ED] px-2 py-0.5 text-[#2F6B4F]">
-                      {transaction.categoryName}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <BadgeCheck className="size-3" />
-                      AI phân loại
-                    </span>
-                    <Link
-                      href="/transactions"
-                      className="font-medium text-foreground hover:underline"
-                    >
-                      Sửa
-                    </Link>
-                  </div>
-                </div>
-                <span
-                  className={
-                    transaction.type === "income"
-                      ? "shrink-0 text-sm font-semibold text-[#2F6B4F]"
-                      : "shrink-0 text-sm font-semibold text-[#A2482D]"
-                  }
+                Xem tất cả
+              </Link>
+            </div>
+            <div className="divide-y divide-[#E8E4DC]">
+              {dashboard.recentTransactions.map((transaction) => (
+                <article
+                  key={transaction.id}
+                  className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
                 >
-                  {transaction.type === "income" ? "+" : "-"}
-                  {formatVnd(transaction.amount)}
-                </span>
-              </article>
-            ))}
-          </div>
-        </section>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {transaction.note}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span>{transaction.transactionDate.slice(0, 10)}</span>
+                      <Badge
+                        variant="outline"
+                        className="h-auto rounded-full border-[#D8E1D7] bg-[#ECF3ED] px-2 py-0.5 text-[#2F6B4F]"
+                      >
+                        {transaction.categoryName}
+                      </Badge>
+                      <span className="inline-flex items-center gap-1">
+                        <BadgeCheck className="size-3" />
+                        AI phân loại
+                      </span>
+                      <Link
+                        href="/transactions"
+                        className="font-medium text-foreground hover:underline"
+                      >
+                        Sửa
+                      </Link>
+                    </div>
+                  </div>
+                  <span
+                    className={
+                      transaction.type === "income"
+                        ? "shrink-0 text-sm font-semibold text-[#2F6B4F]"
+                        : "shrink-0 text-sm font-semibold text-[#A2482D]"
+                    }
+                  >
+                    {transaction.type === "income" ? "+" : "-"}
+                    {formatVnd(transaction.amount)}
+                  </span>
+                </article>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         <AskMoneyMindPanel
           key={dashboard.month.key}
