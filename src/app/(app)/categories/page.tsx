@@ -70,8 +70,8 @@ export default async function CategoriesPage() {
     <section className="space-y-8">
       <PageHeader
         eyebrow="Danh mục"
-        title="Bản đồ thói quen chi tiêu"
-        description="Danh mục không chỉ để lưu giao dịch. MoneyMind AI dùng chúng để đọc xu hướng, phát hiện tăng trưởng bất thường và gợi ý điều chỉnh."
+        title="Quản lý bản đồ chi tiêu"
+        description="Tổ chức danh mục thu chi để nhập giao dịch nhanh hơn và giúp AI đọc đúng thói quen theo tháng."
       />
       <CategoryManager
         initialCategories={categories}
