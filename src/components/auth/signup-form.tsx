@@ -2,105 +2,140 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { createZodResolver } from "@/lib/zod-form";
 
 const INPUT_CLASS =
   "h-11 w-full rounded-xl border border-warm-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/15";
+const signupFormSchema = z.object({
+  name: z.string().trim().min(1, "Tên hiển thị là bắt buộc."),
+  email: z.email("Email không hợp lệ."),
+  password: z.string().min(8, "Mật khẩu cần ít nhất 8 ký tự."),
+});
+
+type SignupFormValues = z.infer<typeof signupFormSchema>;
 
 export function SignupForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const form = useForm<SignupFormValues>({
+    resolver: createZodResolver(signupFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  });
 
-  function handleSubmit(formData: FormData) {
+  async function handleSubmit(values: SignupFormValues) {
     setError(null);
 
-    startTransition(async () => {
-      const name = String(formData.get("name") ?? "");
-      const email = String(formData.get("email") ?? "");
-      const password = String(formData.get("password") ?? "");
+    const result = await authClient.signUp.email(values);
 
-      const result = await authClient.signUp.email({
-        name,
-        email,
-        password,
-      });
+    if (result.error) {
+      setError("Không thể tạo tài khoản với thông tin này.");
+      return;
+    }
 
-      if (result.error) {
-        setError("Không thể tạo tài khoản với thông tin này.");
-        return;
-      }
-
-      router.push("/dashboard");
-      router.refresh();
-    });
+    router.push("/dashboard");
+    router.refresh();
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="name">
-          Tên hiển thị
-        </label>
-        <input
-          required
-          autoComplete="name"
-          className={INPUT_CLASS}
-          id="name"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
           name="name"
-          placeholder="Nguyễn Văn A"
-          type="text"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tên hiển thị</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  autoComplete="name"
+                  className={INPUT_CLASS}
+                  placeholder="Nguyễn Văn A"
+                  type="text"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="email">
-          Email
-        </label>
-        <input
-          required
-          autoComplete="email"
-          className={INPUT_CLASS}
-          id="email"
+        <FormField
+          control={form.control}
           name="email"
-          placeholder="ban@example.com"
-          type="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  autoComplete="email"
+                  className={INPUT_CLASS}
+                  placeholder="ban@example.com"
+                  type="email"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="password">
-          Mật khẩu
-        </label>
-        <input
-          required
-          autoComplete="new-password"
-          className={INPUT_CLASS}
-          id="password"
-          minLength={8}
+        <FormField
+          control={form.control}
           name="password"
-          type="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mật khẩu</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  autoComplete="new-password"
+                  className={INPUT_CLASS}
+                  type="password"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      {error ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
+        {error ? (
+          <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+        <Button
+          className="h-11 w-full bg-primary hover:bg-primary-hover"
+          disabled={form.formState.isSubmitting}
+          type="submit"
+        >
+          {form.formState.isSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
+        </Button>
+        <p className="text-center text-sm text-muted-foreground">
+          Đã có tài khoản?{" "}
+          <Link
+            className="font-medium text-foreground hover:underline"
+            href="/login"
+          >
+            Đăng nhập
+          </Link>
         </p>
-      ) : null}
-      <Button
-        className="h-11 w-full bg-primary hover:bg-primary-hover"
-        disabled={isPending}
-        type="submit"
-      >
-        {isPending ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
-      </Button>
-      <p className="text-center text-sm text-muted-foreground">
-        Đã có tài khoản?{" "}
-        <Link className="font-medium text-foreground hover:underline" href="/login">
-          Đăng nhập
-        </Link>
-      </p>
-    </form>
+      </form>
+    </Form>
   );
 }
