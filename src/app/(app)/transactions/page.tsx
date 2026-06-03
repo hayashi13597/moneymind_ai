@@ -84,8 +84,8 @@ export default async function TransactionsPage({
     <section className="space-y-8">
       <PageHeader
         eyebrow="Giao dịch"
-        title="Dòng tiền hằng ngày"
-        description="Theo dõi thu chi như một activity feed. MoneyMind AI giúp đọc mô tả tự nhiên, phân loại giao dịch và học dần thói quen chi tiêu của bạn."
+        title="Giao dịch trong tháng"
+        description="Ghi lại thu chi hằng ngày, xem theo từng tháng và dùng AI để tạo bản nháp trước khi lưu."
       />
       <TransactionManager
         initialTransactions={transactionItems}
