@@ -111,6 +111,31 @@ describe("BudgetManager", () => {
     expect(container.textContent).toContain("Chưa đặt");
   });
 
+  it("shows one edit action per budget row", () => {
+    act(() => {
+      root.render(
+        React.createElement(BudgetManager, {
+          selectedMonth,
+          initialData: budgetData,
+        }),
+      );
+    });
+
+    expect(
+      container.querySelectorAll('[aria-label^="Sửa ngân sách cho "]'),
+    ).toHaveLength(budgetData.rows.length);
+    expect(
+      container.querySelector(
+        '[aria-label="Sửa ngân sách tháng này cho Ăn uống"]',
+      ),
+    ).toBeNull();
+    expect(
+      container.querySelector(
+        '[aria-label="Sửa ngân sách mặc định cho Ăn uống"]',
+      ),
+    ).toBeNull();
+  });
+
   it("navigates between budget months", () => {
     act(() => {
       root.render(
@@ -151,7 +176,7 @@ describe("BudgetManager", () => {
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>(
-          '[aria-label="Sửa ngân sách tháng này cho Ăn uống"]',
+          '[aria-label="Sửa ngân sách cho Ăn uống"]',
         )
         ?.click();
     });
@@ -182,5 +207,61 @@ describe("BudgetManager", () => {
       }),
     });
     expect(refreshMock).toHaveBeenCalled();
+  });
+
+  it("can switch the edit dialog to update a default budget", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ budget: { id: "budget_1" } }),
+    });
+    globalThis.fetch = fetchMock;
+
+    act(() => {
+      root.render(
+        React.createElement(BudgetManager, {
+          selectedMonth,
+          initialData: budgetData,
+        }),
+      );
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Sửa ngân sách cho Ăn uống"]',
+        )
+        ?.click();
+    });
+
+    await act(async () => {
+      document
+        .querySelector<HTMLButtonElement>('[aria-label="Sửa ngân sách mặc định"]')
+        ?.click();
+    });
+
+    await act(async () => {
+      const input =
+        document.querySelector<HTMLInputElement>('input[name="amount"]');
+      if (input) {
+        input.value = "5tr";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    });
+
+    await act(async () => {
+      document
+        .querySelector<HTMLButtonElement>('[aria-label="Lưu ngân sách"]')
+        ?.click();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/budgets", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        categoryId: "cat_food",
+        scope: "default",
+        amount: "5tr",
+      }),
+    });
   });
 });

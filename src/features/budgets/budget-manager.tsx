@@ -249,9 +249,28 @@ export function BudgetManager({
                 {editing.row.categoryName}
               </h3>
             </div>
+            <div className="grid grid-cols-2 gap-2 rounded-xl border border-[#DDD8CE] bg-white p-1">
+              <Button
+                type="button"
+                variant={editing.scope === "month" ? "default" : "ghost"}
+                aria-label="Sửa ngân sách tháng này"
+                onClick={() => setEditing({ ...editing, scope: "month" })}
+              >
+                Riêng tháng này
+              </Button>
+              <Button
+                type="button"
+                variant={editing.scope === "default" ? "default" : "ghost"}
+                aria-label="Sửa ngân sách mặc định"
+                onClick={() => setEditing({ ...editing, scope: "default" })}
+              >
+                Mặc định
+              </Button>
+            </div>
             <label className="block space-y-2 text-sm font-medium text-foreground">
               <span>Số tiền ngân sách</span>
               <input
+                key={`${editing.row.categoryId}-${editing.scope}`}
                 name="amount"
                 defaultValue={
                   editing.scope === "month"
@@ -362,18 +381,8 @@ function BudgetRow({
           variant="outline"
           size="icon"
           className="border-[#DDD8CE]"
-          aria-label={`Sửa ngân sách tháng này cho ${row.categoryName}`}
+          aria-label={`Sửa ngân sách cho ${row.categoryName}`}
           onClick={() => onEdit({ row, scope: "month" })}
-        >
-          <Pencil className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="border-[#DDD8CE]"
-          aria-label={`Sửa ngân sách mặc định cho ${row.categoryName}`}
-          onClick={() => onEdit({ row, scope: "default" })}
         >
           <Pencil className="size-4" />
         </Button>
