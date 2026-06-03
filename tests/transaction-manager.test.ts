@@ -216,7 +216,8 @@ describe("TransactionManager", () => {
     expect(container.textContent).toContain("Giao dịch 1");
     expect(container.textContent).toContain("Giao dịch 5");
     expect(container.textContent).not.toContain("Giao dịch 6");
-    expect(container.textContent).toContain("1-5 / 6 giao dịch");
+    expect(container.textContent).toContain("1-5 trong 6 giao dịch");
+    expect(container.textContent).toContain("Trang 1 / 2");
 
     await act(async () => {
       container

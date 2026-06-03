@@ -1,10 +1,13 @@
 "use client";
 
 import {
-  BadgeCheck,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  CircleDollarSign,
+  Ellipsis,
   Pencil,
   Search,
   Sparkles,
@@ -16,7 +19,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { EmptyState, InsightCard, MetricCard } from "@/components/app-ui";
+import { EmptyState, InsightCard } from "@/components/app-ui";
 import { FormCombobox } from "@/components/form-combobox";
 import { FormMonthPicker } from "@/components/form-month-picker";
 import {
@@ -184,6 +187,38 @@ function categoryTone(type: "income" | "expense") {
     : "border-[#E7D9D2] bg-[#FBF0EC] text-[#A2482D]";
 }
 
+function typeLabel(type: "income" | "expense") {
+  return type === "income" ? "Thu nhập" : "Chi tiêu";
+}
+
+function transactionCountLabel(count: number) {
+  return `${count} giao dịch`;
+}
+
+function getPaginationItems(currentPage: number, pageCount: number) {
+  const items: Array<number | "ellipsis-left" | "ellipsis-right"> = [];
+
+  for (let page = 1; page <= pageCount; page += 1) {
+    const isBoundary = page === 1 || page === pageCount;
+    const isNearCurrent = Math.abs(page - currentPage) <= 1;
+
+    if (isBoundary || isNearCurrent) {
+      items.push(page);
+      continue;
+    }
+
+    if (page < currentPage && !items.includes("ellipsis-left")) {
+      items.push("ellipsis-left");
+    }
+
+    if (page > currentPage && !items.includes("ellipsis-right")) {
+      items.push("ellipsis-right");
+    }
+  }
+
+  return items;
+}
+
 export function TransactionManager({
   initialTransactions,
   categories,
@@ -282,9 +317,6 @@ export function TransactionManager({
     const expense = transactions
       .filter((transaction) => transaction.type === "expense")
       .reduce((total, transaction) => total + transaction.amount, 0);
-    const aiCategorizedCount = transactions.filter(
-      (transaction) => transaction.rawInput,
-    ).length;
     const topExpenseCategory = transactions
       .filter((transaction) => transaction.type === "expense")
       .reduce<Record<string, { name: string; amount: number }>>(
@@ -309,7 +341,6 @@ export function TransactionManager({
       income,
       expense,
       balance: income - expense,
-      aiCategorizedCount,
       topCategory,
     };
   }, [transactions]);
@@ -349,6 +380,14 @@ export function TransactionManager({
       : pageStart + 1;
   const visibleEnd =
     visibleStart === 0 ? 0 : visibleStart + visibleTransactions.length - 1;
+  const currentPageRange =
+    visibleStart === 0
+      ? "Trang này chưa có giao dịch"
+      : `Đang hiển thị ${visibleStart}-${visibleEnd}`;
+  const paginationItems = getPaginationItems(currentPage, pageCount);
+  const filteredCount = filteredTransactions.length;
+  const isFiltered =
+    query.trim() !== "" || typeFilter !== "all" || categoryFilter !== "all";
 
   function openPage(nextPage: number, nextPageSize = serverPagination.pageSize) {
     const searchParams = new URLSearchParams({
@@ -474,7 +513,7 @@ export function TransactionManager({
     }
 
     setAiPending(true);
-      setError("");
+    setError("");
 
     try {
       const providerSetting = readLocalAiProviderSetting();
@@ -620,42 +659,70 @@ export function TransactionManager({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid gap-3 md:grid-cols-4">
-        <MetricCard
-          label="Dòng tiền ròng"
-          value={formatVnd(summary.balance)}
-          helper={`${transactions.length} giao dịch trong ${selectedMonth.label.toLowerCase()}`}
-          tone={summary.balance >= 0 ? "positive" : "negative"}
-        />
-        <MetricCard
-          label="Thu nhập"
-          value={formatVnd(summary.income)}
-          helper="Tổng tiền vào trong danh sách hiện tại"
-          tone="positive"
-        />
-        <MetricCard
-          label="Chi tiêu"
-          value={formatVnd(summary.expense)}
-          helper={
-            summary.topCategory
-              ? `Lớn nhất: ${summary.topCategory.name}`
-              : "Chưa có danh mục chi tiêu nổi bật"
-          }
-          tone="negative"
-        />
-        <MetricCard
-          label="AI đã hỗ trợ"
-          value={`${summary.aiCategorizedCount}`}
-          helper="Giao dịch có dữ liệu nhập thô để AI học cách phân loại"
-          tone="positive"
-        />
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-[#D8E1D7] bg-[#FFFDF7]/92 p-4 shadow-[0_18px_64px_rgba(47,42,31,0.06)] md:p-5">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))]">
+          <div className="rounded-xl border border-[#CBDACB] bg-[#ECF3ED] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-[#496757]">
+                  Chênh lệch thu chi
+                </p>
+                <p
+                  className={
+                    summary.balance >= 0
+                      ? "mt-3 text-3xl font-bold leading-none text-[#2F6B4F]"
+                      : "mt-3 text-3xl font-bold leading-none text-[#A2482D]"
+                  }
+                >
+                  {formatVnd(summary.balance)}
+                </p>
+              </div>
+              <span className="rounded-lg bg-white/72 p-2 text-[#2F6B4F] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+                <CircleDollarSign className="size-5" />
+              </span>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-[#5B7164]">
+              {currentPageRange} trong {selectedMonth.label.toLowerCase()}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#E1DDD4] bg-white/72 p-4 shadow-[0_10px_32px_rgba(47,42,31,0.04)]">
+            <p className="text-sm font-medium text-muted-foreground">Thu nhập</p>
+            <p className="mt-3 text-2xl font-bold leading-none text-[#2F6B4F]">
+              {formatVnd(summary.income)}
+            </p>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              Tổng thu trong trang này
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#E1DDD4] bg-white/72 p-4 shadow-[0_10px_32px_rgba(47,42,31,0.04)]">
+            <p className="text-sm font-medium text-muted-foreground">Chi tiêu</p>
+            <p className="mt-3 text-2xl font-bold leading-none text-[#A2482D]">
+              {formatVnd(summary.expense)}
+            </p>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              {summary.topCategory
+                ? `Danh mục lớn nhất: ${summary.topCategory.name}`
+                : "Chưa có danh mục nổi bật"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#D8E1D7] bg-[#F7F5EC] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
+            <p className="text-sm font-medium text-[#5F675E]">Tháng đang xem</p>
+            <p className="mt-3 text-2xl font-bold leading-none text-[#2F3E34]">
+              {selectedMonth.label}
+            </p>
+            <p className="mt-2 text-xs leading-5 text-[#697168]">
+              Tổng {transactionCountLabel(serverPagination.total)} trong tháng
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(340px,0.88fr)_minmax(0,1.12fr)] xl:items-start">
         <InsightCard
           title="Thêm giao dịch nhanh"
-          description="Nhập mô tả tự nhiên như 'ăn trưa 55k hôm nay'. MoneyMind AI sẽ điền số tiền, ngày và danh mục để bạn kiểm tra trước khi lưu."
+          description="Nhập một câu ngắn để AI tạo bản nháp, sau đó kiểm tra số tiền và danh mục trước khi lưu."
+          className="xl:sticky xl:top-24"
         >
           <Form {...createForm}>
           <form
@@ -663,13 +730,13 @@ export function TransactionManager({
             onSubmit={createForm.handleSubmit(createTransaction)}
             className="space-y-5"
           >
-            <div className="rounded-2xl border border-[#D8E1D7] bg-white/70 p-4">
+            <div className="rounded-xl border border-[#D8E1D7] bg-white/76 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]">
               <FormField
                 control={createForm.control}
                 name="rawInput"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Mô tả nhanh cho AI</FormLabel>
+                    <FormLabel>Mô tả giao dịch</FormLabel>
                     <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                       <FormControl>
                         <Input
@@ -683,10 +750,10 @@ export function TransactionManager({
                         variant="outline"
                         onClick={parseRawInput}
                         disabled={aiPending}
-                        className="h-11 border-[#D8E1D7] bg-white"
+                        className="h-11 border-[#C8DCC9] bg-white text-[#2F6B4F] hover:bg-[#F3F8F3]"
                       >
                         <Sparkles className="size-4" />
-                        {aiPending ? "Đang đọc" : "AI điền giúp"}
+                        {aiPending ? "AI đang đọc" : "Nhờ AI đọc"}
                       </Button>
                     </div>
                     <FormMessage />
@@ -810,11 +877,11 @@ export function TransactionManager({
                 name="merchant"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Người bán</FormLabel>
+                    <FormLabel>Nơi phát sinh</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Tùy chọn"
+                        placeholder="Ví dụ: Highlands, công ty, ví Momo"
                         className={CONTROL_CLASS_NAME}
                       />
                     </FormControl>
@@ -833,7 +900,7 @@ export function TransactionManager({
             <Button
               type="submit"
               disabled={pending}
-              className="h-11 w-full bg-[#2F6B4F] hover:bg-[#285B43]"
+              className="h-11 w-full bg-[#2F6B4F] shadow-[0_12px_28px_rgba(47,107,79,0.22)] hover:bg-[#285B43]"
             >
               <WalletCards className="size-4" />
               {pending ? "Đang lưu..." : "Lưu giao dịch"}
@@ -842,248 +909,367 @@ export function TransactionManager({
           </Form>
         </InsightCard>
 
-        <Card className="gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none">
-          <CardContent className="p-5 md:p-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Activity feed tài chính</h2>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  Đang xem {selectedMonth.label.toLowerCase()}. Chọn tháng và
-                  năm khác để đổi activity feed.
-                </p>
-              </div>
-              <div
-                aria-label="Điều hướng tháng giao dịch"
-                className="grid w-full max-w-[320px] grid-cols-[40px_minmax(0,1fr)_40px] items-center md:w-[320px]"
-              >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Xem tháng trước"
-                  onClick={() => openMonth(selectedMonth.previousKey)}
-                  className="size-10 rounded-r-none border-[#DDD8CE]"
+        <Card className="gap-0 overflow-hidden rounded-2xl border-[#D8E1D7] bg-[#FFFDF7]/96 py-0 shadow-[0_18px_64px_rgba(47,42,31,0.06)]">
+          <CardContent className="p-0">
+            <div className="border-b border-[#E8E4DC] bg-[#F8F5EA]/76 p-4 md:p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold tracking-tight">
+                      Danh sách giao dịch
+                    </h2>
+                    <span className="rounded-full border border-[#D8E1D7] bg-[#FFFDF7] px-2.5 py-1 text-xs font-medium text-[#5E685A]">
+                      {selectedMonth.label}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {transactionCountLabel(serverPagination.total)} trong tháng.
+                    Bộ lọc áp dụng cho các giao dịch đang hiển thị.
+                  </p>
+                </div>
+                <div
+                  aria-label="Điều hướng tháng giao dịch"
+                  className="grid w-full max-w-[320px] grid-cols-[40px_minmax(0,1fr)_40px] items-center md:w-[320px]"
                 >
-                  <ChevronLeft className="size-4" />
-                </Button>
-                <FormMonthPicker
-                  value={selectedMonth.key}
-                  onValueChange={openMonth}
-                  aria-label="Chọn tháng giao dịch"
-                  className="rounded-none border-x-0 border-[#D8E1D7] bg-white"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Xem tháng sau"
-                  onClick={() => openMonth(selectedMonth.nextKey)}
-                  className="size-10 rounded-l-none border-[#DDD8CE]"
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Xem tháng trước"
+                    onClick={() => openMonth(selectedMonth.previousKey)}
+                    className="size-10 rounded-r-none border-[#DDD8CE]"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </Button>
+                  <FormMonthPicker
+                    value={selectedMonth.key}
+                    onValueChange={openMonth}
+                    aria-label="Chọn tháng giao dịch"
+                    className="rounded-none border-x-0 border-[#D8E1D7] bg-white"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Xem tháng sau"
+                    onClick={() => openMonth(selectedMonth.nextKey)}
+                    className="size-10 rounded-l-none border-[#DDD8CE]"
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
             <div
-              className="mt-5 grid gap-2 lg:grid-cols-[1fr_140px_180px]"
+              className="m-4 rounded-xl border border-[#E8E4DC] bg-[#FBF8EF]/72 p-3 md:m-5"
               suppressHydrationWarning
             >
-            <Label className={`${FIELD_CLASS_NAME} relative`}>
-              <span className="sr-only">Tìm giao dịch</span>
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                }}
-                placeholder="Tìm ghi chú, người bán, danh mục..."
-                className="h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] pl-9 pr-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-              />
-            </Label>
-            <FormCombobox
-              value={typeFilter}
-              options={transactionTypeFilterOptions}
-              onValueChange={(nextType) => {
-                setTypeFilter(nextType as typeof typeFilter);
-              }}
-              aria-label="Lọc theo loại"
-            />
-            <FormCombobox
-              value={categoryFilter}
-              options={[
-                { value: "all", label: "Mọi danh mục" },
-                ...categories.map((category) => ({
-                  value: category.id,
-                  label: category.name,
-                })),
-              ]}
-              onValueChange={(nextCategory) => {
-                setCategoryFilter(nextCategory);
-              }}
-              aria-label="Lọc theo danh mục"
-            />
-            </div>
-
-            <div className="mt-5 divide-y divide-[#E8E4DC]">
-              {visibleTransactions.map((transaction) => (
-                <article
-                  key={transaction.id}
-                  className="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto] sm:items-center"
-                >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-semibold">
-                      {transaction.note}
-                    </p>
-                    <Badge
-                      variant="outline"
-                      className={`h-auto rounded-full px-2 py-0.5 text-xs font-medium ${categoryTone(
-                        transaction.type,
-                      )}`}
-                    >
-                      {transaction.category.name}
-                    </Badge>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays className="size-3" />
-                      {formatDisplayDate(transaction.transactionDate)}
-                    </span>
-                    {transaction.merchant ? <span>{transaction.merchant}</span> : null}
-                    {transaction.rawInput ? (
-                      <span className="inline-flex items-center gap-1 text-[#2F6B4F]">
-                        <BadgeCheck className="size-3" />
-                        AI auto-categorized
-                      </span>
-                    ) : (
-                      <span>Thủ công</span>
-                    )}
-                  </div>
-                  {transaction.rawInput ? (
-                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                      Nhập thô: {transaction.rawInput}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
-                  <span
-                    className={
-                      transaction.type === "income"
-                        ? "text-base font-semibold text-[#2F6B4F]"
-                        : "text-base font-semibold text-[#A2482D]"
-                    }
-                  >
-                    {transaction.type === "income" ? "+" : "-"}
-                    {formatVnd(transaction.amount)}
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      aria-label={`Sửa giao dịch ${transaction.note}`}
-                      onClick={() => openEditTransaction(transaction)}
-                      className="border-[#DDD8CE]"
-                    >
-                      <Pencil className="size-4" />
-                      Sửa
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          aria-label={`Xóa giao dịch ${transaction.note}`}
-                          className="border-[#DDD8CE] text-destructive hover:text-destructive"
-                        >
-                          Xóa
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Xóa giao dịch?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Giao dịch &quot;{transaction.note}&quot; sẽ bị xóa khỏi
-                            tháng này. Hành động này không thể khôi phục.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel
-                            aria-label={`Hủy xóa giao dịch ${transaction.note}`}
-                          >
-                            Hủy
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            aria-label={`Xác nhận xóa giao dịch ${transaction.note}`}
-                            onClick={() => deleteTransactionById(transaction)}
-                          >
-                            Xóa giao dịch
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-                </article>
-              ))}
-            </div>
-
-            {serverPagination.total > 0 ? (
-              <div className="mt-5 flex flex-col gap-3 border-t border-[#E8E4DC] pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
-                {visibleStart}-{visibleEnd} / {serverPagination.total} giao
-                dịch
-              </p>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="w-full sm:w-36">
-                  <FormCombobox
-                    value={pageSize}
-                    options={pageSizeOptions}
-                    onValueChange={(nextPageSize) => {
-                      openPage(1, Number(nextPageSize));
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-[#38342C]">
+                  Bộ lọc
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isFiltered
+                    ? `Tìm thấy ${transactionCountLabel(filteredCount)} trong trang này`
+                    : "Đang hiển thị tất cả giao dịch trong trang này"}
+                </p>
+              </div>
+              <div className="grid gap-2 lg:grid-cols-[1fr_140px_180px]">
+                <Label className={`${FIELD_CLASS_NAME} relative`}>
+                  <span className="sr-only">Tìm giao dịch</span>
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={query}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
                     }}
-                    aria-label="Số giao dịch mỗi trang"
+                    placeholder="Tìm ghi chú, nơi phát sinh, danh mục..."
+                    className="h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FFFDF7] pl-9 pr-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
                   />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="border-[#DDD8CE]"
-                  >
-                    Trước
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openPage(Math.min(pageCount, currentPage + 1))}
-                    disabled={currentPage === pageCount}
-                    className="border-[#DDD8CE]"
-                  >
-                    Sau
-                  </Button>
+                </Label>
+                <FormCombobox
+                  value={typeFilter}
+                  options={transactionTypeFilterOptions}
+                  onValueChange={(nextType) => {
+                    setTypeFilter(nextType as typeof typeFilter);
+                  }}
+                  aria-label="Lọc theo loại"
+                />
+                <FormCombobox
+                  value={categoryFilter}
+                  options={[
+                    { value: "all", label: "Tất cả danh mục" },
+                    ...categories.map((category) => ({
+                      value: category.id,
+                      label: category.name,
+                    })),
+                  ]}
+                  onValueChange={(nextCategory) => {
+                    setCategoryFilter(nextCategory);
+                  }}
+                  aria-label="Lọc theo danh mục"
+                />
+              </div>
+            </div>
+
+            {visibleTransactions.length > 0 ? (
+              <div className="px-4 pb-2 md:px-5">
+                <div className="overflow-hidden rounded-xl border border-[#E8E4DC] bg-[#FFFDF7]">
+                  {visibleTransactions.map((transaction) => (
+                    <article
+                      key={transaction.id}
+                      className="grid gap-4 border-b border-[#EDE7DC] p-4 transition duration-200 last:border-b-0 hover:bg-[#FBF8EF]/72 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-semibold">
+                            {transaction.note}
+                          </p>
+                          <Badge
+                            variant="outline"
+                            className={`h-auto rounded-full px-2 py-0.5 text-xs font-medium ${categoryTone(
+                              transaction.type,
+                            )}`}
+                          >
+                            {transaction.category.name}
+                          </Badge>
+                          <span className="rounded-full bg-[#F1EADC] px-2 py-0.5 text-xs font-medium text-[#6B665C]">
+                            {typeLabel(transaction.type)}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarDays className="size-3" />
+                            {formatDisplayDate(transaction.transactionDate)}
+                          </span>
+                          {transaction.merchant ? (
+                            <span>{transaction.merchant}</span>
+                          ) : null}
+                          {transaction.rawInput ? (
+                            <span>Có mô tả nhanh</span>
+                          ) : null}
+                        </div>
+                        {transaction.rawInput ? (
+                          <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                            Mô tả ban đầu: {transaction.rawInput}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
+                        <span
+                          className={
+                            transaction.type === "income"
+                              ? "text-lg font-bold leading-none text-[#2F6B4F]"
+                              : "text-lg font-bold leading-none text-[#A2482D]"
+                          }
+                        >
+                          {transaction.type === "income" ? "+" : "-"}
+                          {formatVnd(transaction.amount)}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            aria-label={`Sửa giao dịch ${transaction.note}`}
+                            onClick={() => openEditTransaction(transaction)}
+                            className="border-[#DDD8CE]"
+                          >
+                            <Pencil className="size-4" />
+                            Sửa
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                aria-label={`Xóa giao dịch ${transaction.note}`}
+                                className="border-[#DDD8CE] text-destructive hover:text-destructive"
+                              >
+                                Xóa
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Xóa giao dịch?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Giao dịch &quot;{transaction.note}&quot; sẽ bị
+                                  xóa khỏi tháng này. Hành động này không thể
+                                  khôi phục.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel
+                                  aria-label={`Hủy xóa giao dịch ${transaction.note}`}
+                                >
+                                  Hủy
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  aria-label={`Xác nhận xóa giao dịch ${transaction.note}`}
+                                  onClick={() =>
+                                    deleteTransactionById(transaction)
+                                  }
+                                >
+                                  Xóa giao dịch
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               </div>
+            ) : null}
+
+            {serverPagination.total > 0 ? (
+              <div className="space-y-4 border-t border-[#E8E4DC] bg-[#F8F5EA]/70 p-4 md:p-5">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-[#38342C]">
+                      {visibleStart}-{visibleEnd} trong{" "}
+                      {transactionCountLabel(serverPagination.total)}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      Bạn có thể đổi số giao dịch mỗi trang ở bên dưới.
+                    </p>
+                  </div>
+                  <span className="w-fit rounded-full border border-[#D8E1D7] bg-[#FFFDF7] px-3 py-1 text-xs font-medium text-[#5E685A]">
+                    Trang {currentPage} / {pageCount}
+                  </span>
+                </div>
+
+                <div className="grid gap-3">
+                  <div className="overflow-x-auto pb-1">
+                    <nav
+                      aria-label="Phân trang giao dịch"
+                      className="mx-auto flex w-max min-w-full items-center justify-center gap-1 rounded-xl border border-[#E1DDD4] bg-[#FFFDF7] p-2 sm:min-w-0"
+                    >
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Về trang đầu"
+                        onClick={() => openPage(1)}
+                        disabled={currentPage === 1}
+                        className="size-9 rounded-lg text-[#6B665C] hover:bg-[#F1EADC]"
+                      >
+                        <ChevronsLeft className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Về trang trước"
+                        onClick={() => openPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="size-9 rounded-lg text-[#6B665C] hover:bg-[#F1EADC]"
+                      >
+                        <ChevronLeft className="size-4" />
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {paginationItems.map((item) =>
+                          typeof item === "number" ? (
+                            <Button
+                              key={item}
+                              type="button"
+                              variant={
+                                item === currentPage ? "default" : "ghost"
+                              }
+                              size="icon"
+                              aria-label={`Xem trang ${item}`}
+                              aria-current={
+                                item === currentPage ? "page" : undefined
+                              }
+                              onClick={() => openPage(item)}
+                              className={
+                                item === currentPage
+                                  ? "size-9 rounded-lg bg-[#2F6B4F] text-white shadow-[0_10px_24px_rgba(47,107,79,0.18)] hover:bg-[#285B43]"
+                                  : "size-9 rounded-lg text-[#6B665C] hover:bg-[#F1EADC]"
+                              }
+                            >
+                              {item}
+                            </Button>
+                          ) : (
+                            <span
+                              key={item}
+                              aria-hidden="true"
+                              className="grid size-9 place-items-center text-[#8B857A]"
+                            >
+                              <Ellipsis className="size-4" />
+                            </span>
+                          ),
+                        )}
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Sang trang sau"
+                        onClick={() =>
+                          openPage(Math.min(pageCount, currentPage + 1))
+                        }
+                        disabled={currentPage === pageCount}
+                        className="size-9 rounded-lg text-[#6B665C] hover:bg-[#F1EADC]"
+                      >
+                        <ChevronRight className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Đến trang cuối"
+                        onClick={() => openPage(pageCount)}
+                        disabled={currentPage === pageCount}
+                        className="size-9 rounded-lg text-[#6B665C] hover:bg-[#F1EADC]"
+                      >
+                        <ChevronsRight className="size-4" />
+                      </Button>
+                    </nav>
+                  </div>
+
+                  <div className="flex flex-col gap-2 rounded-xl border border-[#E1DDD4] bg-[#FFFDF7] p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-[#38342C]">
+                        Số giao dịch mỗi trang
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Khi đổi số lượng, danh sách sẽ quay về trang đầu.
+                      </p>
+                    </div>
+                    <div className="w-full sm:w-[152px]">
+                      <FormCombobox
+                        value={pageSize}
+                        options={pageSizeOptions}
+                        onValueChange={(nextPageSize) => {
+                          openPage(1, Number(nextPageSize));
+                        }}
+                        aria-label="Số giao dịch mỗi trang"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : null}
 
             {transactions.length === 0 ? (
-              <div className="mt-5">
+              <div className="m-4 md:m-5">
                 <EmptyState
                   title="Chưa có giao dịch."
-                  description="Bắt đầu bằng cách thêm giao dịch đầu tiên. MoneyMind AI sẽ học thói quen chi tiêu của bạn."
+                  description="Bắt đầu bằng cách thêm giao dịch đầu tiên hoặc nhập mô tả để AI tạo bản nháp."
                 />
               </div>
             ) : null}
 
             {transactions.length > 0 && filteredTransactions.length === 0 ? (
-              <p className="mt-5 rounded-xl border border-dashed border-[#DCD7CC] p-4 text-sm text-muted-foreground">
+              <p className="m-4 rounded-xl border border-dashed border-[#DCD7CC] p-4 text-sm text-muted-foreground md:m-5">
                 Không tìm thấy giao dịch phù hợp với bộ lọc hiện tại.
               </p>
             ) : null}
@@ -1290,11 +1476,11 @@ function TransactionEditDialog({
               name="merchant"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>Người bán</FormLabel>
+                  <FormLabel>Nơi phát sinh</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Tùy chọn"
+                      placeholder="Ví dụ: Highlands, công ty, ví Momo"
                       className={DIALOG_CONTROL_CLASS_NAME}
                     />
                   </FormControl>
@@ -1307,7 +1493,7 @@ function TransactionEditDialog({
               name="rawInput"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>Mô tả AI</FormLabel>
+                  <FormLabel>Mô tả ban đầu</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
