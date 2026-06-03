@@ -1,6 +1,15 @@
 import { Bot, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 
 type PageHeaderProps = {
@@ -40,15 +49,15 @@ type SectionCardProps = {
 
 export function SectionCard({ children, className, muted }: SectionCardProps) {
   return (
-    <section
+    <Card
       className={cn(
-        "rounded-2xl border border-[#E1DDD4] bg-card p-5 md:p-6",
+        "gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none",
         muted && "bg-[#F6F3EC]",
         className,
       )}
     >
-      {children}
-    </section>
+      <CardContent className="p-5 md:p-6">{children}</CardContent>
+    </Card>
   );
 }
 
@@ -66,19 +75,21 @@ export function MetricCard({
   tone = "default",
 }: MetricCardProps) {
   return (
-    <article className="rounded-2xl border border-[#E1DDD4] bg-card p-5">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p
-        className={cn(
-          "mt-3 text-2xl font-semibold tracking-normal text-foreground",
-          tone === "positive" && "text-[#2F6B4F]",
-          tone === "negative" && "text-[#A2482D]",
-        )}
-      >
-        {value}
-      </p>
-      <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p>
-    </article>
+    <Card className="gap-0 rounded-2xl border-[#E1DDD4] bg-card py-0 shadow-none">
+      <CardContent className="p-5">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p
+          className={cn(
+            "mt-3 text-2xl font-semibold tracking-normal text-foreground",
+            tone === "positive" && "text-[#2F6B4F]",
+            tone === "negative" && "text-[#A2482D]",
+          )}
+        >
+          {value}
+        </p>
+        <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -96,25 +107,29 @@ export function InsightCard({
   className,
 }: InsightCardProps) {
   return (
-    <aside
+    <Card
       className={cn(
-        "rounded-2xl border border-[#D8E1D7] bg-[#F3F8F2] p-5 md:p-6",
+        "gap-0 rounded-2xl border-[#D8E1D7] bg-[#F3F8F2] py-0 shadow-none",
         className,
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="rounded-full bg-[#2F6B4F] p-2 text-white">
-          <Sparkles className="size-4" />
+      <CardHeader className="p-5 pb-0 md:p-6 md:pb-0">
+        <div className="flex items-start gap-3">
+          <Badge className="h-auto rounded-full bg-[#2F6B4F] p-2 text-white hover:bg-[#2F6B4F]">
+            <Sparkles className="size-4" />
+          </Badge>
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold">{title}</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              {description}
+            </p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            {description}
-          </p>
-        </div>
-      </div>
-      {children ? <div className="mt-5">{children}</div> : null}
-    </aside>
+      </CardHeader>
+      {children ? (
+        <CardContent className="p-5 md:p-6">{children}</CardContent>
+      ) : null}
+    </Card>
   );
 }
 
@@ -126,16 +141,22 @@ type EmptyStateProps = {
 
 export function EmptyState({ title, description, children }: EmptyStateProps) {
   return (
-    <div className="rounded-2xl border border-dashed border-[#DCD7CC] bg-[#FDFCF8] p-6 text-center">
-      <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#ECF3ED] text-[#2F6B4F]">
-        <Bot className="size-5" />
-      </div>
-      <h2 className="mt-4 text-base font-semibold">{title}</h2>
-      <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted-foreground">
-        {description}
-      </p>
+    <Empty className="rounded-2xl border border-dashed border-[#DCD7CC] bg-[#FDFCF8] p-6 text-center">
+      <EmptyHeader className="max-w-lg gap-0">
+        <EmptyMedia
+          variant="icon"
+          className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#ECF3ED] text-[#2F6B4F]"
+        >
+          <Bot className="size-5" />
+        </EmptyMedia>
+        <EmptyTitle className="mt-4 text-base font-semibold">
+          {title}
+        </EmptyTitle>
+        <EmptyDescription className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted-foreground">
+          {description}
+        </EmptyDescription>
+      </EmptyHeader>
       {children ? <div className="mt-5">{children}</div> : null}
-    </div>
+    </Empty>
   );
 }
-
