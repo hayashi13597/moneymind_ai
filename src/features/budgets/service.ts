@@ -41,6 +41,19 @@ export type DashboardBudgetSummary = CategoryBudgetList & {
   items: CategoryBudgetRow[];
 };
 
+type BudgetPeriodInput = {
+  scope: "default" | "month";
+  month?: string;
+};
+
+function periodFromInput(input: BudgetPeriodInput) {
+  return toBudgetPeriod(
+    input.scope === "default"
+      ? { scope: "default" }
+      : { scope: "month", month: input.month! },
+  );
+}
+
 async function validateExpenseCategory(userId: string, categoryId: string) {
   const category = await db.category.findFirst({
     where: { id: categoryId, userId },
@@ -203,11 +216,7 @@ export async function upsertBudget(userId: string, input: BudgetUpsertInput) {
     return categoryResult;
   }
 
-  const period = toBudgetPeriod(
-    input.scope === "default"
-      ? { scope: "default" }
-      : { scope: "month", month: input.month as string },
-  );
+  const period = periodFromInput(input);
   const budget = await db.categoryBudget.upsert({
     where: {
       userId_categoryId_period: {
@@ -235,11 +244,7 @@ export async function deleteBudget(userId: string, input: BudgetDeleteInput) {
     return categoryResult;
   }
 
-  const period = toBudgetPeriod(
-    input.scope === "default"
-      ? { scope: "default" }
-      : { scope: "month", month: input.month as string },
-  );
+  const period = periodFromInput(input);
   const result = await db.categoryBudget.deleteMany({
     where: {
       userId,

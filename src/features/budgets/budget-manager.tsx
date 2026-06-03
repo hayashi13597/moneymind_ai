@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { DashboardMonth } from "@/features/dashboard/month";
@@ -68,6 +68,19 @@ export function BudgetManager({
   const [editing, setEditing] = useState<EditingState>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) {
+      amountInputRef.current?.focus();
+    }
+  }, [editing]);
+
+  function closeDialogOnEscape(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      setEditing(null);
+    }
+  }
 
   async function submitBudget(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -232,6 +245,8 @@ export function BudgetManager({
       {editing ? (
         <div
           aria-modal="true"
+          aria-labelledby="budget-edit-dialog-title"
+          onKeyDown={closeDialogOnEscape}
           role="dialog"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
         >
@@ -245,7 +260,10 @@ export function BudgetManager({
                   ? `Riêng ${selectedMonth.label}`
                   : "Mặc định hằng tháng"}
               </p>
-              <h3 className="mt-1 text-xl font-semibold text-foreground">
+              <h3
+                id="budget-edit-dialog-title"
+                className="mt-1 text-xl font-semibold text-foreground"
+              >
                 {editing.row.categoryName}
               </h3>
             </div>
@@ -271,6 +289,7 @@ export function BudgetManager({
               <span>Số tiền ngân sách</span>
               <input
                 key={`${editing.row.categoryId}-${editing.scope}`}
+                ref={amountInputRef}
                 name="amount"
                 defaultValue={
                   editing.scope === "month"

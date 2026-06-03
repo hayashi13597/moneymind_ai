@@ -24,6 +24,20 @@ function budgetDomainError(reason: string) {
   return jsonBadRequest();
 }
 
+async function readJsonBody(request: Request) {
+  try {
+    const payload = await request.json();
+
+    if (payload === null || payload === undefined) {
+      return { ok: false as const };
+    }
+
+    return { ok: true as const, payload };
+  } catch {
+    return { ok: false as const };
+  }
+}
+
 export async function GET(request: Request) {
   const user = await getRequiredApiUser();
 
@@ -52,7 +66,13 @@ export async function PUT(request: Request) {
     return jsonUnauthorized();
   }
 
-  const parsed = budgetUpsertSchema.safeParse(await request.json());
+  const payload = await readJsonBody(request);
+
+  if (!payload.ok) {
+    return jsonBadRequest();
+  }
+
+  const parsed = budgetUpsertSchema.safeParse(payload.payload);
 
   if (!parsed.success) {
     return jsonBadRequest();
@@ -76,7 +96,13 @@ export async function DELETE(request: Request) {
     return jsonUnauthorized();
   }
 
-  const parsed = budgetDeleteSchema.safeParse(await request.json());
+  const payload = await readJsonBody(request);
+
+  if (!payload.ok) {
+    return jsonBadRequest();
+  }
+
+  const parsed = budgetDeleteSchema.safeParse(payload.payload);
 
   if (!parsed.success) {
     return jsonBadRequest();

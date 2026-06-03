@@ -50,6 +50,12 @@ afterAll(() => {
 
 describe("budgets route", () => {
   beforeEach(() => {
+    getRequiredApiUserMock.mockReset();
+    listCategoryBudgetRowsMock.mockReset();
+    upsertBudgetMock.mockReset();
+    deleteBudgetMock.mockReset();
+    revalidatePathMock.mockReset();
+
     getRequiredApiUserMock.mockResolvedValue({ id: "user_1" });
     listCategoryBudgetRowsMock.mockResolvedValue({
       rows: [],
@@ -57,7 +63,6 @@ describe("budgets route", () => {
     });
     upsertBudgetMock.mockResolvedValue({ ok: true, budget: { id: "budget_1" } });
     deleteBudgetMock.mockResolvedValue({ ok: true, count: 1 });
-    revalidatePathMock.mockReset();
   });
 
   it("requires auth", async () => {
@@ -110,10 +115,34 @@ describe("budgets route", () => {
       month: "2026-06",
       amount: 3000000,
     });
-    expect(revalidatePathMock).toHaveBeenCalledWith("/(app)/budgets");
     expect(revalidatePathMock).toHaveBeenCalledWith("/budgets");
-    expect(revalidatePathMock).toHaveBeenCalledWith("/(app)/dashboard");
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
+    expect(revalidatePathMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects malformed budget upsert bodies", async () => {
+    const response = await PUT({
+      json: async () => {
+        throw new SyntaxError("Unexpected end of JSON input");
+      },
+    } as unknown as Request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "Dữ liệu không hợp lệ." });
+    expect(upsertBudgetMock).not.toHaveBeenCalled();
+    expect(revalidatePathMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects empty budget upsert bodies", async () => {
+    const response = await PUT({
+      json: async () => null,
+    } as unknown as Request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "Dữ liệu không hợp lệ." });
+    expect(upsertBudgetMock).not.toHaveBeenCalled();
   });
 
   it("returns Vietnamese category errors", async () => {
@@ -148,6 +177,20 @@ describe("budgets route", () => {
       categoryId: "cat_food",
       scope: "default",
     });
-    expect(revalidatePathMock).toHaveBeenCalledWith("/(app)/budgets");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/budgets");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
+    expect(revalidatePathMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects malformed budget delete bodies", async () => {
+    const response = await DELETE({
+      json: async () => undefined,
+    } as unknown as Request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "Dữ liệu không hợp lệ." });
+    expect(deleteBudgetMock).not.toHaveBeenCalled();
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 });

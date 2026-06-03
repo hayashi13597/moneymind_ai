@@ -264,4 +264,67 @@ describe("BudgetManager", () => {
       }),
     });
   });
+
+  it("names the edit dialog and moves focus into it", async () => {
+    act(() => {
+      root.render(
+        React.createElement(BudgetManager, {
+          selectedMonth,
+          initialData: budgetData,
+        }),
+      );
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Sửa ngân sách cho Ăn uống"]',
+        )
+        ?.click();
+    });
+
+    const dialog = document.querySelector<HTMLDivElement>('[role="dialog"]');
+    const heading = document.querySelector<HTMLHeadingElement>(
+      "#budget-edit-dialog-title",
+    );
+
+    expect(dialog?.getAttribute("aria-labelledby")).toBe(
+      "budget-edit-dialog-title",
+    );
+    expect(heading?.textContent).toBe("Ăn uống");
+    expect(document.activeElement).toBe(
+      document.querySelector<HTMLInputElement>('input[name="amount"]'),
+    );
+  });
+
+  it("closes the edit dialog on Escape", async () => {
+    act(() => {
+      root.render(
+        React.createElement(BudgetManager, {
+          selectedMonth,
+          initialData: budgetData,
+        }),
+      );
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Sửa ngân sách cho Ăn uống"]',
+        )
+        ?.click();
+    });
+
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+
+    await act(async () => {
+      document
+        .querySelector('[role="dialog"]')
+        ?.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+        );
+    });
+
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
 });
