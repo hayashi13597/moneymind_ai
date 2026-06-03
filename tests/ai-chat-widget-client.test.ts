@@ -19,15 +19,22 @@ jest.mock("@/features/ai-chat/transaction-review-modal", () => ({
 const readLocalAiProviderSettingMock = readLocalAiProviderSetting as jest.Mock;
 const fetchMock = jest.fn();
 
-function changeInput(input: HTMLInputElement, value: string) {
+function changeField(
+  field: HTMLInputElement | HTMLTextAreaElement,
+  value: string,
+) {
+  const prototype =
+    field instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : HTMLInputElement.prototype;
   const valueSetter = Object.getOwnPropertyDescriptor(
-    HTMLInputElement.prototype,
+    prototype,
     "value",
   )?.set;
 
-  valueSetter?.call(input, value);
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  input.dispatchEvent(new Event("change", { bubbles: true }));
+  valueSetter?.call(field, value);
+  field.dispatchEvent(new Event("input", { bubbles: true }));
+  field.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 describe("AiChatWidget", () => {
@@ -65,10 +72,10 @@ describe("AiChatWidget", () => {
         ?.click();
     });
 
-    const input = container.querySelector<HTMLInputElement>("input")!;
+    const input = container.querySelector<HTMLTextAreaElement>("textarea")!;
 
     await act(async () => {
-      changeInput(input, "Tôi chi gì nhiều nhất?");
+      changeField(input, "Tôi chi gì nhiều nhất?");
       container
         .querySelector<HTMLButtonElement>('[aria-label="Gửi tin nhắn"]')
         ?.click();

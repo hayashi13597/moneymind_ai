@@ -1,10 +1,21 @@
 "use client";
 
 import { Bot, MessageCircle, Send, Sparkles, X } from "lucide-react";
-import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 import type {
   AiChatMessage,
   AiChatResponse,
@@ -12,6 +23,7 @@ import type {
 } from "@/features/ai-chat/schemas";
 import { AiChatTransactionReviewModal } from "@/features/ai-chat/transaction-review-modal";
 import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
+import { createZodResolver } from "@/lib/zod-form";
 
 type Category = {
   id: string;
@@ -38,6 +50,11 @@ const SUGGESTED_PROMPTS = [
   "Tạo kế hoạch tiết kiệm mỗi tuần.",
   "Tìm khoản định kỳ nên hủy.",
 ];
+const chatFormSchema = z.object({
+  input: z.string().trim().min(1, "Nhập nội dung trước khi gửi."),
+});
+
+type ChatFormValues = z.infer<typeof chatFormSchema>;
 
 async function readJsonError(response: Response) {
   const payload = (await response.json().catch(() => null)) as {
@@ -82,21 +99,28 @@ export function AiChatBubble({ entry, onReviewDraft }: AiChatBubbleProps) {
 export function AiChatWidget({ categories }: AiChatWidgetProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatEntry[]>([]);
-  const [input, setInput] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [reviewDraft, setReviewDraft] =
     useState<AiChatTransactionDraft | null>(null);
   const month = useMemo(() => currentMonthKey(), []);
+  const form = useForm<ChatFormValues>({
+    resolver: createZodResolver(chatFormSchema),
+    defaultValues: {
+      input: "",
+    },
+  });
+  const input = useWatch({ control: form.control, name: "input" });
 
   function selectPrompt(prompt: string) {
-    setInput(prompt);
+    form.setValue("input", prompt, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   }
 
-  async function sendMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const content = input.trim();
+  async function sendMessage(values: ChatFormValues) {
+    const content = values.input.trim();
 
     if (!content || pending) {
       return;
@@ -114,7 +138,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
       { role: "user", content },
     ];
     setMessages(nextMessages);
-    setInput("");
+    form.reset({ input: "" });
     setError("");
     setPending(true);
 
@@ -154,8 +178,8 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
     <>
       <div className="fixed bottom-4 right-4 z-40">
         {open ? (
-          <section className="flex h-[min(620px,calc(100dvh-2rem))] w-[min(calc(100vw-2rem),420px)] flex-col overflow-hidden rounded-2xl border border-[#DCD7CC] bg-card shadow-[0_18px_60px_rgba(47,42,31,0.18)]">
-            <header className="flex items-center justify-between border-b border-[#E8E4DC] bg-[#FDFCF8] px-4 py-3">
+          <Card className="flex h-[min(620px,calc(100dvh-2rem))] w-[min(calc(100vw-2rem),420px)] flex-col gap-0 overflow-hidden rounded-2xl border-[#DCD7CC] bg-card py-0 shadow-[0_18px_60px_rgba(47,42,31,0.18)]">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-[#E8E4DC] bg-[#FDFCF8] px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="rounded-full bg-[#2F6B4F] p-2 text-white">
                   <Bot className="size-4" />
@@ -177,8 +201,8 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
               >
                 <X className="size-4" />
               </Button>
-            </header>
-            <div className="flex-1 space-y-3 overflow-y-auto p-4">
+            </CardHeader>
+            <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
               {messages.length === 0 ? (
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-[#D8E1D7] bg-[#F3F8F2] p-4">
@@ -219,33 +243,47 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                   onReviewDraft={setReviewDraft}
                 />
               ) : null}
-            </div>
+            </CardContent>
             {error ? (
               <p className="border-t border-[#E8E4DC] px-4 py-2 text-sm text-destructive">
                 {error}
               </p>
             ) : null}
-            <form
-              onSubmit={sendMessage}
-              className="flex gap-2 border-t border-[#E8E4DC] bg-[#FDFCF8] p-3"
-            >
-              <input
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                placeholder="Hỏi về chi tiêu..."
-                className="h-10 min-w-0 flex-1 rounded-xl border border-[#DCD7CC] bg-white px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
-              />
-              <Button
-                type="submit"
-                disabled={pending || !input.trim()}
-                size="icon-lg"
-                aria-label="Gửi tin nhắn"
-                className="bg-[#2F6B4F] hover:bg-[#285B43]"
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(sendMessage)}
+                className="flex gap-2 border-t border-[#E8E4DC] bg-[#FDFCF8] p-3"
               >
-                <Send className="size-4" />
-              </Button>
-            </form>
-          </section>
+                <FormField
+                  control={form.control}
+                  name="input"
+                  render={({ field }) => (
+                    <FormItem className="min-w-0 flex-1 space-y-1">
+                      <FormLabel className="sr-only">Tin nhắn</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder="Hỏi về chi tiêu..."
+                          rows={1}
+                          className="min-h-11 w-full resize-none rounded-xl border border-[#DCD7CC] bg-white px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  disabled={pending || !input.trim()}
+                  size="icon-lg"
+                  aria-label="Gửi tin nhắn"
+                  className="bg-[#2F6B4F] hover:bg-[#285B43]"
+                >
+                  <Send className="size-4" />
+                </Button>
+              </form>
+            </Form>
+          </Card>
         ) : (
           <Button
             type="button"
