@@ -1,5 +1,8 @@
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
 function SkeletonBlock({ className }: { className: string }) {
-  return <div className={`rounded-xl bg-[#E9E4DA] ${className}`} />;
+  return <Skeleton className={cn("rounded-xl bg-[#E9E4DA]", className)} />;
 }
 
 export default function Loading() {

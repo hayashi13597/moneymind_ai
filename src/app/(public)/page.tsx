@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, BadgeCheck, Bot, MessageCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function PublicHomePage() {
   return (
@@ -54,41 +55,43 @@ export default function PublicHomePage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-warm-border bg-card p-5 shadow-[0_18px_60px_rgba(47,42,31,0.08)]">
-          <div className="rounded-2xl border border-soft-border bg-soft-accent p-5">
-            <div className="flex items-start gap-3">
-              <div className="rounded-full bg-primary p-2 text-white">
-                <MessageCircle className="size-4" />
+        <Card className="gap-0 rounded-2xl border-warm-border bg-card py-0 shadow-[0_18px_60px_rgba(47,42,31,0.08)]">
+          <CardContent className="p-5">
+            <div className="rounded-2xl border border-soft-border bg-soft-accent p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-primary p-2 text-white">
+                  <MessageCircle className="size-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">MoneyMind Coach</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    “Tháng này tôi tiêu nhiều nhất vào đâu?”
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold">MoneyMind Coach</p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  “Tháng này tôi tiêu nhiều nhất vào đâu?”
-                </p>
+              <div className="mt-5 rounded-2xl border border-soft-border bg-white/80 p-4 text-sm leading-6">
+                MoneyMind dùng giao dịch trong tháng để tóm tắt dòng tiền, chỉ ra
+                danh mục nổi bật và gợi ý bước tiếp theo. Kết quả AI luôn để bạn
+                kiểm tra trước khi lưu giao dịch mới.
               </div>
             </div>
-            <div className="mt-5 rounded-2xl border border-soft-border bg-white/80 p-4 text-sm leading-6">
-              MoneyMind dùng giao dịch trong tháng để tóm tắt dòng tiền, chỉ ra
-              danh mục nổi bật và gợi ý bước tiếp theo. Kết quả AI luôn để bạn
-              kiểm tra trước khi lưu giao dịch mới.
+            <div className="mt-5 grid gap-3">
+              {[
+                ["Dòng tiền tháng", "Thu nhập, chi tiêu, số dư"],
+                ["Danh mục", "Tạo, sửa, xóa và theo dõi biến động"],
+                ["AI giao dịch", "Điền nháp để bạn kiểm tra rồi lưu"],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-border bg-surface px-4 py-3"
+                >
+                  <span className="text-sm text-muted-foreground">{label}</span>
+                  <span className="text-sm font-semibold">{value}</span>
+                </div>
+              ))}
             </div>
-          </div>
-          <div className="mt-5 grid gap-3">
-            {[
-              ["Dòng tiền tháng", "Thu nhập, chi tiêu, số dư"],
-              ["Danh mục", "Tạo, sửa, xóa và theo dõi biến động"],
-              ["AI giao dịch", "Điền nháp để bạn kiểm tra rồi lưu"],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="flex items-center justify-between gap-4 rounded-xl border border-border bg-surface px-4 py-3"
-              >
-                <span className="text-sm text-muted-foreground">{label}</span>
-                <span className="text-sm font-semibold">{value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </section>
     </main>
   );
