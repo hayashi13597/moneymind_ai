@@ -117,7 +117,7 @@ describe("BudgetManager", () => {
       );
     });
 
-    expect(container.textContent).toContain("Tổng ngân sách");
+    expect(container.textContent).toContain("Tổng hạn mức");
     expect(container.textContent).toContain("3.500.000");
     expect(container.textContent).toContain("Ăn uống");
     expect(container.textContent).toContain("Gần vượt");
@@ -138,16 +138,16 @@ describe("BudgetManager", () => {
     });
 
     expect(
-      container.querySelectorAll('[aria-label^="Sửa ngân sách cho "]'),
+      container.querySelectorAll('[aria-label^="Sửa hạn mức cho "]'),
     ).toHaveLength(budgetData.rows.length);
     expect(
       container.querySelector(
-        '[aria-label="Sửa ngân sách tháng này cho Ăn uống"]',
+        '[aria-label="Sửa hạn mức tháng này cho Ăn uống"]',
       ),
     ).toBeNull();
     expect(
       container.querySelector(
-        '[aria-label="Sửa ngân sách mặc định cho Ăn uống"]',
+        '[aria-label="Sửa hạn mức mặc định cho Ăn uống"]',
       ),
     ).toBeNull();
   });
@@ -192,7 +192,7 @@ describe("BudgetManager", () => {
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>(
-          '[aria-label="Sửa ngân sách cho Ăn uống"]',
+          '[aria-label="Sửa hạn mức cho Ăn uống"]',
         )
         ?.click();
     });
@@ -207,7 +207,7 @@ describe("BudgetManager", () => {
 
     await act(async () => {
       document
-        .querySelector<HTMLButtonElement>('[aria-label="Lưu ngân sách"]')
+        .querySelector<HTMLButtonElement>('[aria-label="Lưu hạn mức"]')
         ?.click();
     });
 
@@ -243,14 +243,14 @@ describe("BudgetManager", () => {
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>(
-          '[aria-label="Sửa ngân sách cho Ăn uống"]',
+          '[aria-label="Sửa hạn mức cho Ăn uống"]',
         )
         ?.click();
     });
 
     await act(async () => {
       document
-        .querySelector<HTMLButtonElement>('[aria-label="Sửa ngân sách mặc định"]')
+        .querySelector<HTMLButtonElement>('[aria-label="Sửa hạn mức mặc định"]')
         ?.click();
     });
 
@@ -264,7 +264,7 @@ describe("BudgetManager", () => {
 
     await act(async () => {
       document
-        .querySelector<HTMLButtonElement>('[aria-label="Lưu ngân sách"]')
+        .querySelector<HTMLButtonElement>('[aria-label="Lưu hạn mức"]')
         ?.click();
     });
 
@@ -292,7 +292,7 @@ describe("BudgetManager", () => {
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>(
-          '[aria-label="Sửa ngân sách cho Ăn uống"]',
+          '[aria-label="Sửa hạn mức cho Ăn uống"]',
         )
         ?.click();
     });
@@ -324,7 +324,7 @@ describe("BudgetManager", () => {
     await act(async () => {
       container
         .querySelector<HTMLButtonElement>(
-          '[aria-label="Sửa ngân sách cho Ăn uống"]',
+          '[aria-label="Sửa hạn mức cho Ăn uống"]',
         )
         ?.click();
     });

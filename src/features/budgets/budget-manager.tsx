@@ -50,7 +50,7 @@ const statusLabels = {
 const DIALOG_CONTROL_CLASS_NAME =
   "h-11 w-full rounded-xl border border-[#DCD7CC] bg-white px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15";
 const budgetFormSchema = z.object({
-  amount: z.string().trim().min(1, "Số tiền ngân sách là bắt buộc."),
+  amount: z.string().trim().min(1, "Bạn cần nhập số tiền hạn mức."),
 });
 
 type BudgetFormValues = z.infer<typeof budgetFormSchema>;
@@ -72,7 +72,7 @@ function statusTone(status: CategoryBudgetRow["status"]) {
 }
 
 function formatOptionalAmount(value: number | null) {
-  return value === null ? "Chưa đặt" : formatVnd(value);
+  return value === null ? "Chưa đặt hạn mức" : formatVnd(value);
 }
 
 function remainingLabel(row: CategoryBudgetRow) {
@@ -120,7 +120,7 @@ export function BudgetManager({
         const payload = (await response.json().catch(() => null)) as
           | { error?: string }
           | null;
-        throw new Error(payload?.error ?? "Không thể lưu ngân sách.");
+        throw new Error(payload?.error ?? "Không thể lưu hạn mức.");
       }
 
       setEditing(null);
@@ -129,7 +129,7 @@ export function BudgetManager({
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Không thể lưu ngân sách.",
+          : "Không thể lưu hạn mức.",
       );
     } finally {
       setIsSubmitting(false);
@@ -155,7 +155,7 @@ export function BudgetManager({
         const payload = (await response.json().catch(() => null)) as
           | { error?: string }
           | null;
-        throw new Error(payload?.error ?? "Không thể xóa ngân sách.");
+        throw new Error(payload?.error ?? "Không thể xóa hạn mức.");
       }
 
       router.refresh();
@@ -163,7 +163,7 @@ export function BudgetManager({
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Không thể xóa ngân sách.",
+          : "Không thể xóa hạn mức.",
       );
     } finally {
       setIsSubmitting(false);
@@ -178,7 +178,7 @@ export function BudgetManager({
             {selectedMonth.label}
           </p>
           <h2 className="mt-1 text-2xl font-bold text-foreground">
-            Bảng ngân sách tháng
+            Hạn mức tháng này
           </h2>
         </div>
         <nav aria-label="Điều hướng tháng ngân sách" className="flex gap-2">
@@ -209,7 +209,7 @@ export function BudgetManager({
 
       <div className="grid gap-3 md:grid-cols-4">
         <SummaryCard
-          label="Tổng ngân sách"
+          label="Tổng hạn mức"
           value={formatVnd(initialData.summary.totalBudget)}
         />
         <SummaryCard
@@ -221,7 +221,7 @@ export function BudgetManager({
           value={formatVnd(Math.abs(initialData.summary.remaining))}
         />
         <SummaryCard
-          label="Vượt từng danh mục"
+          label="Vượt hạn mức"
           value={formatVnd(initialData.summary.overAmount)}
         />
       </div>
@@ -321,10 +321,10 @@ function BudgetEditDialog({
           <DialogHeader>
             <p className="text-sm font-medium text-muted-foreground">
               {editing.scope === "month"
-                ? `Riêng ${selectedMonth.label}`
-                : "Mặc định hằng tháng"}
+                ? `Áp dụng riêng cho ${selectedMonth.label}`
+                : "Áp dụng cho các tháng sau"}
             </p>
-            <DialogTitle className="sr-only">Sửa ngân sách</DialogTitle>
+            <DialogTitle className="sr-only">Sửa hạn mức</DialogTitle>
             <h3
               id="budget-edit-dialog-title"
               className="mt-1 text-xl font-semibold text-foreground"
@@ -336,18 +336,18 @@ function BudgetEditDialog({
             <Button
               type="button"
               variant={editing.scope === "month" ? "default" : "ghost"}
-              aria-label="Sửa ngân sách tháng này"
+              aria-label="Sửa hạn mức tháng này"
               onClick={() => onScopeChange("month")}
             >
-              Riêng tháng này
+              Chỉ tháng này
             </Button>
             <Button
               type="button"
               variant={editing.scope === "default" ? "default" : "ghost"}
-              aria-label="Sửa ngân sách mặc định"
+              aria-label="Sửa hạn mức mặc định"
               onClick={() => onScopeChange("default")}
             >
-              Mặc định
+              Mặc định hằng tháng
             </Button>
           </div>
           <FormField
@@ -355,7 +355,7 @@ function BudgetEditDialog({
             name="amount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Số tiền ngân sách</FormLabel>
+                <FormLabel>Số tiền hạn mức</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -379,10 +379,10 @@ function BudgetEditDialog({
             </Button>
             <Button
               type="submit"
-              aria-label="Lưu ngân sách"
+              aria-label="Lưu hạn mức"
               disabled={isSubmitting}
             >
-              Lưu ngân sách
+              Lưu hạn mức
             </Button>
           </div>
         </form>
@@ -444,7 +444,7 @@ function BudgetRow({
           {formatOptionalAmount(row.effectiveAmount)}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Mặc định: {formatOptionalAmount(row.defaultAmount)}
+          Hằng tháng: {formatOptionalAmount(row.defaultAmount)}
         </p>
       </div>
       <div>
@@ -471,7 +471,7 @@ function BudgetRow({
           variant="outline"
           size="icon"
           className="border-[#DDD8CE]"
-          aria-label={`Sửa ngân sách cho ${row.categoryName}`}
+          aria-label={`Sửa hạn mức cho ${row.categoryName}`}
           onClick={() => onEdit({ row, scope: "month" })}
         >
           <Pencil className="size-4" />
@@ -482,7 +482,7 @@ function BudgetRow({
             variant="outline"
             size="icon"
             className="border-[#DDD8CE]"
-            aria-label={`Xóa override tháng này cho ${row.categoryName}`}
+            aria-label={`Xóa hạn mức riêng của tháng này cho ${row.categoryName}`}
             disabled={isSubmitting}
             onClick={() => onDelete(row, "month")}
           >
@@ -495,7 +495,7 @@ function BudgetRow({
             variant="outline"
             size="icon"
             className="border-[#DDD8CE]"
-            aria-label={`Xóa ngân sách mặc định cho ${row.categoryName}`}
+            aria-label={`Xóa hạn mức mặc định cho ${row.categoryName}`}
             disabled={isSubmitting}
             onClick={() => onDelete(row, "default")}
           >

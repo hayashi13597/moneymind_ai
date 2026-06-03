@@ -51,14 +51,14 @@ import {
 } from "@/features/ai/local-settings";
 import { createZodResolver } from "@/lib/zod-form";
 
-const MISSING_API_KEY_MESSAGE = "Bạn cần cấu hình API key AI trước.";
+const MISSING_API_KEY_MESSAGE = "Bạn cần nhập API key trước.";
 const FIELD_LABEL_CLASS_NAME = "inline-flex items-center gap-2";
 const CONTROL_CLASS_NAME =
   "h-11 w-full rounded-xl border border-[#DCD7CC] bg-[#FDFCF8] px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15";
 const aiProviderFormSchema = z.object({
-  name: z.string().trim().min(1, "Tên provider là bắt buộc."),
+  name: z.string().trim().min(1, "Bạn cần đặt tên cho cấu hình AI."),
   baseUrl: z.url("Base URL không hợp lệ."),
-  model: z.string().trim().min(1, "Model là bắt buộc."),
+  model: z.string().trim().min(1, "Bạn cần nhập tên model."),
   apiKey: z.string(),
 });
 
@@ -72,7 +72,9 @@ function getServerAiProviderStoreSnapshot() {
 }
 
 function createDraftProviderName(providerCount: number) {
-  return providerCount === 0 ? "Provider chính" : `Provider ${providerCount + 1}`;
+  return providerCount === 0
+    ? "Cấu hình chính"
+    : `Cấu hình ${providerCount + 1}`;
 }
 
 function createDefaultDraftProvider(
@@ -179,28 +181,28 @@ export function AiSettingsForm() {
     }
 
     deleteLocalAiProvider(provider.id);
-    toast.success("Đã xóa provider AI.");
+    toast.success("Đã xóa cấu hình AI.");
   }
 
   return (
     <div className="space-y-5">
       <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
         <InsightCard
-          title="AI chỉ hiệu quả khi dữ liệu rõ ràng"
-          description="Provider này dùng cho phân loại giao dịch, phân tích tháng và chat tài chính. Hãy chọn model ổn định, phản hồi JSON tốt và phù hợp chi phí của bạn."
+          title="AI cần cấu hình ổn định"
+          description="Cấu hình này dùng cho phân loại giao dịch, nhận xét theo tháng và trả lời câu hỏi tài chính. Hãy chọn model ổn định, phản hồi JSON tốt và phù hợp chi phí của bạn."
         >
           <div className="space-y-3 text-sm">
             <div className="flex items-start gap-2 text-[#2F6B4F]">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
               <span>
-                API key được lưu trên trình duyệt này và không hiển thị lại.
+                API key chỉ được lưu trên trình duyệt này và không hiển thị lại.
               </span>
             </div>
             <div className="flex items-start gap-2 text-muted-foreground">
               <Bot className="mt-0.5 size-4 shrink-0" />
               <span>
-                MoneyMind sẽ hỏi AI bằng dữ liệu giao dịch của tài khoản hiện
-                tại.
+                MoneyMind chỉ gửi dữ liệu giao dịch cần thiết của tài khoản hiện
+                tại cho AI.
               </span>
             </div>
           </div>
@@ -224,9 +226,9 @@ export function AiSettingsForm() {
         <section>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h3 className="text-base font-semibold">Danh sách provider</h3>
+              <h3 className="text-base font-semibold">Cấu hình đã lưu</h3>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Chọn provider đang dùng hoặc sửa cấu hình từng provider.
+                Chọn cấu hình đang dùng hoặc chỉnh lại từng nhà cung cấp AI.
               </p>
             </div>
             {selectedProvider ? (
@@ -242,7 +244,7 @@ export function AiSettingsForm() {
 
           {store.providers.length === 0 ? (
             <div className="mt-4 rounded-xl border border-dashed border-[#DCD7CC] bg-[#F8F5EE] px-4 py-5 text-sm text-muted-foreground">
-              Chưa có provider. Hãy lưu provider đầu tiên ở form phía trên.
+              Chưa có cấu hình AI. Hãy lưu cấu hình đầu tiên ở phần phía trên.
             </div>
           ) : (
             <div className="mt-4 space-y-3">
@@ -314,10 +316,10 @@ export function AiSettingsForm() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Xóa provider AI?
+                                Xóa cấu hình AI?
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Provider &quot;{provider.name}&quot; và API key sẽ bị
+                                Cấu hình &quot;{provider.name}&quot; và API key sẽ bị
                                 xóa vĩnh viễn khỏi trình duyệt này. Hành động
                                 này không thể khôi phục.
                               </AlertDialogDescription>
@@ -332,7 +334,7 @@ export function AiSettingsForm() {
                                 aria-label={`Xác nhận xóa ${provider.name}`}
                                 onClick={() => deleteProvider(provider)}
                               >
-                                Xóa provider
+                                Xóa cấu hình
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -382,12 +384,12 @@ function AiProviderFormSection({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <div>
           <h2 className="text-lg font-semibold">
-            {isEditing ? "Sửa provider AI" : "Thêm provider AI"}
+            {isEditing ? "Sửa cấu hình AI" : "Thêm cấu hình AI"}
           </h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Tạo provider mới hoặc chỉnh sửa provider trong danh sách bên dưới.
-            Provider được chọn sẽ dùng cho chat, phân tích tháng và phân tích
-            giao dịch.
+            Tạo cấu hình mới hoặc chỉnh lại cấu hình đã lưu bên dưới. Cấu hình
+            đang chọn sẽ dùng cho chat, nhận xét theo tháng và phân tích giao
+            dịch.
           </p>
         </div>
 
@@ -398,7 +400,7 @@ function AiProviderFormSection({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className={FIELD_LABEL_CLASS_NAME}>
-                  Tên provider
+                  Tên cấu hình
                 </FormLabel>
                 <FormControl>
                   <Input {...field} className={CONTROL_CLASS_NAME} />
@@ -483,7 +485,7 @@ function AiProviderFormSection({
               className="h-10 border-[#DDD8CE]"
             >
               <Plus className="size-4" />
-              Provider mới
+              Cấu hình mới
             </Button>
             <Button
               id="saveProvider"
@@ -494,8 +496,8 @@ function AiProviderFormSection({
               {pending
                 ? "Đang lưu..."
                 : isEditing
-                  ? "Cập nhật provider"
-                  : "Lưu provider"}
+                  ? "Cập nhật cấu hình"
+                  : "Lưu cấu hình"}
             </Button>
           </div>
         </div>

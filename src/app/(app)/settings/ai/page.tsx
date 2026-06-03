@@ -6,8 +6,8 @@ export default function AiSettingsPage() {
     <div className="space-y-8">
       <PageHeader
         eyebrow="Cấu hình AI"
-        title="Huấn luyện viên MoneyMind"
-        description="Kết nối provider AI để phân loại giao dịch, tạo insight tháng và trả lời các câu hỏi tài chính cá nhân trong ứng dụng."
+        title="Kết nối MoneyMind với AI"
+        description="Thêm nhà cung cấp AI để phân loại giao dịch, tạo nhận xét theo tháng và trả lời câu hỏi tài chính trong ứng dụng."
       />
       <AiSettingsForm />
     </div>

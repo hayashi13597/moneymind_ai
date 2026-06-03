@@ -19,7 +19,7 @@ async function readJsonError(response: Response) {
     error?: string;
   } | null;
 
-  return payload?.error ?? "Không thể tạo insight AI.";
+  return payload?.error ?? "Không thể tạo nhận xét AI.";
 }
 
 export function MonthlyInsightPanel({
@@ -38,7 +38,7 @@ export function MonthlyInsightPanel({
       const providerSetting = readLocalAiProviderSetting();
 
       if (!providerSetting) {
-        const message = "Bạn cần cấu hình nhà cung cấp AI trước.";
+        const message = "Bạn cần thêm cấu hình AI trước.";
         setError(message);
         toast.error(message);
         return;
@@ -59,7 +59,9 @@ export function MonthlyInsightPanel({
 
       const payload = (await response.json()) as { insight: MonthlyInsightDto };
       setInsight(payload.insight);
-      toast.success(regenerate ? "Đã tạo lại insight AI." : "Đã tạo insight AI.");
+      toast.success(
+        regenerate ? "Đã tạo lại nhận xét AI." : "Đã tạo nhận xét AI.",
+      );
     } catch {
       const message = "Không thể kết nối dịch vụ AI.";
       setError(message);
@@ -74,9 +76,9 @@ export function MonthlyInsightPanel({
       <CardContent className="p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Phân tích từ MoneyMind AI</h2>
+            <h2 className="text-lg font-semibold">Nhận xét từ MoneyMind</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Phân tích ngắn dựa trên dữ liệu thật của tháng này.
+              Tóm tắt ngắn dựa trên giao dịch trong tháng này.
             </p>
           </div>
           <Button
@@ -88,14 +90,14 @@ export function MonthlyInsightPanel({
               insight ? "border-[#DDD8CE]" : "bg-[#2F6B4F] hover:bg-[#285B43]"
             }
           >
-            {insight ? "Tạo lại" : "Tạo insight"}
+            {insight ? "Tạo lại" : "Tạo nhận xét"}
           </Button>
         </div>
         {insight ? (
           <MonthlyInsightMarkdown content={insight.content} />
         ) : (
           <p className="mt-4 text-sm text-muted-foreground">
-            Chưa có insight cho tháng này.
+            Chưa có nhận xét cho tháng này.
           </p>
         )}
         {error ? (

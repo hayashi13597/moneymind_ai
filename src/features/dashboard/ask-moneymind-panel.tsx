@@ -12,7 +12,7 @@ const PROMPTS = [
   "Tháng này tôi đã chi quá tay ở đâu?",
   "Tôi có nên mua điện thoại mới không?",
   "Tuần này tôi nên tiết kiệm bao nhiêu?",
-  "Tạo kế hoạch tiết kiệm cho tôi.",
+  "Gợi ý cách tiết kiệm cho tháng này.",
 ];
 
 type AskMoneyMindPanelProps = {
@@ -47,7 +47,7 @@ export function AskMoneyMindPanel({ month }: AskMoneyMindPanelProps) {
       const providerSetting = readLocalAiProviderSetting();
 
       if (!providerSetting) {
-        setError("Bạn cần cấu hình nhà cung cấp AI trước.");
+        setError("Bạn cần thêm cấu hình AI trước.");
         return;
       }
 
@@ -83,9 +83,9 @@ export function AskMoneyMindPanel({ month }: AskMoneyMindPanelProps) {
             <Sparkles className="size-4" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Hỏi MoneyMind AI</h2>
+            <h2 className="text-lg font-semibold">Hỏi MoneyMind</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Chọn một câu hỏi để MoneyMind AI trả lời.
+              Chọn một câu hỏi để xem câu trả lời dựa trên dữ liệu tháng này.
             </p>
           </div>
         </div>
@@ -117,7 +117,7 @@ export function AskMoneyMindPanel({ month }: AskMoneyMindPanelProps) {
               aria-live="polite"
             >
               {pending
-                ? "MoneyMind AI đang phân tích dữ liệu tháng này..."
+                ? "MoneyMind đang xem lại dữ liệu tháng này..."
                 : null}
               {error ? <p className="text-[#A2482D]">{error}</p> : null}
               {answer ? <p className="whitespace-pre-line">{answer}</p> : null}
@@ -128,11 +128,11 @@ export function AskMoneyMindPanel({ month }: AskMoneyMindPanelProps) {
         <div className="mt-5 grid gap-3 text-sm md:grid-cols-2">
           <div className="flex items-start gap-2 text-[#2F6B4F]">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-            <span>Câu trả lời thực tế dựa trên dữ liệu tháng này.</span>
+            <span>Câu trả lời dựa trên giao dịch trong tháng này.</span>
           </div>
           <div className="flex items-start gap-2 text-[#6F5D3F]">
             <CircleAlert className="mt-0.5 size-4 shrink-0" />
-            <span>Kiểm tra gợi ý của AI trước khi quyết định.</span>
+            <span>Xem gợi ý như tham khảo trước khi ra quyết định.</span>
           </div>
         </div>
       </CardContent>
