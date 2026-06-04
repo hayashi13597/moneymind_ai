@@ -170,4 +170,21 @@ describe("AiChatWidget", () => {
 
     expect(container.textContent).toContain("55.000 đ, Ăn uống, 2026-06-04");
   });
+
+  it("keeps the send button aligned with the textarea row", async () => {
+    act(() => {
+      root.render(React.createElement(AiChatWidget, { categories: [] }));
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Mở chat AI"]')
+        ?.click();
+    });
+
+    const composer = container.querySelector("textarea")?.closest("form");
+
+    expect(composer?.className).toContain("items-start");
+    expect(composer?.className).not.toContain("items-end");
+  });
 });

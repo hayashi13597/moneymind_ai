@@ -329,7 +329,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(sendMessage)}
-                className="flex items-end gap-2 border-t border-warm-border bg-card p-3"
+                className="flex items-start gap-2 border-t border-warm-border bg-card p-3"
               >
                 <FormField
                   control={form.control}
@@ -342,7 +342,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                           {...field}
                           placeholder="Hỏi về chi tiêu..."
                           rows={1}
-                          className="max-h-32 min-h-11 w-full resize-none rounded-xl border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
+                          className="max-h-32 min-h-11 w-full resize-none rounded-xl border-input bg-background px-3 py-2.5 text-sm leading-5 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
                         />
                       </FormControl>
                       <FormMessage />
