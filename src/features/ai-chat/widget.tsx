@@ -16,9 +16,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import type { AgentResponse } from "@/features/agent/schemas";
 import type {
   AiChatMessage,
-  AiChatResponse,
   AiChatTransactionDraft,
 } from "@/features/ai-chat/schemas";
 import { AiChatTransactionReviewModal } from "@/features/ai-chat/transaction-review-modal";
@@ -37,11 +37,16 @@ type AiChatWidgetProps = {
 
 type ChatEntry = AiChatMessage & {
   draft?: AiChatTransactionDraft;
+  transactions?: AgentResponse["transactions"];
+  clarification?: AgentResponse["clarification"];
+  resultType?: AgentResponse["resultType"];
 };
 
 type AiChatBubbleProps = {
   entry: ChatEntry;
   onReviewDraft: (draft: AiChatTransactionDraft) => void;
+  onSelectCandidate?: (candidate: { id: string; label: string }) => void;
+  pending?: boolean;
 };
 
 const SUGGESTED_PROMPTS = [
@@ -72,7 +77,12 @@ function currentMonthKey() {
   return `${year}-${month}`;
 }
 
-export function AiChatBubble({ entry, onReviewDraft }: AiChatBubbleProps) {
+export function AiChatBubble({
+  entry,
+  onReviewDraft,
+  onSelectCandidate,
+  pending = false,
+}: AiChatBubbleProps) {
   return (
     <div
       className={
@@ -91,6 +101,42 @@ export function AiChatBubble({ entry, onReviewDraft }: AiChatBubbleProps) {
         >
           Xem giao dịch nháp
         </Button>
+      ) : null}
+      {entry.transactions?.length ? (
+        <div className="mt-3 space-y-2">
+          {entry.transactions.map((transaction) => (
+            <div
+              key={transaction.id}
+              className="rounded-lg border border-[#E8E4DC] bg-white/80 p-3 text-xs"
+            >
+              <div className="font-medium">
+                {transaction.categoryName} ·{" "}
+                {transaction.amount.toLocaleString("vi-VN")} đ
+              </div>
+              <div className="mt-1 text-muted-foreground">
+                {transaction.date}
+                {transaction.merchant ? ` · ${transaction.merchant}` : ""}
+              </div>
+              <div className="mt-1">{transaction.note}</div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {entry.clarification?.candidates?.length ? (
+        <div className="mt-3 space-y-2">
+          {entry.clarification.candidates.map((candidate) => (
+            <Button
+              key={candidate.id}
+              type="button"
+              variant="outline"
+              disabled={pending}
+              onClick={() => onSelectCandidate?.(candidate)}
+              className="rounded-lg border border-[#E8E4DC] bg-white/80 p-3 text-xs font-medium"
+            >
+              {candidate.label}
+            </Button>
+          ))}
+        </div>
       ) : null}
     </div>
   );
@@ -143,7 +189,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
     setPending(true);
 
     try {
-      const response = await fetch("/api/ai/chat", {
+      const response = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -162,16 +208,27 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
         return;
       }
 
-      const payload = (await response.json()) as AiChatResponse;
+      const payload = (await response.json()) as AgentResponse;
       setMessages((current) => [
         ...current,
-        { ...payload.message, draft: payload.transactionDraft },
+        {
+          ...payload.message,
+          transactions: payload.transactions,
+          clarification: payload.clarification,
+          resultType: payload.resultType,
+        },
       ]);
     } catch {
       setError("Không thể kết nối dịch vụ AI.");
     } finally {
       setPending(false);
     }
+  }
+
+  function selectCandidate(candidate: { id: string; label: string }) {
+    void sendMessage({
+      input: `Tôi chọn giao dịch ${candidate.id}: ${candidate.label}`,
+    });
   }
 
   return (
@@ -235,6 +292,8 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                   key={`${message.role}-${index}`}
                   entry={message}
                   onReviewDraft={setReviewDraft}
+                  onSelectCandidate={selectCandidate}
+                  pending={pending}
                 />
               ))}
               {pending ? (

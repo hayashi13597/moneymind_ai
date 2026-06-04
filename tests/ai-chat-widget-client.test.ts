@@ -87,4 +87,87 @@ describe("AiChatWidget", () => {
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("posts chat messages to the agent route", async () => {
+    readLocalAiProviderSettingMock.mockReturnValue({
+      baseUrl: "https://openrouter.ai/api/v1",
+      apiKey: "sk-test",
+      model: "openai/gpt-4o-mini",
+    });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        message: {
+          role: "assistant",
+          content: "Bạn chi nhiều nhất cho ăn uống.",
+        },
+        resultType: "answer",
+      }),
+    });
+
+    act(() => {
+      root.render(React.createElement(AiChatWidget, { categories: [] }));
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Mở chat AI"]')
+        ?.click();
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>("textarea")!;
+
+    await act(async () => {
+      changeField(input, "Tôi chi gì nhiều nhất?");
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Gửi tin nhắn"]')
+        ?.click();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/agent",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("renders clarification candidates from agent responses", async () => {
+    readLocalAiProviderSettingMock.mockReturnValue({
+      baseUrl: "https://openrouter.ai/api/v1",
+      apiKey: "sk-test",
+      model: "openai/gpt-4o-mini",
+    });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        message: { role: "assistant", content: "Bạn muốn xóa giao dịch nào?" },
+        resultType: "clarification_required",
+        clarification: {
+          question: "Bạn muốn xóa giao dịch nào?",
+          candidates: [{ id: "tx_1", label: "55.000 đ, Ăn uống, 2026-06-04" }],
+        },
+      }),
+    });
+
+    act(() => {
+      root.render(React.createElement(AiChatWidget, { categories: [] }));
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Mở chat AI"]')
+        ?.click();
+    });
+
+    await act(async () => {
+      changeField(
+        container.querySelector<HTMLTextAreaElement>("textarea")!,
+        "Xóa ăn trưa",
+      );
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Gửi tin nhắn"]')
+        ?.click();
+    });
+
+    expect(container.textContent).toContain("55.000 đ, Ăn uống, 2026-06-04");
+  });
 });
