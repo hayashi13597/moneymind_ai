@@ -29,7 +29,15 @@ describe("agent finance tools", () => {
     getMonthlyDashboardMock.mockResolvedValue({
       month: "2026-06",
       totals: { income: 10000000, expense: 3500000, remaining: 6500000 },
-      categoryBreakdown: [{ categoryName: "Ăn uống", amount: 1200000 }],
+      categoryBreakdown: [
+        {
+          categoryId: "cat_food",
+          name: "Ăn uống",
+          color: "#f97316",
+          amount: 1200000,
+          percentage: 100,
+        },
+      ],
     });
     categoryFindManyMock.mockResolvedValue([
       { id: "cat_food", name: "Ăn uống", type: "expense" },
@@ -69,7 +77,15 @@ describe("agent finance tools", () => {
       month: "2026-06",
       dashboard: {
         totals: { income: 10000000, expense: 3500000, remaining: 6500000 },
-        categoryBreakdown: [{ categoryName: "Ăn uống", amount: 1200000 }],
+        categoryBreakdown: [
+          {
+            categoryId: "cat_food",
+            name: "Ăn uống",
+            color: "#f97316",
+            amount: 1200000,
+            percentage: 100,
+          },
+        ],
       },
     });
 

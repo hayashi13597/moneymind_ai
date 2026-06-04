@@ -76,7 +76,7 @@ export function formatDashboardExplanation({
   month: string;
   dashboard: {
     totals: { income: number; expense: number; remaining: number };
-    categoryBreakdown: Array<{ categoryName: string; amount: number }>;
+    categoryBreakdown: Array<{ name: string; amount: number }>;
   };
 }) {
   return [
