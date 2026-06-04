@@ -4,6 +4,29 @@ import { db } from "@/lib/db";
 
 import type { CategoryCreateInput, CategoryUpdateInput } from "./schemas";
 
+const CATEGORY_COLOR_PALETTE = [
+  "#16a34a",
+  "#ef4444",
+  "#a16207",
+  "#db2777",
+  "#2563eb",
+  "#7c3aed",
+  "#ea580c",
+  "#0891b2",
+  "#4f46e5",
+  "#64748b",
+  "#2F6B4F",
+  "#A2482D",
+  "#0F766E",
+  "#B45309",
+  "#BE185D",
+  "#4338CA",
+] as const;
+
+type CategoryTransactionClient = Pick<Prisma.TransactionClient, "$queryRaw"> & {
+  category: Pick<Prisma.TransactionClient["category"], "create" | "findMany">;
+};
+
 export async function listCategories(userId: string) {
   return db.category.findMany({
     where: { userId },
@@ -21,15 +44,66 @@ export async function createCategory(
   userId: string,
   input: CategoryCreateInput,
 ) {
-  return db.category.create({
-    data: {
-      userId,
-      name: input.name,
-      type: input.type,
-      color: input.color,
-      icon: input.icon,
-    },
+  if (input.color) {
+    return db.category.create({
+      data: {
+        userId,
+        name: input.name,
+        type: input.type,
+        color: input.color,
+        icon: input.icon,
+      },
+    });
+  }
+
+  return db.$transaction(async (tx) => {
+    await lockCategoryColorSelection(userId, tx);
+    const color = await pickUnusedCategoryColor(userId, tx);
+
+    return tx.category.create({
+      data: {
+        userId,
+        name: input.name,
+        type: input.type,
+        color,
+        icon: input.icon,
+      },
+    });
   });
+}
+
+async function lockCategoryColorSelection(
+  userId: string,
+  client: CategoryTransactionClient,
+) {
+  await client.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
+}
+
+async function pickUnusedCategoryColor(
+  userId: string,
+  client: CategoryTransactionClient,
+) {
+  const existingCategories = await client.category.findMany({
+    where: {
+      userId,
+      color: { not: null },
+    },
+    select: { color: true },
+  });
+  const usedColors = new Set(
+    existingCategories
+      .map((category) => category.color?.toLowerCase())
+      .filter((color): color is string => Boolean(color)),
+  );
+
+  return (
+    CATEGORY_COLOR_PALETTE.find(
+      (color) => !usedColors.has(color.toLowerCase()),
+    ) ??
+    CATEGORY_COLOR_PALETTE[
+      existingCategories.length % CATEGORY_COLOR_PALETTE.length
+    ]
+  );
 }
 
 export async function updateCategory(

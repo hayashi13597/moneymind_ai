@@ -4,10 +4,12 @@ import {
   AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
+  BarChart3,
   CircleDollarSign,
   FolderKanban,
   Pencil,
   Plus,
+  Trash2,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -328,43 +330,63 @@ export function CategoryManager({
   }
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
-          <SummaryTile
-            icon={<CircleDollarSign className="size-4" />}
-            label="Chi tiêu đã phân loại"
-            value={formatVnd(totalCurrentExpense)}
-            helper="Tổng chi tiêu theo danh mục trong tháng hiện tại."
-            tone="expense"
-          />
-          <SummaryTile
-            icon={<FolderKanban className="size-4" />}
-            label="Danh mục đang dùng"
-            value={`${visibleCategories.length}`}
-            helper={`${customCategoryCount} danh mục tùy chỉnh, ${totalTransactions} giao dịch đã gắn danh mục.`}
-          />
-          <SummaryTile
-            icon={<TrendingUp className="size-4" />}
-            label="Danh mục lớn nhất"
-            value={topExpense?.category.name ?? "Chưa có"}
-            helper={
-              topExpense
-                ? `${formatVnd(topExpense.insight.currentAmount)} trong tháng này.`
-                : "Thêm giao dịch để thấy xu hướng chi tiêu."
-            }
-          />
-        </div>
+    <div className="space-y-7">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
+        <SectionCard className="overflow-hidden">
+          <div className="-m-5 bg-[#F5F1E8] p-5 md:-m-6 md:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Tổng quan tháng này
+                </p>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+                  {formatVnd(totalCurrentExpense)}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Chi tiêu đã được gắn vào danh mục trong tháng hiện tại.
+                </p>
+              </div>
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#F7EDE8] text-[#A2482D]">
+                <CircleDollarSign className="size-5" />
+              </span>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+              <SummaryTile
+                icon={<FolderKanban className="size-4" />}
+                label="Đang dùng"
+                value={`${visibleCategories.length}`}
+                helper={`${customCategoryCount} tùy chỉnh`}
+              />
+              <SummaryTile
+                icon={<BarChart3 className="size-4" />}
+                label="Giao dịch"
+                value={`${totalTransactions}`}
+                helper="Đã phân loại"
+              />
+              <SummaryTile
+                icon={<TrendingUp className="size-4" />}
+                label="Lớn nhất"
+                value={topExpense?.category.name ?? "Chưa có"}
+                helper={
+                  topExpense
+                    ? formatVnd(topExpense.insight.currentAmount)
+                    : "Chưa có chi tiêu"
+                }
+              />
+            </div>
+          </div>
+        </SectionCard>
 
         <SectionCard className="min-h-full">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-xl">
               <h2 className="text-xl font-semibold tracking-tight">
-                Tạo danh mục mới
+                Thêm danh mục nhanh
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Đặt tên rõ ràng, dễ nhớ để nhập giao dịch nhanh và xem báo cáo
-                dễ hơn.
+                Đặt tên dễ nhận ra để nhập giao dịch nhanh và xem báo cáo rõ
+                hơn.
               </p>
             </div>
             <Badge
@@ -453,7 +475,7 @@ export function CategoryManager({
             .map((item) => (
               <article
                 key={item.category.id}
-                className="rounded-xl border border-[#D8E1D7] bg-white/72 p-4"
+                className="rounded-xl border border-[#D8E1D7] bg-white/82 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="truncate text-sm font-semibold">
@@ -504,7 +526,7 @@ export function CategoryManager({
         </div>
       </InsightCard>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         {(
           [
             ["expense", groupedCategories.expense],
@@ -550,30 +572,32 @@ function SummaryTile({
   tone?: "default" | "expense";
 }) {
   return (
-    <Card className="gap-0 rounded-xl border-[#E1DDD4] bg-card/92 py-0 shadow-[0_12px_36px_rgba(47,42,31,0.045)]">
-      <CardContent className="p-5">
-        <div className="flex items-center gap-3">
-          <span
-            className={cn(
-              "flex size-9 items-center justify-center rounded-xl bg-[#ECF3ED] text-[#2F6B4F]",
-              tone === "expense" && "bg-[#F7EDE8] text-[#A2482D]",
-            )}
-          >
-            {icon}
-          </span>
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        </div>
-        <p
+    <div className="rounded-xl border border-[#E3DDD1] bg-[#FFFDF7]/78 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]">
+      <div className="flex items-center gap-3">
+        <span
           className={cn(
-            "mt-4 truncate text-2xl font-bold leading-none text-foreground",
-            tone === "expense" && "text-[#A2482D]",
+            "flex size-9 items-center justify-center rounded-xl bg-[#ECF3ED] text-[#2F6B4F]",
+            tone === "expense" && "bg-[#F7EDE8] text-[#A2482D]",
           )}
         >
-          {value}
+          {icon}
+        </span>
+        <p className="min-w-0 truncate text-sm font-medium text-muted-foreground">
+          {label}
         </p>
-        <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p>
-      </CardContent>
-    </Card>
+      </div>
+      <p
+        className={cn(
+          "mt-4 truncate text-xl font-bold leading-none text-foreground",
+          tone === "expense" && "text-[#A2482D]",
+        )}
+      >
+        {value}
+      </p>
+      <p className="mt-2 truncate text-xs leading-5 text-muted-foreground">
+        {helper}
+      </p>
+    </div>
   );
 }
 
@@ -592,12 +616,35 @@ function CategoryGroupCard({
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
 }) {
+  const isExpense = groupType === "expense";
+
   return (
     <Card className="gap-0 overflow-hidden rounded-xl border-[#E1DDD4] bg-card/92 py-0 shadow-[0_14px_48px_rgba(47,42,31,0.055)]">
       <CardContent className="p-0">
-        <div className="flex items-start justify-between gap-4 border-b border-[#E8E4DC] bg-[#FFFDF7] p-5">
+        <div
+          className={cn(
+            "flex items-start justify-between gap-4 border-b border-[#E8E4DC] p-5",
+            isExpense ? "bg-[#FFF8F3]" : "bg-[#F5FAF5]",
+          )}
+        >
           <div>
-            <h2 className="text-lg font-semibold">{typeLabels[groupType]}</h2>
+            <div className="flex items-center gap-3">
+              <span
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-xl",
+                  isExpense
+                    ? "bg-[#F7EDE8] text-[#A2482D]"
+                    : "bg-[#ECF3ED] text-[#2F6B4F]",
+                )}
+              >
+                {isExpense ? (
+                  <TrendingDown className="size-5" />
+                ) : (
+                  <TrendingUp className="size-5" />
+                )}
+              </span>
+              <h2 className="text-lg font-semibold">{typeLabels[groupType]}</h2>
+            </div>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
               {typeDescriptions[groupType]}
             </p>
@@ -610,12 +657,15 @@ function CategoryGroupCard({
           </Badge>
         </div>
 
-        <div className="divide-y divide-[#E8E4DC]">
+        <div className="bg-[#FFFDF7]/72">
           {categories.map((category) => (
             <CategoryRow
               key={category.id}
               category={category}
-              insight={insightsByCategory.get(category.id) ?? fallbackInsight(category.id)}
+              insight={
+                insightsByCategory.get(category.id) ??
+                fallbackInsight(category.id)
+              }
               maxCurrentExpense={maxCurrentExpense}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -655,19 +705,29 @@ function CategoryRow({
       : 0;
 
   return (
-    <article className="grid gap-4 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+    <article className="grid gap-4 border-b border-[#EAE4D8] p-5 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
       <div className="min-w-0">
         <div className="flex items-center gap-3">
           <span
-            className="size-3 shrink-0 rounded-full ring-4 ring-[#F2EFE7]"
+            className="size-4 shrink-0 rounded-full ring-4 ring-[#F2EFE7]"
             style={{ backgroundColor: category.color ?? "#2F6B4F" }}
           />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">{category.name}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {category.isDefault ? "Mặc định" : "Tùy chỉnh"} -{" "}
-              {insight.transactionCount} giao dịch
-            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Badge
+                variant="outline"
+                className="rounded-full border-[#DDD8CE] bg-white px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              >
+                {category.isDefault ? "Mặc định" : "Tùy chỉnh"}
+              </Badge>
+              <Badge
+                variant="outline"
+                className="rounded-full border-[#DDD8CE] bg-white px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              >
+                {insight.transactionCount} giao dịch
+              </Badge>
+            </div>
           </div>
         </div>
 
@@ -709,7 +769,7 @@ function CategoryRow({
           size="sm"
           aria-label={`Sửa danh mục ${category.name}`}
           onClick={() => onEdit(category)}
-          className="rounded-xl border-[#DDD8CE]"
+          className="rounded-xl border-[#DDD8CE] bg-white"
         >
           <Pencil className="size-4" />
           Sửa
@@ -721,8 +781,9 @@ function CategoryRow({
               variant="outline"
               size="sm"
               aria-label={`Xóa danh mục ${category.name}`}
-              className="rounded-xl border-[#DDD8CE] text-destructive hover:text-destructive"
+              className="rounded-xl border-[#DDD8CE] bg-white text-destructive hover:text-destructive"
             >
+              <Trash2 className="size-4" />
               Xóa
             </Button>
           </AlertDialogTrigger>
