@@ -36,11 +36,20 @@ export function PasswordForm() {
   });
 
   async function handleSubmit(values: PasswordFormInput) {
-    const result = await authClient.changePassword({
-      currentPassword: values.currentPassword,
-      newPassword: values.newPassword,
-      revokeOtherSessions: values.revokeOtherSessions ?? true,
-    });
+    let result;
+
+    try {
+      result = await authClient.changePassword({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+        revokeOtherSessions: values.revokeOtherSessions ?? true,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? `: ${error.message}` : "";
+
+      toast.error(`Không thể đổi mật khẩu${message}`);
+      return;
+    }
 
     if (result.error) {
       toast.error("Mật khẩu hiện tại không đúng hoặc không thể đổi mật khẩu.");

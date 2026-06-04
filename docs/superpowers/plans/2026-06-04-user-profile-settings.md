@@ -618,6 +618,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { createZodResolver } from "@/lib/zod-form";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -706,12 +707,11 @@ export function PasswordForm() {
           render={({ field }) => (
             <FormItem className="flex items-start gap-3 rounded-xl border border-[#E4DED3] bg-[#FFFDF7]/70 p-3">
               <FormControl>
-                <Input
-                  name={field.name}
+                <Checkbox
                   checked={field.value}
-                  onChange={(event) => field.onChange(event.target.checked)}
-                  type="checkbox"
-                  className="mt-1 size-4 accent-primary"
+                  onCheckedChange={(checked) => field.onChange(checked === true)}
+                  aria-label="Đăng xuất khỏi các thiết bị khác"
+                  className="mt-1"
                 />
               </FormControl>
               <div className="space-y-1">
@@ -903,8 +903,8 @@ describe("AccountMenu", () => {
     expect(image?.alt).toBe("Nguyễn Văn A");
   });
 
-  it("renders an initial fallback and account controls", () => {
-    act(() => {
+  it("renders an initial fallback and account controls", async () => {
+    await act(async () => {
       root.render(
         React.createElement(AccountMenu, {
           user: {
@@ -917,8 +917,21 @@ describe("AccountMenu", () => {
     });
 
     expect(container.textContent).toContain("A");
-    expect(container.textContent).toContain("Hồ sơ");
-    expect(container.textContent).toContain("Đăng xuất");
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Mở menu tài khoản"]')
+        ?.dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            button: 0,
+            ctrlKey: false,
+          }),
+        );
+    });
+
+    expect(document.body.textContent).toContain("Hồ sơ");
+    expect(document.body.textContent).toContain("Đăng xuất");
   });
 });
 ```

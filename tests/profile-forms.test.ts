@@ -6,6 +6,7 @@ import { updateProfileAction } from "@/features/profile/actions";
 import { PasswordForm } from "@/features/profile/password-form";
 import { ProfileForm } from "@/features/profile/profile-form";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean })
   .IS_REACT_ACT_ENVIRONMENT = true;
@@ -46,6 +47,7 @@ jest.mock("@/lib/auth-client", () => ({
 
 const updateProfileActionMock = updateProfileAction as jest.Mock;
 const changePasswordMock = authClient.changePassword as jest.Mock;
+const toastErrorMock = toast.error as jest.Mock;
 
 function changeField(field: HTMLInputElement, value: string) {
   const valueSetter = Object.getOwnPropertyDescriptor(
@@ -118,6 +120,35 @@ describe("profile forms", () => {
     expect(refreshMock).toHaveBeenCalled();
   });
 
+  it("shows feedback when profile update rejects", async () => {
+    updateProfileActionMock.mockRejectedValue(new Error("Network down"));
+
+    await act(async () => {
+      root.render(
+        React.createElement(ProfileForm, {
+          user: {
+            name: "Nguyễn Văn A",
+            email: "ban@example.com",
+            image: "",
+          },
+        }),
+      );
+    });
+
+    await act(async () => {
+      changeField(
+        container.querySelector<HTMLInputElement>('input[name="name"]')!,
+        "Tên mới",
+      );
+      container.querySelector<HTMLButtonElement>("#saveProfile")?.click();
+    });
+
+    expect(toastErrorMock).toHaveBeenCalledWith(
+      "Không thể cập nhật hồ sơ: Network down",
+    );
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
   it("blocks mismatched password confirmation", async () => {
     await act(async () => {
       root.render(React.createElement(PasswordForm));
@@ -177,5 +208,37 @@ describe("profile forms", () => {
       newPassword: "new-password",
       revokeOtherSessions: true,
     });
+  });
+
+  it("shows feedback when password change rejects", async () => {
+    changePasswordMock.mockRejectedValue(new Error("Network down"));
+
+    await act(async () => {
+      root.render(React.createElement(PasswordForm));
+    });
+
+    await act(async () => {
+      changeField(
+        container.querySelector<HTMLInputElement>(
+          'input[name="currentPassword"]',
+        )!,
+        "old-password",
+      );
+      changeField(
+        container.querySelector<HTMLInputElement>('input[name="newPassword"]')!,
+        "new-password",
+      );
+      changeField(
+        container.querySelector<HTMLInputElement>(
+          'input[name="confirmPassword"]',
+        )!,
+        "new-password",
+      );
+      container.querySelector<HTMLButtonElement>("#changePassword")?.click();
+    });
+
+    expect(toastErrorMock).toHaveBeenCalledWith(
+      "Không thể đổi mật khẩu: Network down",
+    );
   });
 });

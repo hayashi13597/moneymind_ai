@@ -7,6 +7,8 @@ import { AccountMenu } from "@/components/auth/account-menu";
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean })
   .IS_REACT_ACT_ENVIRONMENT = true;
 
+const originalPointerEvent = globalThis.PointerEvent;
+
 (globalThis as typeof globalThis & { PointerEvent: typeof PointerEvent })
   .PointerEvent = MouseEvent as typeof PointerEvent;
 
@@ -44,6 +46,10 @@ jest.mock("@/lib/auth-client", () => ({
 describe("AccountMenu", () => {
   let container: HTMLDivElement;
   let root: Root;
+
+  afterAll(() => {
+    globalThis.PointerEvent = originalPointerEvent;
+  });
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -109,7 +115,7 @@ describe("AccountMenu", () => {
     expect(document.body.textContent).toContain("Đăng xuất");
     expect(
       document.body.querySelector<HTMLButtonElement>(
-        'button[aria-label="Đăng xuất"]',
+        '[role="menuitem"][aria-label="Đăng xuất"]',
       )?.textContent,
     ).toContain("Đăng xuất");
   });

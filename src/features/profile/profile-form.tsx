@@ -44,7 +44,16 @@ export function ProfileForm({ user }: ProfileFormProps) {
   });
 
   async function handleSubmit(values: ProfileFormInput) {
-    const result = await updateProfileAction(values);
+    let result;
+
+    try {
+      result = await updateProfileAction(values);
+    } catch (error) {
+      const message = error instanceof Error ? `: ${error.message}` : "";
+
+      toast.error(`Không thể cập nhật hồ sơ${message}`);
+      return;
+    }
 
     if (!result.ok) {
       toast.error(result.error);

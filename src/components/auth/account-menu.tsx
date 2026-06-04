@@ -89,9 +89,9 @@ export function AccountMenu({ user }: AccountMenuProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <div>
+        <DropdownMenuItem asChild>
           <LogoutButton showLabel />
-        </div>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
