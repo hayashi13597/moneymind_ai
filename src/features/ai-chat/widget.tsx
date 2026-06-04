@@ -23,6 +23,7 @@ import type {
 } from "@/features/ai-chat/schemas";
 import { AiChatTransactionReviewModal } from "@/features/ai-chat/transaction-review-modal";
 import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
+import { cn } from "@/lib/utils";
 import { createZodResolver } from "@/lib/zod-form";
 
 type Category = {
@@ -83,61 +84,69 @@ export function AiChatBubble({
   onSelectCandidate,
   pending = false,
 }: AiChatBubbleProps) {
+  const isUser = entry.role === "user";
+
   return (
-    <div
-      className={
-        entry.role === "user"
-          ? "ml-8 rounded-2xl bg-[#2F6B4F] px-3 py-2 text-sm leading-6 text-white"
-          : "mr-8 rounded-2xl border border-[#D8E1D7] bg-muted bg-[#F3F8F2] px-3 py-2 text-sm leading-6"
-      }
-    >
-      <p>{entry.content}</p>
-      {entry.draft ? (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onReviewDraft(entry.draft!)}
-          className="mt-3 border-[#D8E1D7] bg-white"
-        >
-          Xem giao dịch nháp
-        </Button>
-      ) : null}
-      {entry.transactions?.length ? (
-        <div className="mt-3 space-y-2">
-          {entry.transactions.map((transaction) => (
-            <div
-              key={transaction.id}
-              className="rounded-lg border border-[#E8E4DC] bg-white/80 p-3 text-xs"
-            >
-              <div className="font-medium">
-                {transaction.categoryName} ·{" "}
-                {transaction.amount.toLocaleString("vi-VN")} đ
+    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+      <div
+        data-role={entry.role}
+        data-pending={pending ? "true" : undefined}
+        className={cn(
+          "max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-6 shadow-sm",
+          isUser
+            ? "rounded-br-md bg-primary text-primary-foreground shadow-[0_10px_24px_rgba(47,107,79,0.18)]"
+            : "rounded-bl-md border border-soft-border bg-soft-accent text-foreground shadow-[0_10px_24px_rgba(47,42,31,0.05)]",
+        )}
+      >
+        <p>{entry.content}</p>
+        {entry.draft ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onReviewDraft(entry.draft!)}
+            className="mt-3 h-8 rounded-lg border-soft-border bg-card px-3 text-xs"
+          >
+            Xem giao dịch nháp
+          </Button>
+        ) : null}
+        {entry.transactions?.length ? (
+          <div className="mt-3 space-y-2">
+            {entry.transactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="rounded-xl border border-warm-border bg-card/90 p-3 text-xs"
+              >
+                <div className="font-medium">
+                  {transaction.categoryName}{" "}
+                  <span className="text-muted-foreground">-</span>{" "}
+                  {transaction.amount.toLocaleString("vi-VN")} đ
+                </div>
+                <div className="mt-1 text-muted-foreground">
+                  {transaction.date}
+                  {transaction.merchant ? ` - ${transaction.merchant}` : ""}
+                </div>
+                <div className="mt-1">{transaction.note}</div>
               </div>
-              <div className="mt-1 text-muted-foreground">
-                {transaction.date}
-                {transaction.merchant ? ` · ${transaction.merchant}` : ""}
-              </div>
-              <div className="mt-1">{transaction.note}</div>
-            </div>
-          ))}
-        </div>
-      ) : null}
-      {entry.clarification?.candidates?.length ? (
-        <div className="mt-3 space-y-2">
-          {entry.clarification.candidates.map((candidate) => (
-            <Button
-              key={candidate.id}
-              type="button"
-              variant="outline"
-              disabled={pending}
-              onClick={() => onSelectCandidate?.(candidate)}
-              className="rounded-lg border border-[#E8E4DC] bg-white/80 p-3 text-xs font-medium"
-            >
-              {candidate.label}
-            </Button>
-          ))}
-        </div>
-      ) : null}
+            ))}
+          </div>
+        ) : null}
+        {entry.clarification?.candidates?.length ? (
+          <div className="mt-3 space-y-2">
+            {entry.clarification.candidates.map((candidate) => (
+              <Button
+                key={candidate.id}
+                type="button"
+                variant="outline"
+                disabled={pending}
+                onClick={() => onSelectCandidate?.(candidate)}
+                className="h-auto w-full justify-start whitespace-normal rounded-xl border-warm-border bg-card/90 p-3 text-left text-xs font-medium"
+              >
+                {candidate.label}
+              </Button>
+            ))}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -233,17 +242,19 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-40">
+      <div className="fixed inset-x-3 bottom-3 z-40 flex justify-end sm:inset-x-auto sm:right-4 sm:bottom-4">
         {open ? (
-          <Card className="flex h-[min(620px,calc(100dvh-2rem))] w-[min(calc(100vw-2rem),420px)] flex-col gap-0 overflow-hidden rounded-2xl border-[#DCD7CC] bg-card py-0 shadow-[0_18px_60px_rgba(47,42,31,0.18)]">
-            <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-[#E8E4DC] bg-[#FDFCF8] px-4 py-3">
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-[#2F6B4F] p-2 text-white">
+          <Card className="flex h-[min(640px,calc(100dvh-1.5rem))] w-full flex-col gap-0 overflow-hidden rounded-2xl border-warm-border bg-card py-0 shadow-[0_22px_70px_rgba(47,42,31,0.20)] sm:w-[min(calc(100vw-2rem),440px)]">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-warm-border bg-card px-4 py-3.5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[0_10px_24px_rgba(47,107,79,0.22)]">
                   <Bot className="size-4" />
                 </div>
-                <div>
-                  <h2 className="text-sm font-semibold">MoneyMind Coach</h2>
-                  <p className="text-xs text-muted-foreground">
+                <div className="min-w-0">
+                  <h2 className="truncate text-sm font-semibold">
+                    MoneyMind Coach
+                  </h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Tháng {month.slice(5, 7)}/{month.slice(0, 4)}
                   </p>
                 </div>
@@ -254,22 +265,28 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                 onClick={() => setOpen(false)}
                 aria-label="Đóng chat AI"
                 size="icon"
-                className="border-[#DDD8CE]"
+                className="border-warm-border bg-background/70"
               >
                 <X className="size-4" />
               </Button>
             </CardHeader>
-            <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+            <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[linear-gradient(180deg,rgb(247_243_234/.42),rgb(255_253_247/.82))] p-3.5 sm:p-4">
               {messages.length === 0 ? (
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-[#D8E1D7] bg-[#F3F8F2] p-4">
-                    <div className="flex items-start gap-2">
-                      <Sparkles className="mt-0.5 size-4 shrink-0 text-[#2F6B4F]" />
-                      <p className="text-sm leading-6 text-muted-foreground">
-                        Hỏi như đang nói với một huấn luyện viên tài chính.
-                        MoneyMind có thể phân tích chi tiêu hoặc tạo giao dịch
-                        nháp để bạn duyệt.
-                      </p>
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-soft-border bg-soft-accent p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
+                    <div className="flex items-start gap-3">
+                      <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-card text-primary">
+                        <Sparkles className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">
+                          Hỏi nhanh về dòng tiền của bạn.
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                          MoneyMind phân tích chi tiêu, tìm giao dịch và tạo
+                          nháp để bạn duyệt trước khi lưu.
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <div className="grid gap-2">
@@ -279,7 +296,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                         type="button"
                         variant="outline"
                         onClick={() => selectPrompt(prompt)}
-                        className="h-auto justify-start whitespace-normal rounded-xl border-[#D8E1D7] bg-white px-3 py-2 text-left text-sm"
+                        className="h-auto justify-start whitespace-normal rounded-xl border-warm-border bg-card/90 px-3 py-2.5 text-left text-sm font-medium"
                       >
                         {prompt}
                       </Button>
@@ -300,18 +317,19 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                 <AiChatBubble
                   entry={{ role: "assistant", content: "AI đang trả lời..." }}
                   onReviewDraft={setReviewDraft}
+                  pending
                 />
               ) : null}
             </CardContent>
             {error ? (
-              <p className="border-t border-[#E8E4DC] px-4 py-2 text-sm text-destructive">
+              <p className="border-t border-warm-border bg-card px-4 py-2.5 text-sm text-destructive">
                 {error}
               </p>
             ) : null}
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(sendMessage)}
-                className="flex gap-2 border-t border-[#E8E4DC] bg-[#FDFCF8] p-3"
+                className="flex items-end gap-2 border-t border-warm-border bg-card p-3"
               >
                 <FormField
                   control={form.control}
@@ -324,7 +342,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                           {...field}
                           placeholder="Hỏi về chi tiêu..."
                           rows={1}
-                          className="min-h-11 w-full resize-none rounded-xl border border-[#DCD7CC] bg-white px-3 text-sm outline-none transition-colors focus:border-[#2F6B4F] focus:ring-3 focus:ring-[#2F6B4F]/15"
+                          className="max-h-32 min-h-11 w-full resize-none rounded-xl border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
                         />
                       </FormControl>
                       <FormMessage />
@@ -336,7 +354,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
                   disabled={pending || !input.trim()}
                   size="icon-lg"
                   aria-label="Gửi tin nhắn"
-                  className="bg-[#2F6B4F] hover:bg-[#285B43]"
+                  className="size-11 rounded-xl bg-primary hover:bg-primary-hover"
                 >
                   <Send className="size-4" />
                 </Button>
@@ -348,7 +366,7 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
             type="button"
             onClick={() => setOpen(true)}
             aria-label="Mở chat AI"
-            className="size-12 rounded-full bg-[#2F6B4F] p-0 shadow-[0_14px_30px_rgba(47,107,79,0.28)] hover:bg-[#285B43]"
+            className="size-12 rounded-2xl bg-primary p-0 shadow-[0_14px_34px_rgba(47,107,79,0.30)] hover:bg-primary-hover"
           >
             <MessageCircle className="size-5" />
           </Button>

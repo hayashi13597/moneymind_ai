@@ -16,11 +16,14 @@ describe("AiChatBubble", () => {
       React.createElement(AiChatBubble, {
         entry: { role: "assistant", content: "AI đang trả lời..." },
         onReviewDraft: jest.fn(),
+        pending: true,
       }),
     );
 
     expect(markup).toContain("AI đang trả lời...");
-    expect(markup).toContain("mr-8");
-    expect(markup).toContain("bg-muted");
+    expect(markup).toContain('data-role="assistant"');
+    expect(markup).toContain('data-pending="true"');
+    expect(markup).toContain("bg-soft-accent");
+    expect(markup).not.toContain("text-muted-foreground");
   });
 });
