@@ -23,6 +23,10 @@ const CATEGORY_COLOR_PALETTE = [
   "#4338CA",
 ] as const;
 
+type CategoryTransactionClient = Pick<Prisma.TransactionClient, "$queryRaw"> & {
+  category: Pick<Prisma.TransactionClient["category"], "create" | "findMany">;
+};
+
 export async function listCategories(userId: string) {
   return db.category.findMany({
     where: { userId },
@@ -40,21 +44,46 @@ export async function createCategory(
   userId: string,
   input: CategoryCreateInput,
 ) {
-  const color = input.color ?? (await pickUnusedCategoryColor(userId));
+  if (input.color) {
+    return db.category.create({
+      data: {
+        userId,
+        name: input.name,
+        type: input.type,
+        color: input.color,
+        icon: input.icon,
+      },
+    });
+  }
 
-  return db.category.create({
-    data: {
-      userId,
-      name: input.name,
-      type: input.type,
-      color,
-      icon: input.icon,
-    },
+  return db.$transaction(async (tx) => {
+    await lockCategoryColorSelection(userId, tx);
+    const color = await pickUnusedCategoryColor(userId, tx);
+
+    return tx.category.create({
+      data: {
+        userId,
+        name: input.name,
+        type: input.type,
+        color,
+        icon: input.icon,
+      },
+    });
   });
 }
 
-async function pickUnusedCategoryColor(userId: string) {
-  const existingCategories = await db.category.findMany({
+async function lockCategoryColorSelection(
+  userId: string,
+  client: CategoryTransactionClient,
+) {
+  await client.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
+}
+
+async function pickUnusedCategoryColor(
+  userId: string,
+  client: CategoryTransactionClient,
+) {
+  const existingCategories = await client.category.findMany({
     where: {
       userId,
       color: { not: null },
