@@ -32,8 +32,11 @@ function buildSystemPrompt() {
     "- transactions.update: sửa một giao dịch khi mục tiêu đủ rõ.",
     "- transactions.delete: xóa một giao dịch khi mục tiêu đủ rõ.",
     "Nếu sửa hoặc xóa có thể mơ hồ, vẫn chọn transactions.update/delete với targetQuery rõ nhất; server sẽ hỏi lại khi tìm nhiều ứng viên.",
-    "Dạng JSON:",
-    '{"resultType":"answer|search_results|suggestion|dashboard_explanation|transaction_created|transaction_updated|transaction_deleted","tool":"tool.name","message":"câu trả lời tiếng Việt","input":{}}',
+    "Dạng JSON chung:",
+    '{"resultType":"answer|search_results|suggestion|dashboard_explanation|transaction_created|transaction_updated|transaction_deleted","tool":"tool.name","message":"câu trả lời tiếng Việt","input":{...}}',
+    "Với finance.answerContext, dashboard.explain, categories.list: input có thể là {}.",
+    "Với transactions.search: input phải có query.",
+    "Với transactions.create/update/delete: input phải đủ field theo hành động.",
   ].join("\n");
 }
 

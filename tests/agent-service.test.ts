@@ -87,6 +87,65 @@ describe("agent service", () => {
     });
   });
 
+  it("accepts read-only tool intents with empty input objects", async () => {
+    chatMock.mockResolvedValue(
+      JSON.stringify({
+        resultType: "answer",
+        tool: "finance.answerContext",
+        message: "Bạn đang còn lại 6.500.000 đ trong tháng này.",
+        input: {},
+      }),
+    );
+
+    await expect(
+      generateAgentResponse(
+        "user_1",
+        {
+          month: "2026-06",
+          providerSetting,
+          messages: [{ role: "user", content: "Tháng này còn bao nhiêu?" }],
+        },
+        providerSetting,
+      ),
+    ).resolves.toEqual({
+      message: {
+        role: "assistant",
+        content: "Bạn đang còn lại 6.500.000 đ trong tháng này.",
+      },
+      resultType: "answer",
+    });
+  });
+
+  it("accepts dashboard explanation intents with empty input objects", async () => {
+    chatMock.mockResolvedValue(
+      JSON.stringify({
+        resultType: "dashboard_explanation",
+        tool: "dashboard.explain",
+        message: "Dashboard tháng này cho thấy bạn vẫn còn dư.",
+        input: {},
+      }),
+    );
+
+    const result = await generateAgentResponse(
+      "user_1",
+      {
+        month: "2026-06",
+        providerSetting,
+        messages: [{ role: "user", content: "Giải thích dashboard" }],
+      },
+      providerSetting,
+    );
+
+    expect(result).toEqual({
+      message: {
+        role: "assistant",
+        content:
+          "Dashboard tháng này cho thấy bạn vẫn còn dư.\n\nDashboard tháng 2026-06",
+      },
+      resultType: "dashboard_explanation",
+    });
+  });
+
   it("returns search results", async () => {
     chatMock.mockResolvedValue(
       JSON.stringify({

@@ -113,6 +113,16 @@ export const agentToolNameSchema = z.enum([
 
 export type AgentToolName = z.infer<typeof agentToolNameSchema>;
 
+const optionalQuestionInputSchema = z
+  .object({ question: trimmedString.min(1).optional() })
+  .optional()
+  .default({});
+
+const optionalReasonInputSchema = z
+  .object({ reason: trimmedString.min(1).optional() })
+  .optional()
+  .default({});
+
 export const agentCreateInputSchema = z.object({
   type: z.enum(["income", "expense"]),
   amount: vndAmountSchema,
@@ -168,13 +178,13 @@ export const agentIntentSchema = z.discriminatedUnion("tool", [
     resultType: z.enum(["answer", "suggestion"]),
     tool: z.literal("finance.answerContext"),
     message: trimmedString.min(1),
-    input: z.object({ question: trimmedString.min(1) }),
+    input: optionalQuestionInputSchema,
   }),
   z.object({
     resultType: z.literal("dashboard_explanation"),
     tool: z.literal("dashboard.explain"),
     message: trimmedString.min(1),
-    input: z.object({ question: trimmedString.min(1) }),
+    input: optionalQuestionInputSchema,
   }),
   z.object({
     resultType: z.literal("search_results"),
@@ -186,7 +196,7 @@ export const agentIntentSchema = z.discriminatedUnion("tool", [
     resultType: z.literal("answer"),
     tool: z.literal("categories.list"),
     message: trimmedString.min(1),
-    input: z.object({ reason: trimmedString.min(1) }),
+    input: optionalReasonInputSchema,
   }),
   z.object({
     resultType: z.literal("transaction_created"),
