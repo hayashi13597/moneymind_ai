@@ -1,7 +1,10 @@
 import { revalidatePath } from "next/cache";
 
 import { updateProfileAction } from "@/features/profile/actions";
-import { profileFormSchema } from "@/features/profile/schemas";
+import {
+  normalizeProfileFormValues,
+  profileFormSchema,
+} from "@/features/profile/schemas";
 import { getCurrentUser } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 
@@ -26,13 +29,13 @@ const userUpdateMock = db.user.update as jest.Mock;
 const revalidatePathMock = revalidatePath as jest.Mock;
 
 describe("profile schemas", () => {
-  it("normalizes an empty avatar URL to null", () => {
+  it("trims profile fields and normalizes an empty avatar URL to null", () => {
     const parsed = profileFormSchema.parse({
       name: " Nguyễn Văn A ",
       image: "   ",
     });
 
-    expect(parsed).toEqual({
+    expect(normalizeProfileFormValues(parsed)).toEqual({
       name: "Nguyễn Văn A",
       image: null,
     });

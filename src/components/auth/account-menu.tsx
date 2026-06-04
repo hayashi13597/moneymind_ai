@@ -39,6 +39,9 @@ export function AccountMenu({ user }: AccountMenuProps) {
           aria-label="Mở menu tài khoản"
         >
           {user.image ? (
+            // User-provided avatar URLs can come from arbitrary domains; next/image
+            // would require broad remotePatterns for this simple account menu.
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={user.image}
               alt={displayName}

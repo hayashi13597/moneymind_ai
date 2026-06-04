@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import {
+  normalizeProfileFormValues,
   profileFormSchema,
   type ProfileFormInput,
 } from "@/features/profile/schemas";
@@ -32,12 +33,14 @@ export async function updateProfileAction(
     };
   }
 
+  const normalized = normalizeProfileFormValues(parsed.data);
+
   try {
     await db.user.update({
       where: { id: user.id },
       data: {
-        name: parsed.data.name,
-        image: parsed.data.image,
+        name: normalized.name,
+        image: normalized.image,
       },
     });
 

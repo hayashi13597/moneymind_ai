@@ -4,8 +4,10 @@ const optionalUrl = z
   .string()
   .trim()
   .max(2048, "URL ảnh đại diện quá dài.")
-  .transform((value) => (value.length === 0 ? null : value))
-  .pipe(z.url("URL ảnh đại diện không hợp lệ.").nullable());
+  .refine(
+    (value) => value.length === 0 || z.url().safeParse(value).success,
+    "URL ảnh đại diện không hợp lệ.",
+  );
 
 export const profileFormSchema = z.object({
   name: z
@@ -15,6 +17,13 @@ export const profileFormSchema = z.object({
     .max(80, "Tên hiển thị tối đa 80 ký tự."),
   image: optionalUrl,
 });
+
+export function normalizeProfileFormValues(values: ProfileFormValues) {
+  return {
+    name: values.name,
+    image: values.image.length === 0 ? null : values.image,
+  };
+}
 
 export const passwordFormSchema = z
   .object({
@@ -29,6 +38,6 @@ export const passwordFormSchema = z
   });
 
 export type ProfileFormInput = z.input<typeof profileFormSchema>;
-export type ProfileFormValues = z.output<typeof profileFormSchema>;
+export type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export type PasswordFormInput = z.input<typeof passwordFormSchema>;
 export type PasswordFormValues = z.output<typeof passwordFormSchema>;
