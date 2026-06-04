@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { AiChatResponse } from "@/features/ai-chat/schemas";
+import type { AgentResponse } from "@/features/agent/schemas";
 import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
 
 const PROMPTS = [
@@ -51,7 +51,7 @@ export function AskMoneyMindPanel({ month }: AskMoneyMindPanelProps) {
         return;
       }
 
-      const response = await fetch("/api/ai/chat", {
+      const response = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -66,7 +66,7 @@ export function AskMoneyMindPanel({ month }: AskMoneyMindPanelProps) {
         return;
       }
 
-      const payload = (await response.json()) as AiChatResponse;
+      const payload = (await response.json()) as AgentResponse;
       setAnswer(payload.message.content);
     } catch {
       setError("Không thể kết nối MoneyMind AI.");
