@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { AgentResponse } from "@/features/agent/schemas";
 import { readLocalAiProviderSetting } from "@/features/ai/local-settings";
+import { MonthlyInsightMarkdown } from "@/features/ai/monthly-insight-markdown";
 
 const PROMPTS = [
   "Tháng này tôi đã chi quá tay ở đâu?",
@@ -120,7 +121,7 @@ export function AskMoneyMindPanel({ month }: AskMoneyMindPanelProps) {
                 ? "MoneyMind đang xem lại dữ liệu tháng này..."
                 : null}
               {error ? <p className="text-[#A2482D]">{error}</p> : null}
-              {answer ? <p className="whitespace-pre-line">{answer}</p> : null}
+              {answer ? <MonthlyInsightMarkdown content={answer} /> : null}
             </div>
           </div>
         ) : null}

@@ -70,4 +70,38 @@ describe("AskMoneyMindPanel", () => {
     );
     expect(container.textContent).toContain("Bạn chi nhiều nhất cho ăn uống.");
   });
+
+  it("renders markdown answers as formatted content", async () => {
+    readLocalAiProviderSettingMock.mockReturnValue({
+      baseUrl: "https://openrouter.ai/api/v1",
+      apiKey: "sk-test",
+      model: "openai/gpt-4o-mini",
+    });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        message: {
+          role: "assistant",
+          content:
+            "Để tiết kiệm hơn trong tháng này:\n\n* **Khác:** Chiếm 85% tổng chi tiêu.\n* **Ăn uống:** Chiếm 13% tổng chi tiêu.",
+        },
+        resultType: "suggestion",
+      }),
+    });
+
+    act(() => {
+      root.render(React.createElement(AskMoneyMindPanel, { month: "2026-06" }));
+    });
+
+    await act(async () => {
+      Array.from(container.querySelectorAll("button"))
+        .find((button) => button.textContent?.includes("Gợi ý cách tiết kiệm"))
+        ?.click();
+    });
+
+    expect(container.querySelectorAll("li")).toHaveLength(2);
+    expect(container.querySelector("strong")?.textContent).toBe("Khác:");
+    expect(container.textContent).not.toContain("**Khác:**");
+    expect(container.textContent).not.toContain("* **Ăn uống:**");
+  });
 });
