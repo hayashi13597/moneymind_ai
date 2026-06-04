@@ -5,9 +5,15 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
 
-export function LogoutButton() {
+type LogoutButtonProps = {
+  showLabel?: boolean;
+  className?: string;
+};
+
+export function LogoutButton({ showLabel, className }: LogoutButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -22,14 +28,19 @@ export function LogoutButton() {
   return (
     <Button
       aria-label="Đăng xuất"
+      className={cn(
+        showLabel && "h-9 w-full justify-start gap-2 px-2 font-medium",
+        className,
+      )}
       disabled={isPending}
       onClick={handleLogout}
-      size="icon"
+      size={showLabel ? "default" : "icon"}
       title="Đăng xuất"
       type="button"
       variant="ghost"
     >
       <LogOut />
+      {showLabel ? <span>Đăng xuất</span> : null}
     </Button>
   );
 }

@@ -28,8 +28,17 @@ jest.mock("next/link", () => {
   };
 });
 
-jest.mock("@/components/auth/logout-button", () => ({
-  LogoutButton: () => React.createElement("button", null, "Đăng xuất"),
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    refresh: jest.fn(),
+  }),
+}));
+
+jest.mock("@/lib/auth-client", () => ({
+  authClient: {
+    signOut: jest.fn(),
+  },
 }));
 
 describe("AccountMenu", () => {
@@ -98,5 +107,10 @@ describe("AccountMenu", () => {
 
     expect(document.body.textContent).toContain("Hồ sơ");
     expect(document.body.textContent).toContain("Đăng xuất");
+    expect(
+      document.body.querySelector<HTMLButtonElement>(
+        'button[aria-label="Đăng xuất"]',
+      )?.textContent,
+    ).toContain("Đăng xuất");
   });
 });

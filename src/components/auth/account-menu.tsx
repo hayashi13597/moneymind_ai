@@ -54,26 +54,43 @@ export function AccountMenu({ user }: AccountMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-64 rounded-xl border-[#DED7CA] bg-[#FFFDF7]"
+        className="w-72 rounded-xl border-[#E1DDD4] bg-card/95 p-2 shadow-[0_18px_58px_rgba(47,42,31,0.09)]"
       >
-        <DropdownMenuLabel className="space-y-1">
-          <span className="block truncate text-sm font-semibold text-foreground">
-            {displayName}
+        <DropdownMenuLabel className="flex items-center gap-3 rounded-lg bg-[#F8F5EE] px-3 py-2.5">
+          <span className="inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#D8E1D7] bg-[#ECF3ED] text-sm font-bold text-[#2F6B4F]">
+            {user.image ? (
+              // User-provided avatar URLs can come from arbitrary domains; next/image
+              // would require broad remotePatterns for this simple account menu.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.image}
+                alt=""
+                className="size-full object-cover"
+                aria-hidden="true"
+              />
+            ) : (
+              getInitial(user)
+            )}
           </span>
-          <span className="block truncate text-xs font-normal text-muted-foreground">
-            {user.email}
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-foreground">
+              {displayName}
+            </span>
+            <span className="block truncate text-xs font-normal text-muted-foreground">
+              {user.email}
+            </span>
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer">
+          <Link href="/profile" className="h-9 cursor-pointer gap-2 px-2">
             <UserRound className="size-4" />
             Hồ sơ
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <div className="px-2 py-1">
-          <LogoutButton />
+        <div>
+          <LogoutButton showLabel />
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
