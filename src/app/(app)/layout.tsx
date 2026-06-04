@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Bot } from "lucide-react";
 
 import { AppNav } from "@/components/app-nav";
-import { LogoutButton } from "@/components/auth/logout-button";
+import { AccountMenu } from "@/components/auth/account-menu";
 import { AiChatWidget } from "@/features/ai-chat/widget";
 import { UserLocalTimeSync } from "@/features/dashboard/user-local-time-sync";
 import { getCurrentSession } from "@/lib/auth-session";
@@ -41,10 +41,7 @@ export default async function AppLayout({
           </Link>
           <AppNav />
           <div className="flex items-center gap-2">
-            <span className="hidden max-w-40 truncate text-sm text-muted-foreground sm:inline">
-              {session.user.email}
-            </span>
-            <LogoutButton />
+            <AccountMenu user={session.user} />
           </div>
         </div>
       </header>
