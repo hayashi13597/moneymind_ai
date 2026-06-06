@@ -20,6 +20,11 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { EmptyState, InsightCard } from "@/components/app-ui";
+import {
+  CoachHero,
+  CoachMetricStrip,
+  CoachPageShell,
+} from "@/components/coach-ui";
 import { FormCombobox } from "@/components/form-combobox";
 import { FormMonthPicker } from "@/components/form-month-picker";
 import {
@@ -412,6 +417,12 @@ export function TransactionManager({
   const filteredCount = filteredTransactions.length;
   const isFiltered =
     query.trim() !== "" || typeFilter !== "all" || categoryFilter !== "all";
+  const coachRecommendation =
+    monthlySummary.balance >= 0
+      ? monthlySummary.topCategory
+        ? `${monthlySummary.topCategory.name} đang là nhóm chi lớn nhất. Ghi thêm giao dịch ngay khi phát sinh để MoneyMind nhận ra nhịp chi tiêu thật.`
+        : "Dòng tiền tháng này vẫn dương. Hãy tiếp tục ghi giao dịch bằng câu tự nhiên để AI có đủ ngữ cảnh huấn luyện."
+      : "Tháng này đang âm dòng tiền. MoneyMind sẽ ưu tiên các khoản chi mới để giúp bạn nhìn ra nhóm cần siết lại trước.";
 
   function openPage(nextPage: number, nextPageSize = serverPagination.pageSize) {
     const searchParams = new URLSearchParams({
@@ -688,8 +699,61 @@ export function TransactionManager({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-[#D8E1D7] bg-[#FFFDF7]/92 p-4 shadow-[0_18px_64px_rgba(47,42,31,0.06)] md:p-5">
+    <CoachPageShell>
+      <CoachHero
+        eyebrow="Coach Capture"
+        title="Ghi lại hôm nay bằng ngôn ngữ tự nhiên"
+        description="Mục tiêu của trang này không phải là nhập liệu cho đủ bảng. Hãy kể MoneyMind chuyện vừa xảy ra, để AI chuẩn bị bản nháp rồi bạn xác nhận lại dữ liệu gốc."
+        recommendation={coachRecommendation}
+        evidence={[
+          {
+            label: "Tháng đang xem",
+            value: selectedMonth.label,
+            helper: transactionCountLabel(serverPagination.total),
+          },
+          {
+            label: "Nhịp thu chi",
+            value: formatVnd(monthlySummary.balance),
+            helper:
+              monthlySummary.balance >= 0
+                ? "Dòng tiền đang dương"
+                : "Cần kiểm tra chi tiêu",
+          },
+        ]}
+      />
+
+      <CoachMetricStrip
+        metrics={[
+          {
+            label: "Thu nhập",
+            value: formatVnd(monthlySummary.income),
+            helper: "Tổng thu trong tháng",
+            tone: "positive",
+          },
+          {
+            label: "Chi tiêu",
+            value: formatVnd(monthlySummary.expense),
+            helper: monthlySummary.topCategory
+              ? `Lớn nhất: ${monthlySummary.topCategory.name}`
+              : "Chưa có nhóm nổi bật",
+            tone: "negative",
+          },
+          {
+            label: "Chênh lệch",
+            value: formatVnd(monthlySummary.balance),
+            helper: currentPageRange,
+            tone: monthlySummary.balance >= 0 ? "positive" : "negative",
+          },
+          {
+            label: "Dữ liệu huấn luyện",
+            value: transactionCountLabel(serverPagination.total),
+            helper: "Nguồn ngữ cảnh cho AI",
+          },
+        ]}
+      />
+
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-[#D8E1D7] bg-[#FFFDF7]/92 p-4 shadow-[0_18px_64px_rgba(47,42,31,0.06)] md:p-5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))]">
           <div className="rounded-xl border border-[#CBDACB] bg-[#ECF3ED] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
             <div className="flex items-start justify-between gap-3">
@@ -745,7 +809,7 @@ export function TransactionManager({
             </p>
           </div>
         </div>
-      </div>
+        </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(340px,0.88fr)_minmax(0,1.12fr)] xl:items-start">
         <InsightCard
@@ -1305,6 +1369,7 @@ export function TransactionManager({
           </CardContent>
         </Card>
       </div>
+      </div>
 
       {editingTransaction ? (
         <TransactionEditDialog
@@ -1316,7 +1381,7 @@ export function TransactionManager({
           onSubmit={updateEditingTransaction}
         />
       ) : null}
-    </div>
+    </CoachPageShell>
   );
 }
 

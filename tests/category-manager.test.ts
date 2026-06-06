@@ -92,6 +92,21 @@ describe("CategoryManager", () => {
     expect(container.textContent).toContain("Thu nhập");
   });
 
+  it("frames categories as taxonomy coaching for better AI signals", () => {
+    act(() => {
+      root.render(
+        React.createElement(CategoryManager, {
+          initialCategories: [category],
+          categoryInsights: [],
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Taxonomy Coach");
+    expect(container.textContent).toContain("Chất lượng tín hiệu AI");
+    expect(container.textContent).toContain("MoneyMind gợi ý");
+  });
+
   it("opens an alert dialog before deleting a category", async () => {
     const confirmSpy = jest
       .spyOn(window, "confirm")

@@ -120,6 +120,24 @@ describe("TransactionManager", () => {
     expect(container.textContent).toContain("Lương tháng này");
   });
 
+  it("leads with an AI coach capture experience", () => {
+    act(() => {
+      root.render(
+        React.createElement(TransactionManager, {
+          initialTransactions: [incomeTransaction],
+          categories,
+          selectedMonth,
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Coach Capture");
+    expect(container.textContent).toContain(
+      "Ghi lại hôm nay bằng ngôn ngữ tự nhiên",
+    );
+    expect(container.textContent).toContain("MoneyMind gợi ý");
+  });
+
   it("uses the shadcn date picker for the transaction date field", () => {
     act(() => {
       root.render(
