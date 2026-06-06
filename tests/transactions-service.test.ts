@@ -1,4 +1,5 @@
 import {
+  getTransactionSummary,
   listPaginatedTransactions,
   listTransactions,
 } from "@/features/transactions/service";
@@ -77,6 +78,54 @@ describe("transactions service", () => {
       total: 12,
       page: 2,
       pageSize: 5,
+    });
+  });
+
+  it("summarizes all selected-month transactions independently from pagination", async () => {
+    findManyMock.mockResolvedValue([
+      {
+        type: "income",
+        amount: 100000,
+        category: { id: "cat_income", name: "Thu nhập" },
+      },
+      {
+        type: "expense",
+        amount: 30000,
+        category: { id: "cat_food", name: "Ăn uống" },
+      },
+      {
+        type: "expense",
+        amount: 20000,
+        category: { id: "cat_food", name: "Ăn uống" },
+      },
+      {
+        type: "expense",
+        amount: 10000,
+        category: { id: "cat_transport", name: "Di chuyển" },
+      },
+    ]);
+
+    const result = await getTransactionSummary("user_1", "2026-05");
+
+    expect(findManyMock).toHaveBeenCalledWith({
+      where: {
+        userId: "user_1",
+        transactionDate: {
+          gte: new Date("2026-05-01T00:00:00.000Z"),
+          lt: new Date("2026-06-01T00:00:00.000Z"),
+        },
+      },
+      include: { category: true },
+    });
+    expect(result).toEqual({
+      income: 100000,
+      expense: 60000,
+      balance: 40000,
+      topCategory: {
+        id: "cat_food",
+        name: "Ăn uống",
+        amount: 50000,
+      },
     });
   });
 });

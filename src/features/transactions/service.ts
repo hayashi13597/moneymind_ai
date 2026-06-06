@@ -17,6 +17,17 @@ type PaginatedTransactionInput = {
   pageSize: number;
 };
 
+export type TransactionSummary = {
+  income: number;
+  expense: number;
+  balance: number;
+  topCategory: {
+    id: string;
+    name: string;
+    amount: number;
+  } | null;
+};
+
 async function validateCategoryForTransaction(
   userId: string,
   categoryId: string,
@@ -45,6 +56,64 @@ export async function listTransactions(userId: string, monthKey?: string) {
     include: { category: true },
     orderBy: [{ transactionDate: "desc" }, { createdAt: "desc" }],
   });
+}
+
+function summarizeTransactions(
+  transactions: Array<{
+    type: "income" | "expense";
+    amount: number;
+    category: {
+      id: string;
+      name: string;
+    };
+  }>,
+): TransactionSummary {
+  const income = transactions
+    .filter((transaction) => transaction.type === "income")
+    .reduce((total, transaction) => total + transaction.amount, 0);
+  const expense = transactions
+    .filter((transaction) => transaction.type === "expense")
+    .reduce((total, transaction) => total + transaction.amount, 0);
+  const expenseCategories = transactions
+    .filter((transaction) => transaction.type === "expense")
+    .reduce<Record<string, { id: string; name: string; amount: number }>>(
+      (accumulator, transaction) => {
+        const current = accumulator[transaction.category.id] ?? {
+          id: transaction.category.id,
+          name: transaction.category.name,
+          amount: 0,
+        };
+        accumulator[transaction.category.id] = {
+          ...current,
+          amount: current.amount + transaction.amount,
+        };
+        return accumulator;
+      },
+      {},
+    );
+  const topCategory =
+    Object.values(expenseCategories).sort((a, b) => b.amount - a.amount)[0] ??
+    null;
+
+  return {
+    income,
+    expense,
+    balance: income - expense,
+    topCategory,
+  };
+}
+
+export async function getTransactionSummary(
+  userId: string,
+  monthKey?: string,
+) {
+  const where = getTransactionListWhere(userId, monthKey);
+  const transactions = await db.transaction.findMany({
+    where,
+    include: { category: true },
+  });
+
+  return summarizeTransactions(transactions);
 }
 
 function getTransactionListWhere(

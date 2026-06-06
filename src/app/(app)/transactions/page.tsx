@@ -7,7 +7,10 @@ import {
   USER_TIME_ZONE_COOKIE,
 } from "@/features/dashboard/month";
 import { TransactionManager } from "@/features/transactions/transaction-manager";
-import { listPaginatedTransactions } from "@/features/transactions/service";
+import {
+  getTransactionSummary,
+  listPaginatedTransactions,
+} from "@/features/transactions/service";
 import { getCurrentUser } from "@/lib/auth-session";
 
 type TransactionsPageProps = {
@@ -68,11 +71,12 @@ export default async function TransactionsPage({
     undefined,
     userTimeZone,
   );
-  const [transactionPage, categories] = await Promise.all([
+  const [transactionPage, transactionSummary, categories] = await Promise.all([
     listPaginatedTransactions(user.id, {
       monthKey: month.key,
       ...parsePaginationParams(params),
     }),
+    getTransactionSummary(user.id, month.key),
     listCategories(user.id),
   ]);
   const transactionItems = transactionPage.transactions.map((transaction) => ({
@@ -96,6 +100,7 @@ export default async function TransactionsPage({
           page: transactionPage.page,
           pageSize: transactionPage.pageSize,
         }}
+        summary={transactionSummary}
       />
     </section>
   );

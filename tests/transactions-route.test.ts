@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { GET, POST } from "@/app/api/transactions/route";
 import {
   createTransaction,
+  getTransactionSummary,
   listPaginatedTransactions,
 } from "@/features/transactions/service";
 import { getRequiredApiUser } from "@/lib/api";
@@ -23,11 +24,13 @@ jest.mock("@/lib/api", () => ({
 
 jest.mock("@/features/transactions/service", () => ({
   createTransaction: jest.fn(),
+  getTransactionSummary: jest.fn(),
   listPaginatedTransactions: jest.fn(),
 }));
 
 const getRequiredApiUserMock = getRequiredApiUser as jest.Mock;
 const createTransactionMock = createTransaction as jest.Mock;
+const getTransactionSummaryMock = getTransactionSummary as jest.Mock;
 const listPaginatedTransactionsMock = listPaginatedTransactions as jest.Mock;
 const revalidatePathMock = revalidatePath as jest.Mock;
 const originalResponse = global.Response;
@@ -65,6 +68,7 @@ function createRequest(type: "income" | "expense" = "expense") {
 describe("transactions route", () => {
   beforeEach(() => {
     createTransactionMock.mockReset();
+    getTransactionSummaryMock.mockReset();
     listPaginatedTransactionsMock.mockReset();
     getRequiredApiUserMock.mockResolvedValue({ id: "user_1" });
     createTransactionMock.mockResolvedValue({
@@ -76,6 +80,12 @@ describe("transactions route", () => {
       total: 0,
       page: 1,
       pageSize: 5,
+    });
+    getTransactionSummaryMock.mockResolvedValue({
+      income: 0,
+      expense: 0,
+      balance: 0,
+      topCategory: null,
     });
     revalidatePathMock.mockReset();
   });
@@ -93,6 +103,10 @@ describe("transactions route", () => {
       page: 1,
       pageSize: 5,
     });
+    expect(getTransactionSummaryMock).toHaveBeenCalledWith(
+      "user_1",
+      "2026-05",
+    );
   });
 
   it("passes pagination query params to the transaction listing service", async () => {
@@ -116,6 +130,12 @@ describe("transactions route", () => {
         page: 1,
         pageSize: 5,
       },
+      summary: {
+        income: 0,
+        expense: 0,
+        balance: 0,
+        topCategory: null,
+      },
     });
   });
 
@@ -130,6 +150,7 @@ describe("transactions route", () => {
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: "Tháng không hợp lệ." });
     expect(listPaginatedTransactionsMock).not.toHaveBeenCalled();
+    expect(getTransactionSummaryMock).not.toHaveBeenCalled();
   });
 
   it("revalidates transaction-backed pages after creating a transaction", async () => {

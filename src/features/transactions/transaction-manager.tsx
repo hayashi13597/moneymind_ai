@@ -77,12 +77,24 @@ type TransactionManagerProps = {
   categories: Category[];
   selectedMonth: DashboardMonth;
   pagination?: TransactionPagination;
+  summary?: TransactionSummary;
 };
 
 type TransactionPagination = {
   total: number;
   page: number;
   pageSize: number;
+};
+
+type TransactionSummary = {
+  income: number;
+  expense: number;
+  balance: number;
+  topCategory: {
+    id: string;
+    name: string;
+    amount: number;
+  } | null;
 };
 
 type EditingTransaction = {
@@ -224,6 +236,7 @@ export function TransactionManager({
   categories,
   selectedMonth,
   pagination,
+  summary,
 }: TransactionManagerProps) {
   const router = useRouter();
   const initialTransactionsKey = useMemo(
@@ -258,6 +271,51 @@ export function TransactionManager({
     paginationState.sourceKey === initialPaginationKey
       ? paginationState.pagination
       : initialPagination;
+  const currentPageSummary = useMemo(() => {
+    const income = transactions
+      .filter((transaction) => transaction.type === "income")
+      .reduce((total, transaction) => total + transaction.amount, 0);
+    const expense = transactions
+      .filter((transaction) => transaction.type === "expense")
+      .reduce((total, transaction) => total + transaction.amount, 0);
+    const topExpenseCategory = transactions
+      .filter((transaction) => transaction.type === "expense")
+      .reduce<Record<string, { id: string; name: string; amount: number }>>(
+        (accumulator, transaction) => {
+          const current = accumulator[transaction.category.id] ?? {
+            id: transaction.category.id,
+            name: transaction.category.name,
+            amount: 0,
+          };
+          accumulator[transaction.category.id] = {
+            ...current,
+            amount: current.amount + transaction.amount,
+          };
+          return accumulator;
+        },
+        {},
+      );
+    const topCategory =
+      Object.values(topExpenseCategory).sort((a, b) => b.amount - a.amount)[0] ??
+      null;
+
+    return {
+      income,
+      expense,
+      balance: income - expense,
+      topCategory,
+    };
+  }, [transactions]);
+  const initialSummary = summary ?? currentPageSummary;
+  const initialSummaryKey = `${initialSummary.income}:${initialSummary.expense}:${initialSummary.balance}:${initialSummary.topCategory?.id ?? ""}:${initialSummary.topCategory?.amount ?? 0}`;
+  const [summaryState, setSummaryState] = useState({
+    sourceKey: initialSummaryKey,
+    summary: initialSummary,
+  });
+  const monthlySummary =
+    summaryState.sourceKey === initialSummaryKey
+      ? summaryState.summary
+      : initialSummary;
   const createForm = useForm<TransactionFormValues>({
     resolver: createZodResolver(transactionFormSchema),
     defaultValues: {
@@ -310,40 +368,6 @@ export function TransactionManager({
     }
   }, [createForm, selectedMonth.key]);
 
-  const summary = useMemo(() => {
-    const income = transactions
-      .filter((transaction) => transaction.type === "income")
-      .reduce((total, transaction) => total + transaction.amount, 0);
-    const expense = transactions
-      .filter((transaction) => transaction.type === "expense")
-      .reduce((total, transaction) => total + transaction.amount, 0);
-    const topExpenseCategory = transactions
-      .filter((transaction) => transaction.type === "expense")
-      .reduce<Record<string, { name: string; amount: number }>>(
-        (accumulator, transaction) => {
-          const current = accumulator[transaction.category.id] ?? {
-            name: transaction.category.name,
-            amount: 0,
-          };
-          accumulator[transaction.category.id] = {
-            ...current,
-            amount: current.amount + transaction.amount,
-          };
-          return accumulator;
-        },
-        {},
-      );
-    const topCategory = Object.values(topExpenseCategory).sort(
-      (a, b) => b.amount - a.amount,
-    )[0];
-
-    return {
-      income,
-      expense,
-      balance: income - expense,
-      topCategory,
-    };
-  }, [transactions]);
   const filteredTransactions = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
@@ -428,6 +452,7 @@ export function TransactionManager({
       const payload = (await response.json()) as {
         transactions: Transaction[];
         pagination: TransactionPagination;
+        summary: TransactionSummary;
       };
       setTransactionState({
         sourceKey: initialTransactionsKey,
@@ -439,6 +464,10 @@ export function TransactionManager({
       setPaginationState({
         sourceKey: initialPaginationKey,
         pagination: payload.pagination,
+      });
+      setSummaryState({
+        sourceKey: initialSummaryKey,
+        summary: payload.summary,
       });
       return true;
     } catch {
@@ -670,12 +699,12 @@ export function TransactionManager({
                 </p>
                 <p
                   className={
-                    summary.balance >= 0
+                    monthlySummary.balance >= 0
                       ? "mt-3 text-3xl font-bold leading-none text-[#2F6B4F]"
                       : "mt-3 text-3xl font-bold leading-none text-[#A2482D]"
                   }
                 >
-                  {formatVnd(summary.balance)}
+                  {formatVnd(monthlySummary.balance)}
                 </p>
               </div>
               <span className="rounded-lg bg-white/72 p-2 text-[#2F6B4F] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
@@ -689,20 +718,20 @@ export function TransactionManager({
           <div className="rounded-xl border border-[#E1DDD4] bg-white/72 p-4 shadow-[0_10px_32px_rgba(47,42,31,0.04)]">
             <p className="text-sm font-medium text-muted-foreground">Thu nhập</p>
             <p className="mt-3 text-2xl font-bold leading-none text-[#2F6B4F]">
-              {formatVnd(summary.income)}
+              {formatVnd(monthlySummary.income)}
             </p>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Tổng thu trong trang này
+              Tổng thu trong tháng này
             </p>
           </div>
           <div className="rounded-xl border border-[#E1DDD4] bg-white/72 p-4 shadow-[0_10px_32px_rgba(47,42,31,0.04)]">
             <p className="text-sm font-medium text-muted-foreground">Chi tiêu</p>
             <p className="mt-3 text-2xl font-bold leading-none text-[#A2482D]">
-              {formatVnd(summary.expense)}
+              {formatVnd(monthlySummary.expense)}
             </p>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              {summary.topCategory
-                ? `Danh mục lớn nhất: ${summary.topCategory.name}`
+              {monthlySummary.topCategory
+                ? `Danh mục lớn nhất: ${monthlySummary.topCategory.name}`
                 : "Chưa có danh mục nổi bật"}
             </p>
           </div>
