@@ -2,6 +2,7 @@ import { revalidateTransactionViews } from "@/features/transactions/revalidation
 import { transactionCreateSchema } from "@/features/transactions/schemas";
 import {
   createTransaction,
+  getTransactionSummary,
   listPaginatedTransactions,
 } from "@/features/transactions/service";
 import {
@@ -68,10 +69,13 @@ export async function GET(request: Request) {
   }
 
   const month = monthParam ?? undefined;
-  const result = await listPaginatedTransactions(user.id, {
-    monthKey: month,
-    ...parsePaginationParams(searchParams),
-  });
+  const [result, summary] = await Promise.all([
+    listPaginatedTransactions(user.id, {
+      monthKey: month,
+      ...parsePaginationParams(searchParams),
+    }),
+    getTransactionSummary(user.id, month),
+  ]);
 
   return Response.json({
     transactions: result.transactions,
@@ -80,6 +84,7 @@ export async function GET(request: Request) {
       page: result.page,
       pageSize: result.pageSize,
     },
+    summary,
   });
 }
 

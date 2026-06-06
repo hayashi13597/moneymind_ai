@@ -236,6 +236,47 @@ describe("TransactionManager", () => {
     );
   });
 
+  it("keeps the monthly summary independent from the visible transaction page", () => {
+    act(() => {
+      root.render(
+        React.createElement(TransactionManager, {
+          initialTransactions: [
+            {
+              ...incomeTransaction,
+              id: "tx_page_2",
+              type: "expense",
+              amount: 10000,
+              note: "Chi tiêu ở trang 2",
+              category: categories[2],
+            },
+          ],
+          categories,
+          selectedMonth,
+          pagination: {
+            total: 6,
+            page: 2,
+            pageSize: 5,
+          },
+          summary: {
+            income: 100000,
+            expense: 50000,
+            balance: 50000,
+            topCategory: {
+              id: "cat_food",
+              name: "Ăn uống",
+              amount: 50000,
+            },
+          },
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("100.000 ₫");
+    expect(container.textContent).toContain("50.000 ₫");
+    expect(container.textContent).toContain("Tổng thu trong tháng này");
+    expect(container.textContent).toContain("Danh mục lớn nhất: Ăn uống");
+  });
+
   it("opens an alert dialog before deleting a transaction", async () => {
     const confirmSpy = jest
       .spyOn(window, "confirm")
