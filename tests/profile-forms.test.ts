@@ -120,6 +120,23 @@ describe("profile forms", () => {
     expect(refreshMock).toHaveBeenCalled();
   });
 
+  it("frames profile data as coach personalization", async () => {
+    await act(async () => {
+      root.render(
+        React.createElement(ProfileForm, {
+          user: {
+            name: "Nguyễn Văn A",
+            email: "ban@example.com",
+            image: "",
+          },
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Hồ sơ huấn luyện");
+    expect(container.textContent).toContain("MoneyMind dùng thông tin này");
+  });
+
   it("shows feedback when profile update rejects", async () => {
     updateProfileActionMock.mockRejectedValue(new Error("Network down"));
 
@@ -176,6 +193,15 @@ describe("profile forms", () => {
 
     expect(container.textContent).toContain("Mật khẩu mới không khớp.");
     expect(changePasswordMock).not.toHaveBeenCalled();
+  });
+
+  it("frames password changes as account confidence", async () => {
+    await act(async () => {
+      root.render(React.createElement(PasswordForm));
+    });
+
+    expect(container.textContent).toContain("Độ tin cậy tài khoản");
+    expect(container.textContent).toContain("Giữ phiên cố vấn an toàn");
   });
 
   it("changes password with revoke other sessions enabled by default", async () => {

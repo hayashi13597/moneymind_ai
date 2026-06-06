@@ -63,6 +63,18 @@ export function PasswordForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="rounded-2xl border border-[#D8E1D7] bg-[#F3F8F1] p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2F6B4F]">
+            Độ tin cậy tài khoản
+          </p>
+          <h2 className="mt-2 text-lg font-semibold text-foreground">
+            Giữ phiên cố vấn an toàn
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Mật khẩu mạnh và thu hồi phiên cũ giúp dữ liệu tài chính cá nhân
+            không bị truy cập từ thiết bị bạn không còn dùng.
+          </p>
+        </div>
         <FormField
           control={form.control}
           name="currentPassword"
