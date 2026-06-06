@@ -10,7 +10,13 @@ function parseMonthKey(input: string) {
     return null;
   }
 
-  return { year: Number(match[1]), monthIndex: Number(match[2]) - 1 };
+  const month = Number(match[2]);
+
+  if (month < 1 || month > 12) {
+    return null;
+  }
+
+  return { year: Number(match[1]), monthIndex: month - 1 };
 }
 
 export function formatAgentDate(date: Date) {

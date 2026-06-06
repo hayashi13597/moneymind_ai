@@ -40,7 +40,14 @@ function extractJsonObject(content: string) {
         depth -= 1;
 
         if (depth === 0) {
-          return content.slice(start, index + 1);
+          const candidate = content.slice(start, index + 1);
+
+          try {
+            JSON.parse(candidate);
+            return candidate;
+          } catch {
+            break;
+          }
         }
       }
     }

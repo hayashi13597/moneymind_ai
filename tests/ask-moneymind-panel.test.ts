@@ -104,4 +104,38 @@ describe("AskMoneyMindPanel", () => {
     expect(container.textContent).not.toContain("**Khác:**");
     expect(container.textContent).not.toContain("* **Ăn uống:**");
   });
+
+  it("sanitizes unsafe raw HTML in markdown answers", async () => {
+    readLocalAiProviderSettingMock.mockReturnValue({
+      baseUrl: "https://openrouter.ai/api/v1",
+      apiKey: "sk-test",
+      model: "openai/gpt-4o-mini",
+    });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        message: {
+          role: "assistant",
+          content:
+            'Nội dung an toàn.\n\n<script>alert(1)</script>\n<div onclick="alert(1)">click</div>',
+        },
+        resultType: "suggestion",
+      }),
+    });
+
+    act(() => {
+      root.render(React.createElement(AskMoneyMindPanel, { month: "2026-06" }));
+    });
+
+    await act(async () => {
+      Array.from(container.querySelectorAll("button"))
+        .find((button) => button.textContent?.includes("Gợi ý cách tiết kiệm"))
+        ?.click();
+    });
+
+    expect(container.querySelectorAll("script")).toHaveLength(0);
+    expect(container.innerHTML).not.toContain("<script>");
+    expect(container.innerHTML).not.toContain("onclick=");
+    expect(container.textContent).not.toContain("alert(1)");
+  });
 });

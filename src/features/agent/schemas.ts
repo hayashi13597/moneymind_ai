@@ -9,6 +9,25 @@ const optionalNullableTrimmedString = z.preprocess(
   trimmedString.min(1).nullable().optional(),
 );
 
+const calendarDateSchema = trimmedString.refine((value) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return false;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() + 1 === month &&
+    date.getUTCDate() === day
+  );
+});
+
 const vndAmountSchema = z.preprocess((value) => {
   if (typeof value !== "string") {
     return value;
@@ -83,23 +102,56 @@ export const agentClarificationSchema = z.object({
 
 export type AgentClarification = z.infer<typeof agentClarificationSchema>;
 
-export const agentResponseSchema = z.object({
-  message: z.object({
-    role: z.literal("assistant"),
-    content: trimmedString.min(1),
-  }),
-  resultType: agentResultTypeSchema,
-  transactions: z.array(agentTransactionSummarySchema).optional(),
-  clarification: agentClarificationSchema.optional(),
-  action: z
-    .object({
-      type: z.enum(["create", "update", "delete"]),
-      transactionId: trimmedString.min(1).optional(),
-    })
-    .optional(),
+const agentResponseMessageSchema = z.object({
+  role: z.literal("assistant"),
+  content: trimmedString.min(1),
 });
 
-export type AgentResponse = z.infer<typeof agentResponseSchema>;
+const agentResponseActionSchema = z
+  .object({
+    type: z.enum(["create", "update", "delete"]),
+    transactionId: trimmedString.min(1).optional(),
+  })
+  .optional();
+
+const agentBaseResponseSchema = z.object({
+  message: agentResponseMessageSchema,
+  action: agentResponseActionSchema,
+});
+
+export const agentResponseSchema = z.discriminatedUnion("resultType", [
+  agentBaseResponseSchema.extend({
+    resultType: z.literal(agentResultTypeSchema.enum.clarification_required),
+    clarification: agentClarificationSchema,
+  }),
+  agentBaseResponseSchema.extend({
+    resultType: z.literal(agentResultTypeSchema.enum.search_results),
+    transactions: z.array(agentTransactionSummarySchema).min(1),
+  }),
+  agentBaseResponseSchema.extend({
+    resultType: z.literal(agentResultTypeSchema.enum.answer),
+  }),
+  agentBaseResponseSchema.extend({
+    resultType: z.literal(agentResultTypeSchema.enum.suggestion),
+  }),
+  agentBaseResponseSchema.extend({
+    resultType: z.literal(agentResultTypeSchema.enum.dashboard_explanation),
+  }),
+  agentBaseResponseSchema.extend({
+    resultType: z.literal(agentResultTypeSchema.enum.transaction_created),
+  }),
+  agentBaseResponseSchema.extend({
+    resultType: z.literal(agentResultTypeSchema.enum.transaction_updated),
+  }),
+  agentBaseResponseSchema.extend({
+    resultType: z.literal(agentResultTypeSchema.enum.transaction_deleted),
+  }),
+]);
+
+export type AgentResponse = z.infer<typeof agentResponseSchema> & {
+  transactions?: AgentTransactionSummary[];
+  clarification?: AgentClarification;
+};
 
 export const agentToolNameSchema = z.enum([
   "finance.answerContext",
@@ -129,7 +181,7 @@ export const agentCreateInputSchema = z.object({
   categoryName: trimmedString.min(1),
   note: trimmedString.min(1),
   merchant: optionalNullableTrimmedString,
-  transactionDate: trimmedString.regex(/^\d{4}-\d{2}-\d{2}$/),
+  transactionDate: calendarDateSchema,
 });
 
 export type AgentCreateInput = z.infer<typeof agentCreateInputSchema>;
@@ -157,7 +209,7 @@ export const agentUpdateInputSchema = z.object({
       categoryName: trimmedString.min(1).optional(),
       note: trimmedString.min(1).optional(),
       merchant: optionalNullableTrimmedString,
-      transactionDate: trimmedString.regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      transactionDate: calendarDateSchema.optional(),
     })
     .refine((value) => Object.keys(value).length > 0, {
       message: "Cần ít nhất một trường để cập nhật.",

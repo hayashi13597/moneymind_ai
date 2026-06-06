@@ -171,6 +171,44 @@ describe("AiChatWidget", () => {
     expect(container.textContent).toContain("55.000 đ, Ăn uống, 2026-06-04");
   });
 
+  it("rejects invalid agent response payloads before updating chat state", async () => {
+    readLocalAiProviderSettingMock.mockReturnValue({
+      baseUrl: "https://openrouter.ai/api/v1",
+      apiKey: "sk-test",
+      model: "openai/gpt-4o-mini",
+    });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        message: { role: "assistant", content: "Bạn muốn xóa giao dịch nào?" },
+        resultType: "clarification_required",
+      }),
+    });
+
+    act(() => {
+      root.render(React.createElement(AiChatWidget, { categories: [] }));
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Mở chat AI"]')
+        ?.click();
+    });
+
+    await act(async () => {
+      changeField(
+        container.querySelector<HTMLTextAreaElement>("textarea")!,
+        "Xóa ăn trưa",
+      );
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Gửi tin nhắn"]')
+        ?.click();
+    });
+
+    expect(container.textContent).toContain("AI trả về phản hồi không hợp lệ.");
+    expect(container.textContent).not.toContain("Bạn muốn xóa giao dịch nào?");
+  });
+
   it("keeps the send button aligned with the textarea row", async () => {
     act(() => {
       root.render(React.createElement(AiChatWidget, { categories: [] }));

@@ -72,6 +72,12 @@ describe("agent finance tools", () => {
     });
   });
 
+  it("rejects on invalid month", async () => {
+    await expect(buildAgentFinanceContext("user_1", "2026-13")).rejects.toThrow(
+      "Invalid month key",
+    );
+  });
+
   it("formats dashboard explanation context in Vietnamese", () => {
     const message = formatDashboardExplanation({
       month: "2026-06",
@@ -79,11 +85,8 @@ describe("agent finance tools", () => {
         totals: { income: 10000000, expense: 3500000, remaining: 6500000 },
         categoryBreakdown: [
           {
-            categoryId: "cat_food",
             name: "Ăn uống",
-            color: "#f97316",
             amount: 1200000,
-            percentage: 100,
           },
         ],
       },

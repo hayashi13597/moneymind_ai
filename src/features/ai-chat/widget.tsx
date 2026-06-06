@@ -16,7 +16,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import type { AgentResponse } from "@/features/agent/schemas";
+import {
+  agentResponseSchema,
+  type AgentResponse,
+} from "@/features/agent/schemas";
 import type {
   AiChatMessage,
   AiChatTransactionDraft,
@@ -217,13 +220,23 @@ export function AiChatWidget({ categories }: AiChatWidgetProps) {
         return;
       }
 
-      const payload = (await response.json()) as AgentResponse;
+      const body = await response.json();
+      const parsed = agentResponseSchema.safeParse(body);
+
+      if (!parsed.success) {
+        setError("AI trả về phản hồi không hợp lệ.");
+        return;
+      }
+
+      const payload = parsed.data;
       setMessages((current) => [
         ...current,
         {
           ...payload.message,
-          transactions: payload.transactions,
-          clarification: payload.clarification,
+          transactions:
+            "transactions" in payload ? payload.transactions : undefined,
+          clarification:
+            "clarification" in payload ? payload.clarification : undefined,
           resultType: payload.resultType,
         },
       ]);

@@ -58,6 +58,16 @@ describe("agent schemas", () => {
     ).toThrow();
   });
 
+  it("rejects histories without a user message", () => {
+    expect(() =>
+      agentRequestSchema.parse({
+        month: "2026-06",
+        providerSetting,
+        messages: [{ role: "assistant", content: "Mình có thể giúp gì?" }],
+      }),
+    ).toThrow();
+  });
+
   it("accepts public response variants", () => {
     expect(
       agentResponseSchema.parse({
@@ -87,6 +97,53 @@ describe("agent schemas", () => {
         },
       }),
     ).toMatchObject({ resultType: "clarification_required" });
+  });
+
+  it("rejects response variants missing required fields", () => {
+    expect(() =>
+      agentResponseSchema.parse({
+        message: { role: "assistant", content: "Bạn muốn chọn giao dịch nào?" },
+        resultType: "clarification_required",
+      }),
+    ).toThrow();
+
+    expect(() =>
+      agentResponseSchema.parse({
+        message: { role: "assistant", content: "Mình chưa tìm thấy giao dịch." },
+        resultType: "search_results",
+        transactions: [],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects impossible calendar dates in transaction inputs", () => {
+    expect(() =>
+      agentIntentSchema.parse({
+        resultType: "transaction_created",
+        tool: "transactions.create",
+        message: "Đã thêm giao dịch.",
+        input: {
+          type: "expense",
+          amount: 55000,
+          categoryName: "Ăn uống",
+          note: "Cơm trưa",
+          merchant: "Quán cơm",
+          transactionDate: "2026-02-31",
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      agentIntentSchema.parse({
+        resultType: "transaction_updated",
+        tool: "transactions.update",
+        message: "Đã cập nhật giao dịch.",
+        input: {
+          targetQuery: "cơm trưa",
+          updates: { transactionDate: "2026-02-31" },
+        },
+      }),
+    ).toThrow();
   });
 
   it("accepts valid LLM intents and rejects invalid tool names", () => {

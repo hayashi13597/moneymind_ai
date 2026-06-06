@@ -19,6 +19,17 @@ describe("agent json parser", () => {
     });
   });
 
+  it("ignores a preceding non-JSON brace block and extracts the later object", () => {
+    expect(
+      parseAgentJsonObject(
+        'Ghi chú {not: json}\n```json\n{"tool":"dashboard.explain","input":{"question":"vì sao?"}}\n```',
+      ),
+    ).toEqual({
+      tool: "dashboard.explain",
+      input: { question: "vì sao?" },
+    });
+  });
+
   it("throws a controlled AI error when no object exists", () => {
     expect(() => parseAgentJsonObject("không phải json")).toThrow(AiDomainError);
   });

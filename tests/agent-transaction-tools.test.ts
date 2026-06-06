@@ -101,6 +101,25 @@ describe("agent transaction tools", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("returns a category failure from the create service", async () => {
+    createTransactionMock.mockResolvedValue({
+      ok: false,
+      reason: "unknown_category",
+    });
+
+    const result = await createAgentTransaction("user_1", {
+      type: "expense",
+      amount: 55000,
+      categoryName: "Ăn uống",
+      note: "Cơm trưa",
+      merchant: "Quán cơm",
+      transactionDate: "2026-06-04",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result).toMatchObject({ reason: "unknown_category" });
+  });
+
   it("asks for clarification when update target matches multiple transactions", async () => {
     transactionFindManyMock.mockResolvedValue([
       tx,
@@ -134,6 +153,20 @@ describe("agent transaction tools", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("returns not_found for a stale direct update id", async () => {
+    transactionFindManyMock.mockResolvedValue([]);
+
+    const result = await updateAgentTransaction("user_1", "2026-06", {
+      targetQuery: "cơm trưa",
+      transactionId: "tx_missing",
+      updates: { amount: 60000 },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe("not_found");
+    expect(updateTransactionMock).not.toHaveBeenCalled();
+  });
+
   it("deletes a single matched transaction", async () => {
     deleteTransactionMock.mockResolvedValue(true);
 
@@ -143,5 +176,18 @@ describe("agent transaction tools", () => {
 
     expect(deleteTransactionMock).toHaveBeenCalledWith("user_1", "tx_1");
     expect(result.ok).toBe(true);
+  });
+
+  it("returns not_found for a stale direct delete id", async () => {
+    transactionFindManyMock.mockResolvedValue([]);
+
+    const result = await deleteAgentTransaction("user_1", "2026-06", {
+      targetQuery: "cơm trưa",
+      transactionId: "tx_missing",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe("not_found");
+    expect(deleteTransactionMock).not.toHaveBeenCalled();
   });
 });

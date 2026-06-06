@@ -41,7 +41,13 @@ function parseMonthKey(input: string) {
     return null;
   }
 
-  return { year: Number(match[1]), monthIndex: Number(match[2]) - 1 };
+  const month = Number(match[2]);
+
+  if (month < 1 || month > 12) {
+    return null;
+  }
+
+  return { year: Number(match[1]), monthIndex: month - 1 };
 }
 
 function getMonthRange(month: string) {
@@ -95,7 +101,7 @@ function resolveCategory(
   categories: AgentCategory[],
   type: "income" | "expense",
   categoryName: string,
-) {
+): AgentCategory | undefined {
   const normalized = normalizeName(categoryName);
   const typed = categories.filter(
     (category) => !category.type || category.type === type,
@@ -110,8 +116,7 @@ function resolveCategory(
       (category) =>
         normalizeName(category.name) ===
         (type === "income" ? "thu nhập" : "khác"),
-    ) ??
-    typed[0]
+    )
   );
 }
 
@@ -241,6 +246,10 @@ export async function updateAgentTransaction(
     input.transactionId,
   );
 
+  if (input.transactionId && candidates.length === 0) {
+    return { ok: false as const, reason: "not_found" as const };
+  }
+
   if (candidates.length !== 1) {
     return {
       ok: false as const,
@@ -296,6 +305,10 @@ export async function deleteAgentTransaction(
     input.targetQuery,
     input.transactionId,
   );
+
+  if (input.transactionId && candidates.length === 0) {
+    return { ok: false as const, reason: "not_found" as const };
+  }
 
   if (candidates.length !== 1) {
     return {
