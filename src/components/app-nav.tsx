@@ -10,6 +10,8 @@ const navItems = [
   { href: "/transactions", label: "Giao dịch" },
   { href: "/budgets", label: "Ngân sách" },
   { href: "/categories", label: "Danh mục" },
+  { href: "/insights", label: "AI Insights" },
+  { href: "/reports", label: "Báo cáo" },
   { href: "/settings/ai", label: "AI Coach" },
 ] as const;
 
@@ -17,7 +19,7 @@ export function AppNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-1 overflow-x-auto rounded-xl border border-[#DED7CA] bg-[#EEE8DC]/82 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur md:overflow-visible">
+    <nav className="flex items-center gap-1 overflow-x-auto rounded-xl border border-[#DED7CA] bg-[#EEE8DC]/82 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur">
       {navItems.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(`${item.href}/`);
