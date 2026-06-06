@@ -7,6 +7,13 @@ type MarkdownBlock =
   | { kind: "unordered-list"; items: string[] }
   | { kind: "ordered-list"; items: string[] };
 
+function sanitizeMarkdownText(content: string) {
+  return content
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]*>/g, "");
+}
+
 function renderInlineMarkdown(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
 
@@ -24,7 +31,7 @@ function renderInlineMarkdown(text: string) {
 }
 
 function parseMarkdownBlocks(content: string): MarkdownBlock[] {
-  return content
+  return sanitizeMarkdownText(content)
     .trim()
     .split(/\n\s*\n/g)
     .map((block): MarkdownBlock => {
