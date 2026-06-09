@@ -10,7 +10,7 @@ function readProjectFile(path: string) {
 
 function listSourceFiles(directory: string): string[] {
   return readdirSync(join(root, directory)).flatMap((entry) => {
-    const path = `${directory}/${entry}`;
+    const path = join(directory, entry);
     const absolutePath = join(root, path);
     const stat = statSync(absolutePath);
 

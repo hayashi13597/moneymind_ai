@@ -46,6 +46,8 @@ export function AccountMenu({ user }: AccountMenuProps) {
               width={40}
               height={40}
               className="size-full object-cover"
+              // TODO: Profile avatars currently accept arbitrary HTTPS URLs, so
+              // this cannot use a narrow Next.js remotePatterns allowlist yet.
               unoptimized
             />
           ) : (
@@ -67,6 +69,8 @@ export function AccountMenu({ user }: AccountMenuProps) {
                 height={36}
                 className="size-full object-cover"
                 aria-hidden="true"
+                // TODO: Profile avatars currently accept arbitrary HTTPS URLs,
+                // so this cannot use a narrow Next.js remotePatterns allowlist yet.
                 unoptimized
               />
             ) : (
