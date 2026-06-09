@@ -1,6 +1,7 @@
 "use client";
 
 import { UserRound } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -39,15 +40,13 @@ export function AccountMenu({ user }: AccountMenuProps) {
           aria-label="Mở menu tài khoản"
         >
           {user.image ? (
-            // User-provided avatar URLs can come from arbitrary domains; next/image
-            // would require broad remotePatterns for this simple account menu.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={user.image}
               alt={displayName}
               width={40}
               height={40}
               className="size-full object-cover"
+              unoptimized
             />
           ) : (
             <span>{getInitial(user)}</span>
@@ -61,16 +60,14 @@ export function AccountMenu({ user }: AccountMenuProps) {
         <DropdownMenuLabel className="flex items-center gap-3 rounded-lg bg-[#F8F5EE] px-3 py-2.5">
           <span className="inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#D8E1D7] bg-[#ECF3ED] text-sm font-bold text-[#2F6B4F]">
             {user.image ? (
-              // User-provided avatar URLs can come from arbitrary domains; next/image
-              // would require broad remotePatterns for this simple account menu.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={user.image}
                 alt=""
                 width={36}
                 height={36}
                 className="size-full object-cover"
                 aria-hidden="true"
+                unoptimized
               />
             ) : (
               getInitial(user)
