@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AlertCircle, CheckCircle2, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -23,8 +24,9 @@ import { createZodResolver } from "@/lib/zod-form";
 
 const INPUT_CLASS = "h-11 focus:ring-primary/15";
 const SUCCESS_MESSAGE =
-  "Nếu email tồn tại, MoneyMind đã gửi hướng dẫn đặt lại mật khẩu.";
-const ERROR_MESSAGE = "Không thể gửi hướng dẫn lúc này. Vui lòng thử lại.";
+  "Nếu email này đã đăng ký, MoneyMind sẽ gửi liên kết đặt lại mật khẩu trong vài phút.";
+const ERROR_MESSAGE =
+  "Chúng tôi chưa thể gửi liên kết lúc này. Vui lòng thử lại sau.";
 
 export function ForgotPasswordForm() {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -71,15 +73,18 @@ export function ForgotPasswordForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Email đăng nhập</FormLabel>
               <FormControl>
-                <Input
-                  {...field}
-                  autoComplete="email"
-                  className={INPUT_CLASS}
-                  placeholder="ban@example.com"
-                  type="email"
-                />
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    autoComplete="email"
+                    className={`${INPUT_CLASS} pl-9`}
+                    placeholder="ban@example.com"
+                    type="email"
+                    {...field}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -87,14 +92,23 @@ export function ForgotPasswordForm() {
         />
 
         {status === "success" ? (
-          <p className="rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm text-primary">
-            {SUCCESS_MESSAGE}
-          </p>
+          <div
+            aria-live="polite"
+            className="flex gap-3 rounded-xl border border-primary/20 bg-primary/10 px-3 py-3 text-sm leading-6 text-primary"
+            role="status"
+          >
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+            <p>{SUCCESS_MESSAGE}</p>
+          </div>
         ) : null}
         {status === "error" ? (
-          <p className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {ERROR_MESSAGE}
-          </p>
+          <div
+            className="flex gap-3 rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-3 text-sm leading-6 text-destructive"
+            role="alert"
+          >
+            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+            <p>{ERROR_MESSAGE}</p>
+          </div>
         ) : null}
 
         <Button
@@ -103,12 +117,17 @@ export function ForgotPasswordForm() {
           id="requestPasswordReset"
           type="submit"
         >
-          {form.formState.isSubmitting ? "Đang gửi..." : "Gửi hướng dẫn"}
+          {form.formState.isSubmitting
+            ? "Đang gửi..."
+            : "Gửi liên kết đặt lại"}
         </Button>
 
         <p className="text-center text-sm text-muted-foreground">
-          Nhớ mật khẩu?{" "}
-          <Link className="font-medium text-primary" href="/login">
+          Đã nhớ mật khẩu?{" "}
+          <Link
+            className="font-medium text-primary transition-colors hover:text-primary/80"
+            href="/login"
+          >
             Đăng nhập
           </Link>
         </p>
@@ -116,3 +135,5 @@ export function ForgotPasswordForm() {
     </Form>
   );
 }
+
+export default ForgotPasswordForm;

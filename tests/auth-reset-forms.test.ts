@@ -113,9 +113,9 @@ describe("ForgotPasswordForm", () => {
       email: "ban@example.com",
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    expect(container.textContent).toContain(
-      "Nếu email tồn tại, MoneyMind đã gửi hướng dẫn đặt lại mật khẩu.",
-    );
+      expect(container.textContent).toContain(
+        "Nếu email này đã đăng ký, MoneyMind sẽ gửi liên kết đặt lại mật khẩu trong vài phút.",
+      );
   });
 
   it("shows a system error when the reset request fails", async () => {
@@ -136,9 +136,9 @@ describe("ForgotPasswordForm", () => {
       container.querySelector<HTMLButtonElement>("#requestPasswordReset")?.click();
     });
 
-    expect(container.textContent).toContain(
-      "Không thể gửi hướng dẫn lúc này. Vui lòng thử lại.",
-    );
+      expect(container.textContent).toContain(
+        "Chúng tôi chưa thể gửi liên kết lúc này. Vui lòng thử lại sau.",
+      );
   });
 
   it("shows a system error when the reset request throws", async () => {
@@ -156,9 +156,9 @@ describe("ForgotPasswordForm", () => {
       container.querySelector<HTMLButtonElement>("#requestPasswordReset")?.click();
     });
 
-    expect(container.textContent).toContain(
-      "Không thể gửi hướng dẫn lúc này. Vui lòng thử lại.",
-    );
+      expect(container.textContent).toContain(
+        "Chúng tôi chưa thể gửi liên kết lúc này. Vui lòng thử lại sau.",
+      );
   });
 });
 
@@ -245,9 +245,9 @@ describe("ResetPasswordForm", () => {
       container.querySelector<HTMLButtonElement>("#resetPassword")?.click();
     });
 
-    expect(container.textContent).toContain(
-      "Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.",
-    );
+      expect(container.textContent).toContain(
+        "Liên kết này đã hết hạn hoặc đã được dùng. Vui lòng yêu cầu một liên kết mới.",
+      );
   });
 
   it("shows a system error when reset password throws", async () => {
@@ -271,9 +271,9 @@ describe("ResetPasswordForm", () => {
       container.querySelector<HTMLButtonElement>("#resetPassword")?.click();
     });
 
-    expect(container.textContent).toContain(
-      "Không thể đặt lại mật khẩu lúc này. Vui lòng thử lại.",
-    );
+      expect(container.textContent).toContain(
+        "Chúng tôi chưa thể cập nhật mật khẩu lúc này. Vui lòng thử lại sau.",
+      );
   });
 });
 
