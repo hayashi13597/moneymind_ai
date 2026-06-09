@@ -75,7 +75,7 @@ export function MetricCard({
   tone = "default",
 }: MetricCardProps) {
   return (
-    <Card className="gap-0 rounded-xl border-[#E1DDD4] bg-card/92 py-0 shadow-[0_12px_36px_rgba(47,42,31,0.045)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_54px_rgba(47,42,31,0.07)]">
+    <Card className="gap-0 rounded-xl border-[#E1DDD4] bg-card/92 py-0 shadow-[0_12px_36px_rgba(47,42,31,0.045)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_54px_rgba(47,42,31,0.07)] motion-reduce:transform-none motion-reduce:transition-none">
       <CardContent className="p-5">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
         <p

@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -366,6 +366,7 @@ function BudgetEditDialog({
   onScopeChange: (scope: "default" | "month") => void;
   onSubmit: (values: BudgetFormValues) => void;
 }) {
+  const amountInputRef = useRef<HTMLInputElement | null>(null);
   const form = useForm<BudgetFormValues>({
     resolver: createZodResolver(budgetFormSchema),
     defaultValues: {
@@ -385,6 +386,10 @@ function BudgetEditDialog({
       <DialogContent
         aria-describedby={undefined}
         aria-labelledby="budget-edit-dialog-title"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          amountInputRef.current?.focus();
+        }}
         showCloseButton={false}
         className="w-full max-w-md rounded-2xl border-[#DCD7CC] bg-[#FDFCF8] p-5 shadow-[0_24px_80px_rgba(47,42,31,0.18)]"
       >
@@ -434,9 +439,12 @@ function BudgetEditDialog({
                 <FormControl>
                   <Input
                     {...field}
-                    autoFocus
                     className={DIALOG_CONTROL_CLASS_NAME}
                     placeholder="Ví dụ: 3tr"
+                    ref={(node) => {
+                      field.ref(node);
+                      amountInputRef.current = node;
+                    }}
                   />
                 </FormControl>
                 <FormMessage />

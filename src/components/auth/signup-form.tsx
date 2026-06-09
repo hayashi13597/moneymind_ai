@@ -69,7 +69,7 @@ export function SignupForm() {
                   {...field}
                   autoComplete="name"
                   className={INPUT_CLASS}
-                  placeholder="Nguyễn Văn A"
+                  placeholder="Tên bạn muốn hiển thị"
                   type="text"
                 />
               </FormControl>
@@ -88,6 +88,7 @@ export function SignupForm() {
                   {...field}
                   autoComplete="email"
                   className={INPUT_CLASS}
+                  inputMode="email"
                   placeholder="ban@example.com"
                   type="email"
                 />
@@ -107,6 +108,7 @@ export function SignupForm() {
                   {...field}
                   autoComplete="new-password"
                   className={INPUT_CLASS}
+                  placeholder="Tối thiểu 8 ký tự"
                   type="password"
                 />
               </FormControl>

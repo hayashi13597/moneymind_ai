@@ -418,7 +418,12 @@ function AiProviderFormSection({
                   Tên cấu hình
                 </FormLabel>
                 <FormControl>
-                  <Input {...field} className={CONTROL_CLASS_NAME} />
+                  <Input
+                    {...field}
+                    autoComplete="off"
+                    className={CONTROL_CLASS_NAME}
+                    placeholder="OpenAI, OpenRouter..."
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -437,6 +442,7 @@ function AiProviderFormSection({
                 <FormControl>
                   <Input
                     {...field}
+                    autoComplete="off"
                     className={CONTROL_CLASS_NAME}
                     placeholder={
                       hasApiKey
@@ -461,7 +467,13 @@ function AiProviderFormSection({
                   Base URL
                 </FormLabel>
                 <FormControl>
-                  <Input {...field} className={CONTROL_CLASS_NAME} />
+                  <Input
+                    {...field}
+                    autoComplete="url"
+                    className={CONTROL_CLASS_NAME}
+                    inputMode="url"
+                    placeholder="https://api.example.com/v1"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -475,7 +487,12 @@ function AiProviderFormSection({
               <FormItem className="md:col-span-2">
                 <FormLabel className={FIELD_LABEL_CLASS_NAME}>Model</FormLabel>
                 <FormControl>
-                  <Input {...field} className={CONTROL_CLASS_NAME} />
+                  <Input
+                    {...field}
+                    autoComplete="off"
+                    className={CONTROL_CLASS_NAME}
+                    placeholder="gpt-4o-mini"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
