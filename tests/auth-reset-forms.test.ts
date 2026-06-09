@@ -3,6 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import {
   forgotPasswordFormSchema,
   resetPasswordFormSchema,
@@ -20,6 +21,7 @@ jest.mock("@/lib/auth-client", () => ({
 }));
 
 const requestPasswordResetMock = authClient.requestPasswordReset as jest.Mock;
+const resetPasswordMock = authClient.resetPassword as jest.Mock;
 
 function changeField(field: HTMLInputElement, value: string) {
   const valueSetter = Object.getOwnPropertyDescriptor(
@@ -121,6 +123,94 @@ describe("ForgotPasswordForm", () => {
 
     expect(container.textContent).toContain(
       "Không thể gửi hướng dẫn lúc này. Vui lòng thử lại.",
+    );
+  });
+});
+
+describe("ResetPasswordForm", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    resetPasswordMock.mockResolvedValue({ data: {}, error: null });
+  });
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+    resetPasswordMock.mockReset();
+  });
+
+  it("resets the password with the supplied token", async () => {
+    await act(async () => {
+      root.render(React.createElement(ResetPasswordForm, { token: "token_123" }));
+    });
+
+    await act(async () => {
+      changeField(
+        container.querySelector<HTMLInputElement>('input[name="newPassword"]')!,
+        "new-password",
+      );
+      changeField(
+        container.querySelector<HTMLInputElement>(
+          'input[name="confirmPassword"]',
+        )!,
+        "new-password",
+      );
+      container.querySelector<HTMLButtonElement>("#resetPassword")?.click();
+    });
+
+    expect(resetPasswordMock).toHaveBeenCalledWith({
+      token: "token_123",
+      newPassword: "new-password",
+    });
+    expect(container.textContent).toContain(
+      "Đã đặt lại mật khẩu. Bạn có thể đăng nhập bằng mật khẩu mới.",
+    );
+  });
+
+  it("does not submit and shows invalid link copy without a token", async () => {
+    await act(async () => {
+      root.render(React.createElement(ResetPasswordForm, { token: null }));
+    });
+
+    expect(container.textContent).toContain(
+      "Liên kết đặt lại mật khẩu không hợp lệ.",
+    );
+    expect(container.querySelector<HTMLButtonElement>("#resetPassword")).toBeNull();
+  });
+
+  it("shows invalid or expired token copy when Better Auth rejects", async () => {
+    resetPasswordMock.mockResolvedValue({
+      data: null,
+      error: { message: "INVALID_TOKEN" },
+    });
+
+    await act(async () => {
+      root.render(React.createElement(ResetPasswordForm, { token: "bad-token" }));
+    });
+
+    await act(async () => {
+      changeField(
+        container.querySelector<HTMLInputElement>('input[name="newPassword"]')!,
+        "new-password",
+      );
+      changeField(
+        container.querySelector<HTMLInputElement>(
+          'input[name="confirmPassword"]',
+        )!,
+        "new-password",
+      );
+      container.querySelector<HTMLButtonElement>("#resetPassword")?.click();
+    });
+
+    expect(container.textContent).toContain(
+      "Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.",
     );
   });
 });
