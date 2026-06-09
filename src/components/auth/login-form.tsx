@@ -95,6 +95,11 @@ export function LoginForm() {
             </FormItem>
           )}
         />
+        <div className="flex justify-end">
+          <Link className="text-sm font-medium text-primary" href="/forgot-password">
+            Quên mật khẩu?
+          </Link>
+        </div>
         {error ? (
           <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}

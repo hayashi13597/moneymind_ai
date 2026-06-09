@@ -3,6 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
+import { LoginForm } from "@/components/auth/login-form";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import {
   forgotPasswordFormSchema,
@@ -17,7 +18,16 @@ jest.mock("@/lib/auth-client", () => ({
   authClient: {
     requestPasswordReset: jest.fn(),
     resetPassword: jest.fn(),
+    signIn: {
+      email: jest.fn(),
+    },
   },
+}));
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
 }));
 
 const requestPasswordResetMock =
@@ -213,5 +223,35 @@ describe("ResetPasswordForm", () => {
     expect(container.textContent).toContain(
       "Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.",
     );
+  });
+});
+
+describe("LoginForm forgot password link", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("links to the forgot password page", async () => {
+    await act(async () => {
+      root.render(React.createElement(LoginForm));
+    });
+
+    const link = Array.from(container.querySelectorAll("a")).find(
+      (anchor) => anchor.textContent === "Quên mật khẩu?",
+    );
+
+    expect(link?.getAttribute("href")).toBe("/forgot-password");
   });
 });
