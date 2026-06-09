@@ -30,7 +30,7 @@ export function AppNav() {
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFFDF7] hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/20 focus-visible:outline-none active:translate-y-0",
+              "shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors transition-shadow duration-200 hover:-translate-y-0.5 hover:bg-[#FFFDF7] hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/20 focus-visible:outline-none active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none",
               isActive &&
                 "bg-[#FFFDF7] text-foreground shadow-[0_8px_22px_rgba(47,42,31,0.08)]",
             )}

@@ -149,7 +149,7 @@ export function CoachMetricStrip({ metrics, className }: CoachMetricStripProps) 
       {metrics.map((metric) => (
         <Card
           key={metric.label}
-          className="gap-0 rounded-xl border-[#E1DDD4] bg-[#FFFDF7]/92 py-0 shadow-[0_12px_34px_rgba(47,42,31,0.045)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_44px_rgba(47,42,31,0.065)]"
+          className="gap-0 rounded-xl border-[#E1DDD4] bg-[#FFFDF7]/92 py-0 shadow-[0_12px_34px_rgba(47,42,31,0.045)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_44px_rgba(47,42,31,0.065)] motion-reduce:transform-none motion-reduce:transition-none"
         >
           <CardContent className="p-4">
             <p className="text-xs font-medium text-muted-foreground">
@@ -221,7 +221,7 @@ export function CoachActionCard({
   return (
     <Card
       className={cn(
-        "gap-0 rounded-xl border-[#D5E2D1] bg-[#F3F8F1] py-0 shadow-[0_14px_42px_rgba(47,107,79,0.07)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_48px_rgba(47,107,79,0.10)]",
+        "gap-0 rounded-xl border-[#D5E2D1] bg-[#F3F8F1] py-0 shadow-[0_14px_42px_rgba(47,107,79,0.07)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_48px_rgba(47,107,79,0.10)] motion-reduce:transform-none motion-reduce:transition-none",
         className,
       )}
     >

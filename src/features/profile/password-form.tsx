@@ -86,6 +86,7 @@ export function PasswordForm() {
                   {...field}
                   autoComplete="current-password"
                   className={INPUT_CLASS}
+                  placeholder="Nhập mật khẩu hiện tại"
                   type="password"
                 />
               </FormControl>
@@ -104,6 +105,7 @@ export function PasswordForm() {
                   {...field}
                   autoComplete="new-password"
                   className={INPUT_CLASS}
+                  placeholder="Tối thiểu 8 ký tự"
                   type="password"
                 />
               </FormControl>
@@ -122,6 +124,7 @@ export function PasswordForm() {
                   {...field}
                   autoComplete="new-password"
                   className={INPUT_CLASS}
+                  placeholder="Nhập lại mật khẩu mới"
                   type="password"
                 />
               </FormControl>

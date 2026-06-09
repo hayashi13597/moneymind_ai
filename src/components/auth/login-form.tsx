@@ -67,6 +67,7 @@ export function LoginForm() {
                   {...field}
                   autoComplete="email"
                   className={INPUT_CLASS}
+                  inputMode="email"
                   placeholder="ban@example.com"
                   type="email"
                 />
@@ -86,6 +87,7 @@ export function LoginForm() {
                   {...field}
                   autoComplete="current-password"
                   className={INPUT_CLASS}
+                  placeholder="Nhập mật khẩu"
                   type="password"
                 />
               </FormControl>

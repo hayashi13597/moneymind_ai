@@ -112,6 +112,9 @@ describe("shadcn React Hook Form primitives", () => {
     expect(input?.getAttribute("aria-describedby")).toContain(
       "form-item-message",
     );
+    expect(container.querySelector("[role='alert']")?.textContent).toContain(
+      "Tên là bắt buộc.",
+    );
   });
 });
 

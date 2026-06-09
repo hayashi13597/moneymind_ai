@@ -82,6 +82,8 @@ describe("AccountMenu", () => {
 
     expect(image?.src).toBe("https://example.com/avatar.png");
     expect(image?.alt).toBe("Nguyễn Văn A");
+    expect(image?.getAttribute("width")).toBe("40");
+    expect(image?.getAttribute("height")).toBe("40");
   });
 
   it("renders an initial fallback and account controls", async () => {

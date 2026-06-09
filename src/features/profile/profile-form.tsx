@@ -86,7 +86,12 @@ export function ProfileForm({ user }: ProfileFormProps) {
             <FormItem>
               <FormLabel>Tên hiển thị</FormLabel>
               <FormControl>
-                <Input {...field} autoComplete="name" className={INPUT_CLASS} />
+                <Input
+                  {...field}
+                  autoComplete="name"
+                  className={INPUT_CLASS}
+                  placeholder="Tên bạn muốn MoneyMind hiển thị"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -112,7 +117,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
               <FormControl>
                 <Input
                   {...field}
+                  autoComplete="photo"
                   className={INPUT_CLASS}
+                  inputMode="url"
                   placeholder="https://example.com/avatar.png"
                   type="url"
                 />

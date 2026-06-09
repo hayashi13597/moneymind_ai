@@ -45,6 +45,8 @@ export function AccountMenu({ user }: AccountMenuProps) {
             <img
               src={user.image}
               alt={displayName}
+              width={40}
+              height={40}
               className="size-full object-cover"
             />
           ) : (
@@ -65,6 +67,8 @@ export function AccountMenu({ user }: AccountMenuProps) {
               <img
                 src={user.image}
                 alt=""
+                width={36}
+                height={36}
                 className="size-full object-cover"
                 aria-hidden="true"
               />

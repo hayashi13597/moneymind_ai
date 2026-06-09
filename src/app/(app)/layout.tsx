@@ -28,6 +28,12 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen bg-transparent text-foreground">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-foreground focus:ring-3 focus:ring-primary/20 focus:outline-none"
+      >
+        Bỏ qua điều hướng
+      </a>
       <header className="sticky top-0 z-30 border-b border-[#DED7CA]/85 bg-[#FBFAF5]/88 backdrop-blur-xl">
         <div className="mx-auto flex min-h-16 w-full max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:py-0">
           <Link
@@ -45,7 +51,10 @@ export default async function AppLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 md:py-10">
+      <main
+        id="main-content"
+        className="mx-auto w-full max-w-7xl px-4 py-8 md:py-10"
+      >
         {children}
       </main>
       <UserLocalTimeSync />
