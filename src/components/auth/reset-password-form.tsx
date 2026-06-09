@@ -64,17 +64,20 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   async function handleSubmit(values: ResetPasswordFormInput) {
     setStatus("idle");
 
-    const result = await authClient.resetPassword({
-      token: resetToken,
-      newPassword: values.newPassword,
-    });
+    let result;
+
+    try {
+      result = await authClient.resetPassword({
+        token: resetToken,
+        newPassword: values.newPassword,
+      });
+    } catch {
+      setStatus("system-error");
+      return;
+    }
 
     if (result.error) {
-      setStatus(
-        result.error.message?.includes("INVALID_TOKEN")
-          ? "invalid-token"
-          : "system-error",
-      );
+      setStatus("invalid-token");
       return;
     }
 

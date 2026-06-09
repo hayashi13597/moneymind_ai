@@ -136,6 +136,26 @@ describe("ForgotPasswordForm", () => {
       "Không thể gửi hướng dẫn lúc này. Vui lòng thử lại.",
     );
   });
+
+  it("shows a system error when the reset request throws", async () => {
+    requestPasswordResetMock.mockRejectedValue(new Error("Network down"));
+
+    await act(async () => {
+      root.render(React.createElement(ForgotPasswordForm));
+    });
+
+    await act(async () => {
+      changeField(
+        container.querySelector<HTMLInputElement>('input[name="email"]')!,
+        "ban@example.com",
+      );
+      container.querySelector<HTMLButtonElement>("#requestPasswordReset")?.click();
+    });
+
+    expect(container.textContent).toContain(
+      "Không thể gửi hướng dẫn lúc này. Vui lòng thử lại.",
+    );
+  });
 });
 
 describe("ResetPasswordForm", () => {
@@ -199,7 +219,7 @@ describe("ResetPasswordForm", () => {
   it("shows invalid or expired token copy when Better Auth rejects", async () => {
     resetPasswordMock.mockResolvedValue({
       data: null,
-      error: { message: "INVALID_TOKEN" },
+      error: { message: "TOKEN_EXPIRED" },
     });
 
     await act(async () => {
@@ -222,6 +242,32 @@ describe("ResetPasswordForm", () => {
 
     expect(container.textContent).toContain(
       "Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.",
+    );
+  });
+
+  it("shows a system error when reset password throws", async () => {
+    resetPasswordMock.mockRejectedValue(new Error("Network down"));
+
+    await act(async () => {
+      root.render(React.createElement(ResetPasswordForm, { token: "token_123" }));
+    });
+
+    await act(async () => {
+      changeField(
+        container.querySelector<HTMLInputElement>('input[name="newPassword"]')!,
+        "new-password",
+      );
+      changeField(
+        container.querySelector<HTMLInputElement>(
+          'input[name="confirmPassword"]',
+        )!,
+        "new-password",
+      );
+      container.querySelector<HTMLButtonElement>("#resetPassword")?.click();
+    });
+
+    expect(container.textContent).toContain(
+      "Không thể đặt lại mật khẩu lúc này. Vui lòng thử lại.",
     );
   });
 });

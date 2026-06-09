@@ -38,10 +38,17 @@ export function ForgotPasswordForm() {
   async function handleSubmit(values: ForgotPasswordFormInput) {
     setStatus("idle");
 
-    const result = await authClient.requestPasswordReset({
-      email: values.email,
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    let result;
+
+    try {
+      result = await authClient.requestPasswordReset({
+        email: values.email,
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+    } catch {
+      setStatus("error");
+      return;
+    }
 
     if (result.error) {
       setStatus("error");
