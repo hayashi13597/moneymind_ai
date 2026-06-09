@@ -83,20 +83,20 @@ export function CoachHero({
   return (
     <div
       className={cn(
-        "rounded-[2rem] bg-[#2F2A1F]/5 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
+        "rounded-[1.75rem] bg-[#2F2A1F]/5 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
         className,
       )}
     >
-      <div className="overflow-hidden rounded-[calc(2rem-0.375rem)] border border-[#DED7CA]/90 bg-[#FFFDF7] shadow-[0_24px_80px_rgba(47,42,31,0.08),inset_0_1px_0_rgba(255,255,255,0.88)]">
-        <div className="grid gap-6 p-5 md:p-7 xl:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)]">
+      <div className="overflow-hidden rounded-[calc(1.75rem-0.375rem)] border border-[#DED7CA]/90 bg-[#FFFDF7] shadow-[0_24px_80px_rgba(47,42,31,0.08),inset_0_1px_0_rgba(255,255,255,0.88)]">
+        <div className="grid gap-6 p-5 md:p-7 xl:grid-cols-[minmax(0,1.22fr)_minmax(320px,0.78fr)]">
           <div className="min-w-0">
             <Badge
               variant="outline"
-              className="h-auto rounded-full border-[#C8DCC9] bg-[#ECF3ED] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F6B4F]"
+              className="h-auto rounded-lg border-[#C8DCC9] bg-[#ECF3ED] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2F6B4F]"
             >
               {eyebrow}
             </Badge>
-            <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-[0.98] text-foreground md:text-5xl">
+            <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-[1.02] text-foreground md:text-5xl">
               {title}
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
@@ -106,11 +106,11 @@ export function CoachHero({
               <div className="mt-6 flex flex-wrap gap-3">{actions}</div>
             ) : null}
           </div>
-          <div className="rounded-[1.5rem] bg-[#263F32] p-5 text-white shadow-[0_18px_56px_rgba(47,107,79,0.18),inset_0_1px_0_rgba(255,255,255,0.12)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
+          <aside className="rounded-[1.25rem] border border-[#C8DCC9] bg-[#EFF7EF] p-5 text-[#193427] shadow-[0_18px_52px_rgba(47,107,79,0.10),inset_0_1px_0_rgba(255,255,255,0.72)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2F6B4F]">
               MoneyMind gợi ý
             </p>
-            <h2 className="mt-3 text-2xl font-semibold leading-tight">
+            <h2 className="mt-3 text-xl font-semibold leading-snug md:text-2xl">
               {recommendation}
             </h2>
             {evidence.length > 0 ? (
@@ -118,12 +118,12 @@ export function CoachHero({
                 {evidence.map((item) => (
                   <div
                     key={`${item.label}-${item.value}`}
-                    className="rounded-2xl bg-white/[0.08] p-3 ring-1 ring-white/10"
+                    className="rounded-xl border border-[#C8DCC9]/80 bg-[#FFFDF7]/76 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]"
                   >
-                    <p className="text-xs text-white/55">{item.label}</p>
+                    <p className="text-xs text-[#637265]">{item.label}</p>
                     <p className="mt-1 text-lg font-semibold">{item.value}</p>
                     {item.helper ? (
-                      <p className="mt-1 text-xs leading-5 text-white/55">
+                      <p className="mt-1 text-xs leading-5 text-[#637265]">
                         {item.helper}
                       </p>
                     ) : null}
@@ -131,7 +131,7 @@ export function CoachHero({
                 ))}
               </div>
             ) : null}
-          </div>
+          </aside>
         </div>
       </div>
     </div>
@@ -149,7 +149,7 @@ export function CoachMetricStrip({ metrics, className }: CoachMetricStripProps) 
       {metrics.map((metric) => (
         <Card
           key={metric.label}
-          className="gap-0 rounded-2xl border-[#E1DDD4] bg-[#FFFDF7]/92 py-0 shadow-[0_12px_34px_rgba(47,42,31,0.045)]"
+          className="gap-0 rounded-xl border-[#E1DDD4] bg-[#FFFDF7]/92 py-0 shadow-[0_12px_34px_rgba(47,42,31,0.045)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_44px_rgba(47,42,31,0.065)]"
         >
           <CardContent className="p-4">
             <p className="text-xs font-medium text-muted-foreground">
@@ -186,7 +186,7 @@ export function WorkbenchCard({
   return (
     <Card
       className={cn(
-        "gap-0 rounded-[1.5rem] border-[#DED7CA] bg-[#FFFDF7]/94 py-0 shadow-[0_18px_58px_rgba(47,42,31,0.06)]",
+        "gap-0 rounded-[1.25rem] border-[#DED7CA] bg-[#FFFDF7]/94 py-0 shadow-[0_18px_58px_rgba(47,42,31,0.06)]",
         className,
       )}
     >
@@ -221,7 +221,7 @@ export function CoachActionCard({
   return (
     <Card
       className={cn(
-        "gap-0 rounded-2xl border-[#D5E2D1] bg-[#F3F8F1] py-0 shadow-[0_14px_42px_rgba(47,107,79,0.07)]",
+        "gap-0 rounded-xl border-[#D5E2D1] bg-[#F3F8F1] py-0 shadow-[0_14px_42px_rgba(47,107,79,0.07)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_48px_rgba(47,107,79,0.10)]",
         className,
       )}
     >
@@ -237,7 +237,7 @@ export function CoachActionCard({
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {description}
         </p>
-        <Button asChild size="sm" className="mt-4">
+        <Button asChild size="sm" className="mt-4 transition active:translate-y-px">
           <Link href={href}>{action}</Link>
         </Button>
       </CardContent>
@@ -254,7 +254,7 @@ export function CoachEmptyState({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-dashed border-[#DCD7CC] bg-[#FFFDF7]/88 p-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]",
+        "rounded-xl border border-dashed border-[#DCD7CC] bg-[#FFFDF7]/88 p-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]",
         className,
       )}
     >

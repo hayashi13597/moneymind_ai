@@ -45,7 +45,8 @@ describe("InsightsPageView", () => {
       }),
     );
 
-    expect(markup).toContain("Coach Journal");
+    expect(markup).toContain("Nhận xét AI");
+    expect(markup).toContain("Ghi chú tài chính cho từng tháng");
     expect(markup).toContain("MoneyMind gợi ý");
     expect(markup).toContain("Monthly insight for 2026-06");
   });

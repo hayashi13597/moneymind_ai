@@ -94,6 +94,7 @@ describe("ai chat service", () => {
         "user_1",
         {
           month: "2026-05",
+        providerSetting,
           messages: [{ role: "user", content: "Tôi tiêu nhiều nhất vào đâu?" }],
         },
         providerSetting,
@@ -154,6 +155,7 @@ describe("ai chat service", () => {
         "user_1",
         {
           month: "2026-05",
+        providerSetting,
           messages: [
             { role: "user", content: "Tháng này tôi đã chi quá tay ở đâu?" },
           ],
@@ -181,6 +183,7 @@ describe("ai chat service", () => {
         "user_1",
         {
           month: "2026-05",
+        providerSetting,
           messages: [
             { role: "user", content: "Tạo kế hoạch tiết kiệm cho tôi." },
           ],
@@ -214,6 +217,7 @@ describe("ai chat service", () => {
       "user_1",
       {
         month: "2026-05",
+        providerSetting,
         messages: [{ role: "user", content: "Thêm ăn trưa 55k" }],
       },
       providerSetting,
@@ -250,6 +254,7 @@ describe("ai chat service", () => {
       "user_1",
       {
         month: "2026-05",
+        providerSetting,
         messages: [
           {
             role: "user",
@@ -293,6 +298,7 @@ describe("ai chat service", () => {
       "user_1",
       {
         month: "2026-05",
+        providerSetting,
         messages: [
           {
             role: "user",
@@ -334,6 +340,7 @@ describe("ai chat service", () => {
       "user_1",
       {
         month: "2026-05",
+        providerSetting,
         messages: [
           {
             role: "user",
@@ -367,6 +374,7 @@ describe("ai chat service", () => {
       "user_1",
       {
         month: "2026-05",
+        providerSetting,
         messages: [
           {
             role: "user",
@@ -404,6 +412,7 @@ describe("ai chat service", () => {
       "user_1",
       {
         month: "2026-05",
+        providerSetting,
         messages: [{ role: "user", content: "Thêm mua đồ 99k" }],
       },
       providerSetting,
@@ -425,6 +434,7 @@ describe("ai chat service", () => {
       "user_1",
       {
         month: "2026-05",
+        providerSetting,
         messages: [{ role: "user", content: "Test" }],
       },
       {
@@ -451,6 +461,7 @@ describe("ai chat service", () => {
         "user_1",
         {
           month: "2026-05",
+        providerSetting,
           messages: [{ role: "user", content: "Test" }],
         },
         providerSetting,

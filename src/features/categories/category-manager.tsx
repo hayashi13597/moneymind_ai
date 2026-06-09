@@ -19,8 +19,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { EmptyState, InsightCard, SectionCard } from "@/components/app-ui";
+import { InsightCard, SectionCard } from "@/components/app-ui";
 import {
+  CoachEmptyState,
   CoachHero,
   CoachMetricStrip,
   CoachPageShell,
@@ -582,9 +583,9 @@ export function CategoryManager({
             ))}
           {expenseInsights.every((item) => item.insight.currentAmount === 0) ? (
             <div className="md:col-span-2 xl:col-span-5">
-              <EmptyState
-                title="Chưa có dữ liệu chi tiêu tháng này"
-                description="Khi có giao dịch chi tiêu, trang này sẽ hiển thị các nhóm đáng chú ý để bạn kiểm tra cách phân loại."
+              <CoachEmptyState
+                title="Chưa có tín hiệu chi tiêu tháng này"
+                description="Khi có giao dịch chi tiêu, MoneyMind sẽ đưa các nhóm đáng chú ý lên đây để bạn kiểm tra cách phân loại trước khi đọc nhận xét AI."
               />
             </div>
           ) : null}
@@ -739,9 +740,9 @@ function CategoryGroupCard({
           ))}
           {categories.length === 0 ? (
             <div className="p-5">
-              <EmptyState
-                title="Chưa có danh mục"
-                description="Tạo danh mục đầu tiên để nhập giao dịch và xem báo cáo rõ ràng hơn."
+              <CoachEmptyState
+                title="Chưa có danh mục để huấn luyện ngữ cảnh"
+                description="Tạo danh mục đầu tiên để giao dịch, ngân sách và nhận xét AI cùng dùng một ngôn ngữ tài chính rõ ràng."
               />
             </div>
           ) : null}

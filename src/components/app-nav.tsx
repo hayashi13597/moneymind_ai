@@ -10,9 +10,9 @@ const navItems = [
   { href: "/transactions", label: "Giao dịch" },
   { href: "/budgets", label: "Ngân sách" },
   { href: "/categories", label: "Danh mục" },
-  { href: "/insights", label: "AI Insights" },
+  { href: "/insights", label: "Nhận xét AI" },
   { href: "/reports", label: "Báo cáo" },
-  { href: "/settings/ai", label: "AI Coach" },
+  { href: "/settings/ai", label: "Cấu hình AI" },
 ] as const;
 
 export function AppNav() {

@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import {
+  CoachEmptyState,
   CoachHero,
   CoachMetricStrip,
   CoachPageShell,
@@ -14,7 +15,6 @@ import {
 } from "@/components/coach-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -227,7 +227,7 @@ export function BudgetManager({
             helper: "Đường chuẩn tháng này",
           },
           {
-            label: "Đã chi",
+            label: "Mức đã dùng",
             value: formatVnd(initialData.summary.totalSpent),
             helper: "Tổng chi đã ghi nhận",
             tone: "negative",
@@ -251,59 +251,42 @@ export function BudgetManager({
       />
 
       <section className="space-y-5">
-      <div className="flex flex-col gap-4 rounded-xl border border-[#DCD7CC] bg-[#FFFDF7]/90 p-5 shadow-[0_14px_48px_rgba(47,42,31,0.055)] md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            {selectedMonth.label}
-          </p>
-          <h2 className="mt-1 text-2xl font-bold text-foreground">
-            Hạn mức tháng này
-          </h2>
+        <div className="flex flex-col gap-4 rounded-xl border border-[#DCD7CC] bg-[#FFFDF7]/90 p-5 shadow-[0_14px_48px_rgba(47,42,31,0.055)] md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              {selectedMonth.label}
+            </p>
+            <h2 className="mt-1 text-2xl font-bold text-foreground">
+              Hạn mức tháng này
+            </h2>
+          </div>
+          <nav aria-label="Điều hướng tháng ngân sách" className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#DDD8CE]"
+              aria-label="Xem ngân sách tháng trước"
+              onClick={() =>
+                router.push(`/budgets?month=${selectedMonth.previousKey}`)
+              }
+            >
+              <ChevronLeft className="size-4" />
+              Tháng trước
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#DDD8CE]"
+              aria-label="Xem ngân sách tháng sau"
+              onClick={() =>
+                router.push(`/budgets?month=${selectedMonth.nextKey}`)
+              }
+            >
+              Tháng sau
+              <ChevronRight className="size-4" />
+            </Button>
+          </nav>
         </div>
-        <nav aria-label="Điều hướng tháng ngân sách" className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="border-[#DDD8CE]"
-            aria-label="Xem ngân sách tháng trước"
-            onClick={() =>
-              router.push(`/budgets?month=${selectedMonth.previousKey}`)
-            }
-          >
-            <ChevronLeft className="size-4" />
-            Tháng trước
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="border-[#DDD8CE]"
-            aria-label="Xem ngân sách tháng sau"
-            onClick={() => router.push(`/budgets?month=${selectedMonth.nextKey}`)}
-          >
-            Tháng sau
-            <ChevronRight className="size-4" />
-          </Button>
-        </nav>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-4">
-        <SummaryCard
-          label="Tổng hạn mức"
-          value={formatVnd(initialData.summary.totalBudget)}
-        />
-        <SummaryCard
-          label="Đã chi"
-          value={formatVnd(initialData.summary.totalSpent)}
-        />
-        <SummaryCard
-          label={initialData.summary.remaining < 0 ? "Đã vượt" : "Còn lại"}
-          value={formatVnd(Math.abs(initialData.summary.remaining))}
-        />
-        <SummaryCard
-          label="Vượt hạn mức"
-          value={formatVnd(initialData.summary.overAmount)}
-        />
-      </div>
 
       {error ? (
         <p className="rounded-lg border border-[#E5B8A7] bg-[#F9E8E1] px-4 py-3 text-sm text-[#A2482D]">
@@ -316,22 +299,31 @@ export function BudgetManager({
         description="Giữ dữ liệu gốc ở đây, nhưng ưu tiên xử lý các danh mục có tín hiệu rủi ro trước."
       >
         <div className="overflow-hidden rounded-xl border border-[#DCD7CC] bg-[#FFFDF7]/92">
-          <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] gap-3 border-b border-[#E8E1D6] bg-[#F7F3EA] px-4 py-3 text-xs font-semibold tracking-[0.08em] text-muted-foreground">
+          <div className="hidden grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] gap-3 border-b border-[#E8E1D6] bg-[#F7F3EA] px-4 py-3 text-xs font-semibold tracking-[0.08em] text-muted-foreground md:grid">
             <span>Danh mục</span>
             <span>Ngân sách</span>
             <span>Đã chi</span>
             <span>Còn lại</span>
             <span className="text-right">Thao tác</span>
           </div>
-          {initialData.rows.map((row) => (
-            <BudgetRow
-              key={row.categoryId}
-              row={row}
-              isSubmitting={isSubmitting}
-              onEdit={setEditing}
-              onDelete={deleteBudget}
-            />
-          ))}
+          {initialData.rows.length > 0 ? (
+            initialData.rows.map((row) => (
+              <BudgetRow
+                key={row.categoryId}
+                row={row}
+                isSubmitting={isSubmitting}
+                onEdit={setEditing}
+                onDelete={deleteBudget}
+              />
+            ))
+          ) : (
+            <div className="p-5">
+              <CoachEmptyState
+                title="Chưa có danh mục để đặt hạn mức"
+                description="Tạo danh mục chi tiêu trước, sau đó quay lại đây để MoneyMind giúp bạn đặt giới hạn theo từng nhóm."
+              />
+            </div>
+          )}
         </div>
       </WorkbenchCard>
 
@@ -472,19 +464,6 @@ function BudgetEditDialog({
       </Form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="gap-0 rounded-xl border-[#DCD7CC] bg-[#FDFCF8] py-0 shadow-none">
-      <CardContent className="p-4">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
-      </CardContent>
-    </Card>
   );
 }
 

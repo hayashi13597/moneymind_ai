@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 
-import { PageHeader } from "@/components/app-ui";
 import { CategoryManager } from "@/features/categories/category-manager";
 import { listCategories } from "@/features/categories/service";
 import {
@@ -67,12 +66,7 @@ export default async function CategoriesPage() {
   });
 
   return (
-    <section className="space-y-8">
-      <PageHeader
-        eyebrow="Danh mục"
-        title="Quản lý danh mục thu chi"
-        description="Sắp xếp các nhóm thu nhập và chi tiêu để nhập giao dịch nhanh hơn, đồng thời giúp MoneyMind hiểu đúng thói quen từng tháng."
-      />
+    <section>
       <CategoryManager
         initialCategories={categories}
         categoryInsights={categoryInsights}

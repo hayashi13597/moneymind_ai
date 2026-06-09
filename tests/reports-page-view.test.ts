@@ -61,7 +61,8 @@ describe("ReportsPageView", () => {
       React.createElement(ReportsPageView, { dashboard, budgets }),
     );
 
-    expect(markup).toContain("Pattern Lab");
+    expect(markup).toContain("Báo cáo tháng");
+    expect(markup).toContain("Đọc mẫu chi tiêu trước khi chỉnh ngân sách");
     expect(markup).toContain("MoneyMind gợi ý");
     expect(markup).toContain("Ăn uống");
   });

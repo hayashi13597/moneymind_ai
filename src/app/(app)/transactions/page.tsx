@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 
-import { PageHeader } from "@/components/app-ui";
 import { listCategories } from "@/features/categories/service";
 import {
   getSelectedMonth,
@@ -85,12 +84,7 @@ export default async function TransactionsPage({
   }));
 
   return (
-    <section className="space-y-8">
-      <PageHeader
-        eyebrow="Giao dịch"
-        title="Giao dịch trong tháng"
-        description="Ghi lại thu chi hằng ngày, xem theo từng tháng và dùng AI để tạo bản nháp trước khi lưu."
-      />
+    <section>
       <TransactionManager
         initialTransactions={transactionItems}
         categories={categories}

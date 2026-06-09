@@ -1,4 +1,6 @@
 import {
+  CoachActionCard,
+  CoachEmptyState,
   CoachHero,
   CoachMetricStrip,
   CoachPageShell,
@@ -36,15 +38,15 @@ export function ReportsPageView({ dashboard, budgets }: ReportsPageViewProps) {
     (item) => item.changeKind === "increased" || item.changeKind === "new",
   );
   const recommendation = topCategory
-    ? `${topCategory.name} chiếm ${topCategory.percentage}% chi tiêu tháng này. MoneyMind ưu tiên nhóm này vì đây là nơi thay đổi thói quen tạo tác động rõ nhất.`
-    : "Chưa có chi tiêu để phân tích. Khi bạn thêm giao dịch, báo cáo sẽ chuyển thành các mẫu hành vi có thể hành động.";
+    ? `${topCategory.name} chiếm ${topCategory.percentage}% chi tiêu tháng này. Bắt đầu từ nhóm này trước vì một thay đổi nhỏ ở đây tạo tác động rõ nhất.`
+    : "Chưa có chi tiêu để phân tích. Khi bạn thêm giao dịch, báo cáo sẽ tự chuyển thành các mẫu hành vi có thể hành động.";
 
   return (
     <CoachPageShell>
       <CoachHero
-        eyebrow="Pattern Lab"
-        title="Phân tích hành vi, không chỉ xem biểu đồ"
-        description="Reports & Analytics gom các bằng chứng quan trọng trong tháng thành vài mẫu hành vi: nhóm chi lớn nhất, ngày chi cao nhất và độ lệch so với hạn mức."
+        eyebrow="Báo cáo tháng"
+        title="Đọc mẫu chi tiêu trước khi chỉnh ngân sách"
+        description="Báo cáo gom các bằng chứng quan trọng trong tháng: nhóm chi lớn nhất, ngày chi cao nhất và độ lệch so với hạn mức đã đặt."
         recommendation={recommendation}
         evidence={[
           {
@@ -91,16 +93,16 @@ export function ReportsPageView({ dashboard, budgets }: ReportsPageViewProps) {
         ]}
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
         <WorkbenchCard
           title="Mẫu chi tiêu theo danh mục"
-          description="Các nhóm được sắp theo tác động thực tế trong tháng để bạn đọc nguyên nhân trước khi chỉnh ngân sách."
+          description="Các nhóm được sắp theo tác động thực tế trong tháng để bạn nhìn nguyên nhân trước khi chỉnh hạn mức."
         >
           <div className="space-y-3">
             {dashboard.categoryBreakdown.slice(0, 6).map((item) => (
               <article
                 key={item.categoryId}
-                className="rounded-2xl border border-[#E5DED2] bg-[#FBF8EF] p-4"
+                className="rounded-xl border border-[#E5DED2] bg-[#FBF8EF] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
@@ -124,41 +126,66 @@ export function ReportsPageView({ dashboard, budgets }: ReportsPageViewProps) {
               </article>
             ))}
             {dashboard.categoryBreakdown.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-[#DCD7CC] p-5 text-sm text-muted-foreground">
-                Chưa có giao dịch chi tiêu trong tháng này.
-              </p>
+              <CoachEmptyState
+                title="Chưa có chi tiêu để đọc"
+                description="Thêm giao dịch chi trước, MoneyMind sẽ nhóm dữ liệu thành các mẫu chi tiêu trong báo cáo này."
+              />
             ) : null}
           </div>
         </WorkbenchCard>
 
-        <WorkbenchCard
-          title="Bằng chứng hành động"
-          description="Các con số này giúp MoneyMind đề xuất bước tiếp theo thay vì chỉ hiển thị báo cáo tĩnh."
-        >
-          <div className="space-y-3">
-            {budgets.items.slice(0, 4).map((item) => (
-              <div
-                key={item.categoryId}
-                className="rounded-2xl border border-[#E5DED2] bg-[#FFFDF7] p-4"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-medium">{item.categoryName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {item.progressPercentage ?? 0}%
-                  </p>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Đã chi {formatVnd(item.spentAmount)}
-                </p>
-              </div>
-            ))}
-            {budgets.items.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-[#DCD7CC] p-5 text-sm text-muted-foreground">
-                Chưa có hạn mức nào để đối chiếu với chi tiêu.
-              </p>
-            ) : null}
-          </div>
-        </WorkbenchCard>
+        <div className="space-y-4">
+          <WorkbenchCard
+            title="Bằng chứng hành động"
+            description="Đối chiếu hạn mức với chi tiêu thật để biết nhóm nào cần kiểm soát trước."
+          >
+            <div className="space-y-3">
+              {budgets.items.slice(0, 4).map((item) => {
+                const progress = Math.min(item.progressPercentage ?? 0, 100);
+
+                return (
+                  <article
+                    key={item.categoryId}
+                    className="rounded-xl border border-[#E5DED2] bg-[#FFFDF7] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">
+                          {item.categoryName}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Đã chi {formatVnd(item.spentAmount)}
+                        </p>
+                      </div>
+                      <p className="shrink-0 text-sm font-semibold text-[#2F6B4F]">
+                        {item.progressPercentage ?? 0}%
+                      </p>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E6E0D5]">
+                      <div
+                        className="h-full rounded-full bg-[#2F6B4F]"
+                        style={{ width: `${Math.max(4, progress)}%` }}
+                      />
+                    </div>
+                  </article>
+                );
+              })}
+              {budgets.items.length === 0 ? (
+                <CoachEmptyState
+                  title="Chưa có hạn mức để đối chiếu"
+                  description="Tạo ngân sách theo danh mục để báo cáo cho bạn biết nhóm nào đang đi đúng hướng và nhóm nào cần siết lại."
+                />
+              ) : null}
+            </div>
+          </WorkbenchCard>
+          <CoachActionCard
+            title="Chỉnh hạn mức từ báo cáo"
+            description="Sau khi xác định nhóm chi nổi bật, chuyển sang ngân sách để đặt giới hạn sát dữ liệu hơn."
+            action="Mở ngân sách"
+            href={`/budgets?month=${dashboard.month.key}`}
+            meta="Bước tiếp theo"
+          />
+        </div>
       </div>
     </CoachPageShell>
   );

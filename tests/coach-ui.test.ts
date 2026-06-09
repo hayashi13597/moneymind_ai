@@ -52,7 +52,10 @@ describe("coach UI primitives", () => {
         }),
         createElement(
           WorkbenchCard,
-          { title: "Sổ giao dịch", description: "Quản lý dữ liệu gốc." },
+          {
+            title: "Sổ giao dịch",
+            description: "Quản lý dữ liệu gốc.",
+          } as React.ComponentProps<typeof WorkbenchCard>,
           createElement("p", null, "Workbench content"),
         ),
       ),

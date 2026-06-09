@@ -62,7 +62,7 @@ describe("app navigation loading feedback", () => {
     expect(
       container.querySelector<HTMLAnchorElement>('a[href="/insights"]')
         ?.textContent,
-    ).toBe("AI Insights");
+    ).toBe("Nhận xét AI");
     expect(
       container.querySelector<HTMLAnchorElement>('a[href="/reports"]')
         ?.textContent,

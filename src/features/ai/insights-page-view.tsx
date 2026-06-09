@@ -28,17 +28,17 @@ export function InsightsPageView({
     (item) => item.changeKind === "increased",
   );
   const recommendation = risingCategory
-    ? `${risingCategory.name} đang tăng so với tháng trước. Hãy tạo nhận xét AI để biến tín hiệu này thành một hành động cụ thể.`
+    ? `${risingCategory.name} đang tăng so với tháng trước. Tạo nhận xét AI để xem nguyên nhân và chọn một việc cần làm trong tháng này.`
     : dashboard.totals.expense > 0
-      ? "Tháng này đã có đủ dữ liệu chi tiêu để MoneyMind viết nhận xét ngắn, tập trung vào hành động thay vì báo cáo dài."
-      : "Chưa có nhiều dữ liệu trong tháng. Thêm vài giao dịch trước để nhận xét AI không bị chung chung.";
+      ? "Tháng này đã có đủ dữ liệu để MoneyMind viết nhận xét ngắn, ưu tiên việc cần chỉnh thay vì kể lại số liệu."
+      : "Chưa có nhiều dữ liệu trong tháng. Thêm vài giao dịch trước để nhận xét AI bớt chung chung.";
 
   return (
     <CoachPageShell>
       <CoachHero
-        eyebrow="Coach Journal"
-        title="Nhật ký cố vấn cho từng tháng"
-        description="AI Insights là nơi MoneyMind biến dữ liệu tháng thành lời nhắc ngắn, có bằng chứng và có bước tiếp theo. Bạn tạo lại khi dữ liệu thay đổi hoặc khi muốn một góc nhìn mới."
+        eyebrow="Nhận xét AI"
+        title="Ghi chú tài chính cho từng tháng"
+        description="MoneyMind đọc dữ liệu tháng hiện tại và viết một nhận xét ngắn: điều gì đang lệch, vì sao đáng chú ý và nên làm gì tiếp theo."
         recommendation={recommendation}
         evidence={[
           {
@@ -49,7 +49,7 @@ export function InsightsPageView({
           {
             label: "Còn lại",
             value: formatVnd(dashboard.totals.remaining),
-            helper: `${dashboard.healthScore.savingsRate}% tỷ lệ tiết kiệm`,
+            helper: `${dashboard.healthScore.savingsRate}% phần giữ lại`,
           },
         ]}
       />
@@ -65,7 +65,7 @@ export function InsightsPageView({
           {
             label: "Thu nhập",
             value: formatVnd(dashboard.totals.income),
-            helper: "Bằng chứng đầu vào",
+            helper: "Dữ liệu trong tháng",
             tone: "positive",
           },
           {
@@ -79,7 +79,7 @@ export function InsightsPageView({
           {
             label: "Trạng thái nhận xét",
             value: initialInsight ? "Đã có" : "Chưa tạo",
-            helper: initialInsight ? "Có thể tạo lại" : "Cần cấu hình AI",
+            helper: initialInsight ? "Có thể tạo lại" : "Tạo khi cần đọc nhanh",
           },
         ]}
       />
@@ -87,7 +87,7 @@ export function InsightsPageView({
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.16fr)_minmax(320px,0.84fr)]">
         <WorkbenchCard
           title="Nhận xét tháng này"
-          description="Nội dung được tạo từ dữ liệu thật của tháng đang xem. MoneyMind không tự bịa giao dịch hoặc mục tiêu chưa có."
+          description="Nội dung được tạo từ giao dịch và danh mục thật của tháng đang xem. MoneyMind không tự thêm giao dịch hoặc mục tiêu chưa có."
         >
           <MonthlyInsightPanel
             key={dashboard.month.key}
@@ -98,15 +98,15 @@ export function InsightsPageView({
 
         <div className="space-y-4">
           <CoachActionCard
-            title="Muốn nhận xét sắc hơn?"
-            description="Cập nhật giao dịch và danh mục trước khi tạo lại để AI có thêm ngữ cảnh hành vi."
+            title="Cần thêm dữ liệu"
+            description="Cập nhật giao dịch và danh mục trước khi tạo lại để nhận xét phản ánh đúng thói quen chi tiêu."
             action="Mở giao dịch"
             href={`/transactions?month=${dashboard.month.key}`}
-            meta="Dữ liệu huấn luyện"
+            meta="Dữ liệu đầu vào"
           />
           <CoachActionCard
             title="Kiểm tra giới hạn chi"
-            description="Nếu nhận xét nhắc tới một nhóm rủi ro, chuyển sang hạn mức để biến gợi ý thành quyết định."
+            description="Nếu nhận xét nhắc tới một nhóm rủi ro, mở ngân sách để đặt giới hạn rõ hơn cho tháng này."
             action="Mở ngân sách"
             href={`/budgets?month=${dashboard.month.key}`}
             meta="Bước tiếp theo"

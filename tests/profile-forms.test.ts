@@ -133,7 +133,7 @@ describe("profile forms", () => {
       );
     });
 
-    expect(container.textContent).toContain("Hồ sơ huấn luyện");
+    expect(container.textContent).toContain("Hồ sơ hiển thị");
     expect(container.textContent).toContain("MoneyMind dùng thông tin này");
   });
 
@@ -201,7 +201,9 @@ describe("profile forms", () => {
     });
 
     expect(container.textContent).toContain("Độ tin cậy tài khoản");
-    expect(container.textContent).toContain("Giữ phiên cố vấn an toàn");
+    expect(container.textContent).toContain(
+      "Mật khẩu mạnh và thu hồi phiên cũ",
+    );
   });
 
   it("changes password with revoke other sessions enabled by default", async () => {

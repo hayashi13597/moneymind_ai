@@ -20,10 +20,10 @@ export default async function ProfilePage() {
   return (
     <CoachPageShell>
       <CoachHero
-        eyebrow="Personalization"
-        title="Cá nhân hóa phiên cố vấn tài chính"
-        description="Profile không chỉ là tài khoản. Đây là nơi MoneyMind giữ danh tính, độ tin cậy đăng nhập và cách hiển thị thông tin cá nhân trong các phiên cố vấn."
-        recommendation="Hoàn thiện tên hiển thị và giữ mật khẩu an toàn để MoneyMind có thể cá nhân hóa trải nghiệm mà không làm yếu lớp bảo vệ tài khoản."
+        eyebrow="Hồ sơ"
+        title="Thông tin tài khoản và bảo mật"
+        description="Quản lý tên hiển thị, email đăng nhập và mật khẩu của bạn trong một nơi. Những thông tin này giúp MoneyMind hiển thị đúng danh tính mà không chạm vào dữ liệu tài chính."
+        recommendation="Cập nhật tên hiển thị nếu bạn muốn giao diện cá nhân hơn, và đổi mật khẩu ngay khi nghi ngờ phiên đăng nhập cũ không còn an toàn."
         evidence={[
           {
             label: "Email đăng nhập",
@@ -40,7 +40,7 @@ export default async function ProfilePage() {
       <CoachMetricStrip
         metrics={[
           {
-            label: "Danh tính cố vấn",
+            label: "Tên hiển thị",
             value: user.name?.trim() || "Chưa đặt",
             helper: "Tên MoneyMind dùng trong app",
           },
@@ -65,14 +65,14 @@ export default async function ProfilePage() {
       />
       <div className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
         <WorkbenchCard
-          title="Hồ sơ cá nhân hóa"
-          description="Cập nhật cách MoneyMind nhận diện bạn trong giao diện và các phiên cố vấn."
+          title="Hồ sơ hiển thị"
+          description="Cập nhật cách MoneyMind hiển thị tên và ảnh đại diện trong giao diện."
         >
           <ProfileForm user={user} />
         </WorkbenchCard>
         <WorkbenchCard
-          title="Bảo mật phiên cố vấn"
-          description="Đổi mật khẩu và kiểm soát các phiên đăng nhập khác khi bạn muốn siết lại quyền truy cập."
+          title="Bảo mật đăng nhập"
+          description="Đổi mật khẩu và thu hồi các phiên khác khi bạn muốn siết lại quyền truy cập."
         >
           <PasswordForm />
         </WorkbenchCard>

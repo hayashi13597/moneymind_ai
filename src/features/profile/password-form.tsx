@@ -68,7 +68,7 @@ export function PasswordForm() {
             Độ tin cậy tài khoản
           </p>
           <h2 className="mt-2 text-lg font-semibold text-foreground">
-            Giữ phiên cố vấn an toàn
+            Giữ đăng nhập an toàn
           </h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Mật khẩu mạnh và thu hồi phiên cũ giúp dữ liệu tài chính cá nhân
