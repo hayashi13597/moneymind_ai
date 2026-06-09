@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -22,8 +23,6 @@ import { authClient } from "@/lib/auth-client";
 import { createZodResolver } from "@/lib/zod-form";
 
 const INPUT_CLASS = "h-11 focus:ring-primary/15";
-const SUCCESS_MESSAGE =
-  "Đã đặt lại mật khẩu. Bạn có thể đăng nhập bằng mật khẩu mới.";
 const INVALID_LINK_MESSAGE = "Liên kết đặt lại mật khẩu không hợp lệ.";
 const EXPIRED_LINK_MESSAGE =
   "Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.";
@@ -35,8 +34,9 @@ type ResetPasswordFormProps = {
 };
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<
-    "idle" | "success" | "invalid-token" | "system-error"
+    "idle" | "invalid-token" | "system-error"
   >("idle");
   const form = useForm<ResetPasswordFormInput>({
     resolver: createZodResolver(resetPasswordFormSchema),
@@ -82,7 +82,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     }
 
     form.reset();
-    setStatus("success");
+    router.push("/login?reset=success");
+    router.refresh();
   }
 
   return (
@@ -130,11 +131,6 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           )}
         />
 
-        {status === "success" ? (
-          <p className="rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm text-primary">
-            {SUCCESS_MESSAGE}
-          </p>
-        ) : null}
         {status === "invalid-token" ? (
           <p className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {EXPIRED_LINK_MESSAGE}
@@ -148,7 +144,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
         <Button
           className="h-11 w-full"
-          disabled={form.formState.isSubmitting || status === "success"}
+          disabled={form.formState.isSubmitting}
           id="resetPassword"
           type="submit"
         >

@@ -14,6 +14,9 @@ import { authClient } from "@/lib/auth-client";
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean })
   .IS_REACT_ACT_ENVIRONMENT = true;
 
+const mockRouterPush = jest.fn();
+const mockRouterRefresh = jest.fn();
+
 jest.mock("@/lib/auth-client", () => ({
   authClient: {
     requestPasswordReset: jest.fn(),
@@ -26,7 +29,8 @@ jest.mock("@/lib/auth-client", () => ({
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockRouterPush,
+    refresh: mockRouterRefresh,
   }),
 }));
 
@@ -167,6 +171,8 @@ describe("ResetPasswordForm", () => {
     document.body.appendChild(container);
     root = createRoot(container);
     resetPasswordMock.mockResolvedValue({ data: {}, error: null });
+    mockRouterPush.mockReset();
+    mockRouterRefresh.mockReset();
   });
 
   afterEach(() => {
@@ -200,9 +206,8 @@ describe("ResetPasswordForm", () => {
       token: "token_123",
       newPassword: "new-password",
     });
-    expect(container.textContent).toContain(
-      "Đã đặt lại mật khẩu. Bạn có thể đăng nhập bằng mật khẩu mới.",
-    );
+    expect(mockRouterPush).toHaveBeenCalledWith("/login?reset=success");
+    expect(mockRouterRefresh).toHaveBeenCalled();
   });
 
   it("does not submit and shows invalid link copy without a token", async () => {

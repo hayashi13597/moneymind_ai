@@ -4,7 +4,17 @@ import { Bot, CheckCircle2 } from "lucide-react";
 import { LoginForm } from "@/components/auth/login-form";
 import { Button } from "@/components/ui/button";
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{
+    reset?: string | string[];
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const reset = Array.isArray(params.reset) ? params.reset[0] : params.reset;
+  const showResetSuccess = reset === "success";
+
   return (
     <main className="min-h-dvh bg-transparent px-6 py-8 text-foreground">
       <section className="mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[0.92fr_1.08fr]">
@@ -40,11 +50,16 @@ export default function LoginPage() {
             <p className="text-sm font-medium text-muted-foreground">
               Chào mừng trở lại
             </p>
-            <h2 className="mt-2 text-2xl font-bold">
-              Đăng nhập
-            </h2>
-          </div>
-          <LoginForm />
+          <h2 className="mt-2 text-2xl font-bold">
+            Đăng nhập
+          </h2>
+        </div>
+        {showResetSuccess ? (
+          <p className="mb-4 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
+            Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.
+          </p>
+        ) : null}
+        <LoginForm />
           <Button asChild variant="outline" className="mt-4 w-full border-input">
             <Link href="/">Quay lại trang chủ</Link>
           </Button>
