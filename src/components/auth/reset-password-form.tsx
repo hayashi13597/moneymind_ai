@@ -59,11 +59,13 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     );
   }
 
+  const resetToken = token;
+
   async function handleSubmit(values: ResetPasswordFormInput) {
     setStatus("idle");
 
     const result = await authClient.resetPassword({
-      token,
+      token: resetToken,
       newPassword: values.newPassword,
     });
 

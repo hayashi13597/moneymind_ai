@@ -20,8 +20,9 @@ jest.mock("@/lib/auth-client", () => ({
   },
 }));
 
-const requestPasswordResetMock = authClient.requestPasswordReset as jest.Mock;
-const resetPasswordMock = authClient.resetPassword as jest.Mock;
+const requestPasswordResetMock =
+  authClient.requestPasswordReset as unknown as jest.Mock;
+const resetPasswordMock = authClient.resetPassword as unknown as jest.Mock;
 
 function changeField(field: HTMLInputElement, value: string) {
   const valueSetter = Object.getOwnPropertyDescriptor(
