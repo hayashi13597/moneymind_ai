@@ -19,7 +19,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { EmptyState, InsightCard, SectionCard } from "@/components/app-ui";
+import { InsightCard, SectionCard } from "@/components/app-ui";
+import {
+  CoachEmptyState,
+  CoachHero,
+  CoachMetricStrip,
+  CoachPageShell,
+} from "@/components/coach-ui";
 import { RhfComboboxControl } from "@/components/form-rhf-controls";
 import {
   AlertDialog,
@@ -203,6 +209,18 @@ export function CategoryManager({
     ...expenseInsights.map((item) => item.insight.currentAmount),
     1,
   );
+  const categoriesWithSignals = visibleCategories.filter(
+    (category) => (insightsByCategory.get(category.id)?.transactionCount ?? 0) > 0,
+  ).length;
+  const signalQuality =
+    visibleCategories.length === 0
+      ? 0
+      : Math.round((categoriesWithSignals / visibleCategories.length) * 100);
+  const categoryRecommendation = unusualGrowth
+    ? `${unusualGrowth.category.name} đang tăng ${unusualGrowth.insight.changePercentage}%. Giữ tên danh mục này rõ nghĩa để MoneyMind nhận xét đúng ngữ cảnh.`
+    : topExpense
+      ? `${topExpense.category.name} là nhóm chi lớn nhất. Nếu tên danh mục quá rộng, hãy tách nhỏ để AI đưa lời khuyên chính xác hơn.`
+      : "Chưa có nhiều tín hiệu tháng này. Bắt đầu bằng vài danh mục rõ nghĩa để MoneyMind hiểu thói quen thay vì chỉ nhìn con số.";
 
   async function refreshCategories() {
     try {
@@ -330,7 +348,55 @@ export function CategoryManager({
   }
 
   return (
-    <div className="space-y-7">
+    <CoachPageShell>
+      <CoachHero
+        eyebrow="Taxonomy Coach"
+        title="Dạy MoneyMind cách hiểu tiền của bạn"
+        description="Danh mục không chỉ để lọc bảng. Đây là ngôn ngữ huấn luyện giúp AI phân biệt chi tiêu sinh hoạt, thói quen đang tăng và những khoản nên nhắc lại."
+        recommendation={categoryRecommendation}
+        evidence={[
+          {
+            label: "Chất lượng tín hiệu AI",
+            value: `${signalQuality}%`,
+            helper: `${categoriesWithSignals}/${visibleCategories.length || 0} danh mục có giao dịch`,
+          },
+          {
+            label: "Danh mục tùy chỉnh",
+            value: `${customCategoryCount}`,
+            helper: "Ngôn ngữ riêng của bạn",
+          },
+        ]}
+      />
+
+      <CoachMetricStrip
+        metrics={[
+          {
+            label: "Chất lượng tín hiệu AI",
+            value: `${signalQuality}%`,
+            helper: "Danh mục có dữ liệu thật",
+            tone: signalQuality >= 60 ? "positive" : "negative",
+          },
+          {
+            label: "Đang dùng",
+            value: `${visibleCategories.length}`,
+            helper: `${customCategoryCount} tùy chỉnh`,
+          },
+          {
+            label: "Giao dịch đã phân loại",
+            value: `${totalTransactions}`,
+            helper: "Nguồn ngữ cảnh cho nhận xét",
+          },
+          {
+            label: "Nhóm lớn nhất",
+            value: topExpense?.category.name ?? "Chưa có",
+            helper: topExpense
+              ? formatVnd(topExpense.insight.currentAmount)
+              : "Chưa có chi tiêu",
+          },
+        ]}
+      />
+
+      <div className="space-y-7">
       <section className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
         <SectionCard className="overflow-hidden">
           <div className="-m-5 bg-[#F5F1E8] p-5 md:-m-6 md:p-6">
@@ -517,9 +583,9 @@ export function CategoryManager({
             ))}
           {expenseInsights.every((item) => item.insight.currentAmount === 0) ? (
             <div className="md:col-span-2 xl:col-span-5">
-              <EmptyState
-                title="Chưa có dữ liệu chi tiêu tháng này"
-                description="Khi có giao dịch chi tiêu, trang này sẽ hiển thị các nhóm đáng chú ý để bạn kiểm tra cách phân loại."
+              <CoachEmptyState
+                title="Chưa có tín hiệu chi tiêu tháng này"
+                description="Khi có giao dịch chi tiêu, MoneyMind sẽ đưa các nhóm đáng chú ý lên đây để bạn kiểm tra cách phân loại trước khi đọc nhận xét AI."
               />
             </div>
           ) : null}
@@ -554,7 +620,8 @@ export function CategoryManager({
           onSubmit={updateEditingCategory}
         />
       ) : null}
-    </div>
+      </div>
+    </CoachPageShell>
   );
 }
 
@@ -673,9 +740,9 @@ function CategoryGroupCard({
           ))}
           {categories.length === 0 ? (
             <div className="p-5">
-              <EmptyState
-                title="Chưa có danh mục"
-                description="Tạo danh mục đầu tiên để nhập giao dịch và xem báo cáo rõ ràng hơn."
+              <CoachEmptyState
+                title="Chưa có danh mục để huấn luyện ngữ cảnh"
+                description="Tạo danh mục đầu tiên để giao dịch, ngân sách và nhận xét AI cùng dùng một ngôn ngữ tài chính rõ ràng."
               />
             </div>
           ) : null}

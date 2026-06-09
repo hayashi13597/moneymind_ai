@@ -1,14 +1,15 @@
 import { cookies } from "next/headers";
 
-import { BudgetManager } from "@/features/budgets/budget-manager";
-import { listCategoryBudgetRows } from "@/features/budgets/service";
+import { listDashboardBudgetSummary } from "@/features/budgets/service";
 import {
   getSelectedMonth,
   USER_TIME_ZONE_COOKIE,
 } from "@/features/dashboard/month";
+import { getMonthlyDashboard } from "@/features/dashboard/service";
+import { ReportsPageView } from "@/features/reports/reports-page-view";
 import { getCurrentUser } from "@/lib/auth-session";
 
-type BudgetsPageProps = {
+type ReportsPageProps = {
   searchParams: Promise<{
     month?: string | string[];
   }>;
@@ -18,7 +19,7 @@ function firstSearchParam(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
+export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -32,11 +33,10 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
     undefined,
     userTimeZone,
   );
-  const budgetData = await listCategoryBudgetRows(user.id, selectedMonth.key);
+  const [dashboard, budgets] = await Promise.all([
+    getMonthlyDashboard(user.id, selectedMonth),
+    listDashboardBudgetSummary(user.id, selectedMonth.key),
+  ]);
 
-  return (
-    <section>
-      <BudgetManager selectedMonth={selectedMonth} initialData={budgetData} />
-    </section>
-  );
+  return <ReportsPageView dashboard={dashboard} budgets={budgets} />;
 }

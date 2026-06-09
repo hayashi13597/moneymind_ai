@@ -127,6 +127,21 @@ describe("BudgetManager", () => {
     expect(container.textContent).toContain("Chưa đặt");
   });
 
+  it("frames budgets as an AI plan tuner", () => {
+    act(() => {
+      root.render(
+        React.createElement(BudgetManager, {
+          selectedMonth,
+          initialData: budgetData,
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Plan Tuner");
+    expect(container.textContent).toContain("Ưu tiên xử lý");
+    expect(container.textContent).toContain("MoneyMind gợi ý");
+  });
+
   it("shows one edit action per budget row", () => {
     act(() => {
       root.render(

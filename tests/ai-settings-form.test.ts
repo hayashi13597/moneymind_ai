@@ -194,10 +194,21 @@ describe("AiSettingsForm", () => {
 
     expect(layout.className).toContain("space-y-5");
     expect(topRow.className).toContain("grid");
-    expect(topRow.textContent).toContain("AI cần cấu hình ổn định");
+    expect(topRow.textContent).toContain("Coach Control");
+    expect(topRow.textContent).toContain("Mức sẵn sàng");
     expect(topRow.textContent).toContain("Thêm cấu hình AI");
     expect(topRow.textContent).not.toContain("Cấu hình đã lưu");
     expect(providerList.textContent).toContain("Cấu hình đã lưu");
+  });
+
+  it("surfaces coach readiness before provider details", () => {
+    act(() => {
+      root.render(React.createElement(AiSettingsForm));
+    });
+
+    expect(container.textContent).toContain("Coach Control");
+    expect(container.textContent).toContain("Quyền kiểm soát AI");
+    expect(container.textContent).toContain("Chưa sẵn sàng");
   });
 
   it("uses a stable server snapshot before reading localStorage on the client", () => {

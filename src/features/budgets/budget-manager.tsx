@@ -6,9 +6,15 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import {
+  CoachEmptyState,
+  CoachHero,
+  CoachMetricStrip,
+  CoachPageShell,
+  WorkbenchCard,
+} from "@/components/coach-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -95,6 +101,21 @@ export function BudgetManager({
   const [editing, setEditing] = useState<EditingState>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const overLimitRows = initialData.rows.filter(
+    (row) => row.status === "over_limit",
+  );
+  const nearLimitRows = initialData.rows.filter(
+    (row) => row.status === "near_limit",
+  );
+  const unsetRows = initialData.rows.filter((row) => row.status === "not_set");
+  const priorityRow = overLimitRows[0] ?? nearLimitRows[0] ?? unsetRows[0];
+  const budgetRecommendation = priorityRow
+    ? priorityRow.status === "over_limit"
+      ? `${priorityRow.categoryName} đã vượt hạn mức. Điều chỉnh mức riêng tháng này hoặc giảm các giao dịch sắp tới trước khi mở rộng nhóm khác.`
+      : priorityRow.status === "near_limit"
+        ? `${priorityRow.categoryName} đang tiến gần hạn mức. Kiểm tra lại mức tháng này trước khi chi thêm.`
+        : `${priorityRow.categoryName} chưa có hạn mức. Đặt một mức tối thiểu để MoneyMind có đường chuẩn khi nhắc bạn.`
+    : "Các hạn mức đang ổn. Duy trì nhịp này và chỉ tinh chỉnh khi thói quen chi tiêu thật sự đổi.";
 
   async function submitBudget(values: BudgetFormValues) {
     if (!editing) {
@@ -171,60 +192,101 @@ export function BudgetManager({
   }
 
   return (
-    <section className="space-y-5">
-      <div className="flex flex-col gap-4 rounded-xl border border-[#DCD7CC] bg-[#FFFDF7]/90 p-5 shadow-[0_14px_48px_rgba(47,42,31,0.055)] md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            {selectedMonth.label}
-          </p>
-          <h2 className="mt-1 text-2xl font-bold text-foreground">
-            Hạn mức tháng này
-          </h2>
-        </div>
-        <nav aria-label="Điều hướng tháng ngân sách" className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="border-[#DDD8CE]"
-            aria-label="Xem ngân sách tháng trước"
-            onClick={() =>
-              router.push(`/budgets?month=${selectedMonth.previousKey}`)
-            }
-          >
-            <ChevronLeft className="size-4" />
-            Tháng trước
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="border-[#DDD8CE]"
-            aria-label="Xem ngân sách tháng sau"
-            onClick={() => router.push(`/budgets?month=${selectedMonth.nextKey}`)}
-          >
-            Tháng sau
-            <ChevronRight className="size-4" />
-          </Button>
-        </nav>
-      </div>
+    <CoachPageShell>
+      <CoachHero
+        eyebrow="Plan Tuner"
+        title="Điều chỉnh hạn mức theo rủi ro thật"
+        description="Trang ngân sách trở thành nơi MoneyMind chỉ ra danh mục cần quyết định tiếp theo, thay vì bắt bạn tự đọc toàn bộ bảng hạn mức."
+        recommendation={budgetRecommendation}
+        evidence={[
+          {
+            label: "Ưu tiên xử lý",
+            value: priorityRow?.categoryName ?? "Không có",
+            helper:
+              priorityRow?.status === "over_limit"
+                ? "Đã vượt hạn mức"
+                : priorityRow?.status === "near_limit"
+                  ? "Gần vượt hạn mức"
+                  : priorityRow
+                    ? "Chưa có hạn mức"
+                    : "Tất cả đang ổn",
+          },
+          {
+            label: "Tháng đang xem",
+            value: selectedMonth.label,
+            helper: `${initialData.rows.length} danh mục`,
+          },
+        ]}
+      />
 
-      <div className="grid gap-3 md:grid-cols-4">
-        <SummaryCard
-          label="Tổng hạn mức"
-          value={formatVnd(initialData.summary.totalBudget)}
-        />
-        <SummaryCard
-          label="Đã chi"
-          value={formatVnd(initialData.summary.totalSpent)}
-        />
-        <SummaryCard
-          label={initialData.summary.remaining < 0 ? "Đã vượt" : "Còn lại"}
-          value={formatVnd(Math.abs(initialData.summary.remaining))}
-        />
-        <SummaryCard
-          label="Vượt hạn mức"
-          value={formatVnd(initialData.summary.overAmount)}
-        />
-      </div>
+      <CoachMetricStrip
+        metrics={[
+          {
+            label: "Tổng hạn mức",
+            value: formatVnd(initialData.summary.totalBudget),
+            helper: "Đường chuẩn tháng này",
+          },
+          {
+            label: "Mức đã dùng",
+            value: formatVnd(initialData.summary.totalSpent),
+            helper: "Tổng chi đã ghi nhận",
+            tone: "negative",
+          },
+          {
+            label: initialData.summary.remaining < 0 ? "Đã vượt" : "Còn lại",
+            value: formatVnd(Math.abs(initialData.summary.remaining)),
+            helper: "Khoảng đệm còn lại",
+            tone: initialData.summary.remaining < 0 ? "negative" : "positive",
+          },
+          {
+            label: "Nhóm rủi ro",
+            value: `${overLimitRows.length + nearLimitRows.length}`,
+            helper: "Đã vượt hoặc gần vượt",
+            tone:
+              overLimitRows.length + nearLimitRows.length > 0
+                ? "negative"
+                : "positive",
+          },
+        ]}
+      />
+
+      <section className="space-y-5">
+        <div className="flex flex-col gap-4 rounded-xl border border-[#DCD7CC] bg-[#FFFDF7]/90 p-5 shadow-[0_14px_48px_rgba(47,42,31,0.055)] md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              {selectedMonth.label}
+            </p>
+            <h2 className="mt-1 text-2xl font-bold text-foreground">
+              Hạn mức tháng này
+            </h2>
+          </div>
+          <nav aria-label="Điều hướng tháng ngân sách" className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#DDD8CE]"
+              aria-label="Xem ngân sách tháng trước"
+              onClick={() =>
+                router.push(`/budgets?month=${selectedMonth.previousKey}`)
+              }
+            >
+              <ChevronLeft className="size-4" />
+              Tháng trước
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#DDD8CE]"
+              aria-label="Xem ngân sách tháng sau"
+              onClick={() =>
+                router.push(`/budgets?month=${selectedMonth.nextKey}`)
+              }
+            >
+              Tháng sau
+              <ChevronRight className="size-4" />
+            </Button>
+          </nav>
+        </div>
 
       {error ? (
         <p className="rounded-lg border border-[#E5B8A7] bg-[#F9E8E1] px-4 py-3 text-sm text-[#A2482D]">
@@ -232,26 +294,38 @@ export function BudgetManager({
         </p>
       ) : null}
 
-      <Card className="gap-0 overflow-hidden rounded-xl border-[#DCD7CC] bg-[#FFFDF7]/92 py-0 shadow-[0_14px_48px_rgba(47,42,31,0.055)]">
-        <CardContent className="p-0">
-          <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] gap-3 border-b border-[#E8E1D6] bg-[#F7F3EA] px-4 py-3 text-xs font-semibold tracking-[0.08em] text-muted-foreground">
+      <WorkbenchCard
+        title="Bảng hạn mức hành động"
+        description="Giữ dữ liệu gốc ở đây, nhưng ưu tiên xử lý các danh mục có tín hiệu rủi ro trước."
+      >
+        <div className="overflow-hidden rounded-xl border border-[#DCD7CC] bg-[#FFFDF7]/92">
+          <div className="hidden grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] gap-3 border-b border-[#E8E1D6] bg-[#F7F3EA] px-4 py-3 text-xs font-semibold tracking-[0.08em] text-muted-foreground md:grid">
             <span>Danh mục</span>
             <span>Ngân sách</span>
             <span>Đã chi</span>
             <span>Còn lại</span>
             <span className="text-right">Thao tác</span>
           </div>
-          {initialData.rows.map((row) => (
-            <BudgetRow
-              key={row.categoryId}
-              row={row}
-              isSubmitting={isSubmitting}
-              onEdit={setEditing}
-              onDelete={deleteBudget}
-            />
-          ))}
-        </CardContent>
-      </Card>
+          {initialData.rows.length > 0 ? (
+            initialData.rows.map((row) => (
+              <BudgetRow
+                key={row.categoryId}
+                row={row}
+                isSubmitting={isSubmitting}
+                onEdit={setEditing}
+                onDelete={deleteBudget}
+              />
+            ))
+          ) : (
+            <div className="p-5">
+              <CoachEmptyState
+                title="Chưa có danh mục để đặt hạn mức"
+                description="Tạo danh mục chi tiêu trước, sau đó quay lại đây để MoneyMind giúp bạn đặt giới hạn theo từng nhóm."
+              />
+            </div>
+          )}
+        </div>
+      </WorkbenchCard>
 
       {editing ? (
         <BudgetEditDialog
@@ -264,7 +338,8 @@ export function BudgetManager({
           onSubmit={submitBudget}
         />
       ) : null}
-    </section>
+      </section>
+    </CoachPageShell>
   );
 }
 
@@ -389,19 +464,6 @@ function BudgetEditDialog({
       </Form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="gap-0 rounded-xl border-[#DCD7CC] bg-[#FDFCF8] py-0 shadow-none">
-      <CardContent className="p-4">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
-      </CardContent>
-    </Card>
   );
 }
 

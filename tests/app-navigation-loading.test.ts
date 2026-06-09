@@ -59,13 +59,22 @@ describe("app navigation loading feedback", () => {
 
     expect(link?.querySelector("[data-nav-pending]")).toBeNull();
     expect(link?.textContent).toBe("Giao dịch");
+    expect(
+      container.querySelector<HTMLAnchorElement>('a[href="/insights"]')
+        ?.textContent,
+    ).toBe("Nhận xét AI");
+    expect(
+      container.querySelector<HTMLAnchorElement>('a[href="/reports"]')
+        ?.textContent,
+    ).toBe("Báo cáo");
   });
 
   it("renders a route loading skeleton for app page transitions", () => {
     const markup = renderToStaticMarkup(React.createElement(Loading));
 
     expect(markup).toContain("aria-busy=\"true\"");
-    expect(markup).toContain("Đang tải nội dung");
+    expect(markup).toContain("Đang chuẩn bị phiên cố vấn");
+    expect(markup).toContain("MoneyMind đang đọc tín hiệu");
     expect(markup).toContain("animate-pulse");
   });
 });

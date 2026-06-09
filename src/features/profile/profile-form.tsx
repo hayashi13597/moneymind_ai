@@ -67,6 +67,18 @@ export function ProfileForm({ user }: ProfileFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="rounded-2xl border border-[#D8E1D7] bg-[#F3F8F1] p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2F6B4F]">
+            Hồ sơ hiển thị
+          </p>
+          <h2 className="mt-2 text-lg font-semibold text-foreground">
+            Cá nhân hóa cách MoneyMind gọi bạn
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            MoneyMind dùng thông tin này để hiển thị danh tính nhất quán trong
+            ứng dụng, email vẫn là dữ liệu đăng nhập chỉ đọc.
+          </p>
+        </div>
         <FormField
           control={form.control}
           name="name"

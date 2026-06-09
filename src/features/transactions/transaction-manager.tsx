@@ -6,7 +6,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  CircleDollarSign,
   Ellipsis,
   Pencil,
   Search,
@@ -19,7 +18,13 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { EmptyState, InsightCard } from "@/components/app-ui";
+import { InsightCard } from "@/components/app-ui";
+import {
+  CoachEmptyState,
+  CoachHero,
+  CoachMetricStrip,
+  CoachPageShell,
+} from "@/components/coach-ui";
 import { FormCombobox } from "@/components/form-combobox";
 import { FormMonthPicker } from "@/components/form-month-picker";
 import {
@@ -412,6 +417,12 @@ export function TransactionManager({
   const filteredCount = filteredTransactions.length;
   const isFiltered =
     query.trim() !== "" || typeFilter !== "all" || categoryFilter !== "all";
+  const coachRecommendation =
+    monthlySummary.balance >= 0
+      ? monthlySummary.topCategory
+        ? `${monthlySummary.topCategory.name} đang là nhóm chi lớn nhất. Ghi thêm giao dịch ngay khi phát sinh để MoneyMind nhận ra nhịp chi tiêu thật.`
+        : "Dòng tiền tháng này vẫn dương. Hãy tiếp tục ghi giao dịch bằng câu tự nhiên để AI có đủ ngữ cảnh huấn luyện."
+      : "Tháng này đang âm dòng tiền. MoneyMind sẽ ưu tiên các khoản chi mới để giúp bạn nhìn ra nhóm cần siết lại trước.";
 
   function openPage(nextPage: number, nextPageSize = serverPagination.pageSize) {
     const searchParams = new URLSearchParams({
@@ -688,77 +699,121 @@ export function TransactionManager({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-[#D8E1D7] bg-[#FFFDF7]/92 p-4 shadow-[0_18px_64px_rgba(47,42,31,0.06)] md:p-5">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))]">
-          <div className="rounded-xl border border-[#CBDACB] bg-[#ECF3ED] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-[#496757]">
-                  Chênh lệch thu chi
-                </p>
-                <p
-                  className={
-                    monthlySummary.balance >= 0
-                      ? "mt-3 text-3xl font-bold leading-none text-[#2F6B4F]"
-                      : "mt-3 text-3xl font-bold leading-none text-[#A2482D]"
-                  }
-                >
-                  {formatVnd(monthlySummary.balance)}
-                </p>
-              </div>
-              <span className="rounded-lg bg-white/72 p-2 text-[#2F6B4F] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-                <CircleDollarSign className="size-5" />
-              </span>
+    <CoachPageShell>
+      <CoachHero
+        eyebrow="Coach Capture"
+        title="Ghi lại hôm nay bằng ngôn ngữ tự nhiên"
+        description="Mục tiêu của trang này không phải là nhập liệu cho đủ bảng. Hãy kể MoneyMind chuyện vừa xảy ra, để AI chuẩn bị bản nháp rồi bạn xác nhận lại dữ liệu gốc."
+        recommendation={coachRecommendation}
+        evidence={[
+          {
+            label: "Tháng đang xem",
+            value: selectedMonth.label,
+            helper: transactionCountLabel(serverPagination.total),
+          },
+          {
+            label: "Nhịp thu chi",
+            value: formatVnd(monthlySummary.balance),
+            helper:
+              monthlySummary.balance >= 0
+                ? "Dòng tiền đang dương"
+                : "Cần kiểm tra chi tiêu",
+          },
+        ]}
+      />
+
+      <CoachMetricStrip
+        metrics={[
+          {
+            label: "Tổng thu",
+            value: formatVnd(monthlySummary.income),
+            helper: "Tổng thu trong tháng",
+            tone: "positive",
+          },
+          {
+            label: "Tổng chi",
+            value: formatVnd(monthlySummary.expense),
+            helper: monthlySummary.topCategory
+              ? `Lớn nhất: ${monthlySummary.topCategory.name}`
+              : "Chưa có nhóm nổi bật",
+            tone: "negative",
+          },
+          {
+            label: "Chênh lệch",
+            value: formatVnd(monthlySummary.balance),
+            helper: currentPageRange,
+            tone: monthlySummary.balance >= 0 ? "positive" : "negative",
+          },
+          {
+            label: "Dữ liệu huấn luyện",
+            value: transactionCountLabel(serverPagination.total),
+            helper: "Nguồn ngữ cảnh cho AI",
+          },
+        ]}
+      />
+
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-[#D8E1D7] bg-[#FFFDF7]/92 p-4 shadow-[0_18px_64px_rgba(47,42,31,0.06)] md:p-5">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-[#D8E1D7] bg-[#F7F5EC] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
+              <p className="text-sm font-medium text-[#5F675E]">
+                Tháng đang xem
+              </p>
+              <p className="mt-3 text-2xl font-bold leading-none text-[#2F3E34]">
+                {selectedMonth.label}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-[#697168]">
+                Dữ liệu đang được lọc theo tháng này
+              </p>
             </div>
-            <p className="mt-3 text-xs leading-5 text-[#5B7164]">
-              {currentPageRange} trong {selectedMonth.label.toLowerCase()}
-            </p>
-          </div>
-          <div className="rounded-xl border border-[#E1DDD4] bg-white/72 p-4 shadow-[0_10px_32px_rgba(47,42,31,0.04)]">
-            <p className="text-sm font-medium text-muted-foreground">Thu nhập</p>
-            <p className="mt-3 text-2xl font-bold leading-none text-[#2F6B4F]">
-              {formatVnd(monthlySummary.income)}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Tổng thu trong tháng này
-            </p>
-          </div>
-          <div className="rounded-xl border border-[#E1DDD4] bg-white/72 p-4 shadow-[0_10px_32px_rgba(47,42,31,0.04)]">
-            <p className="text-sm font-medium text-muted-foreground">Chi tiêu</p>
-            <p className="mt-3 text-2xl font-bold leading-none text-[#A2482D]">
-              {formatVnd(monthlySummary.expense)}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              {monthlySummary.topCategory
-                ? `Danh mục lớn nhất: ${monthlySummary.topCategory.name}`
-                : "Chưa có danh mục nổi bật"}
-            </p>
-          </div>
-          <div className="rounded-xl border border-[#D8E1D7] bg-[#F7F5EC] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
-            <p className="text-sm font-medium text-[#5F675E]">Tháng đang xem</p>
-            <p className="mt-3 text-2xl font-bold leading-none text-[#2F3E34]">
-              {selectedMonth.label}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-[#697168]">
-              Tổng {transactionCountLabel(serverPagination.total)} trong tháng
-            </p>
+            <div className="rounded-xl border border-[#E1DDD4] bg-white/72 p-4 shadow-[0_10px_32px_rgba(47,42,31,0.04)]">
+              <p className="text-sm font-medium text-muted-foreground">
+                Trang đang xem
+              </p>
+              <p className="mt-3 text-2xl font-bold leading-none text-foreground">
+                {currentPage} / {pageCount}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                {currentPageRange}
+              </p>
+            </div>
+            <div className="rounded-xl border border-[#E1DDD4] bg-white/72 p-4 shadow-[0_10px_32px_rgba(47,42,31,0.04)]">
+              <p className="text-sm font-medium text-muted-foreground">
+                Danh mục nổi bật
+              </p>
+              <p className="mt-3 truncate text-2xl font-bold leading-none text-foreground">
+                {monthlySummary.topCategory?.name ?? "Chưa có"}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                Nhóm chi lớn nhất trong tháng
+              </p>
+            </div>
+            <div className="rounded-xl border border-[#CBDACB] bg-[#ECF3ED] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
+              <p className="text-sm font-medium text-[#496757]">
+                Cách nhập nhanh
+              </p>
+              <p className="mt-3 text-2xl font-bold leading-none text-[#2F6B4F]">
+                AI nháp
+              </p>
+              <p className="mt-2 text-xs leading-5 text-[#5B7164]">
+                Nhập câu tự nhiên rồi kiểm tra trước khi lưu
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(340px,0.88fr)_minmax(0,1.12fr)] xl:items-start">
-        <InsightCard
-          title="Thêm giao dịch nhanh"
-          description="Nhập một câu ngắn để AI tạo bản nháp, sau đó kiểm tra số tiền và danh mục trước khi lưu."
-          className="xl:sticky xl:top-24"
-        >
-          <Form {...createForm}>
-          <form
-            id="transaction-form"
-            onSubmit={createForm.handleSubmit(createTransaction)}
-            className="space-y-5"
+        <div className="grid gap-5 xl:grid-cols-[minmax(340px,0.88fr)_minmax(0,1.12fr)] xl:items-start">
+          <InsightCard
+            title="Thêm giao dịch nhanh"
+            description="Nhập một câu ngắn để AI tạo bản nháp, sau đó kiểm tra số tiền và danh mục trước khi lưu."
+            className="xl:sticky xl:top-24"
           >
+            <Form {...createForm}>
+              <form
+                id="transaction-form"
+                onSubmit={createForm.handleSubmit(createTransaction)}
+                className="space-y-5"
+              >
             <div className="rounded-xl border border-[#D8E1D7] bg-white/76 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]">
               <FormField
                 control={createForm.control}
@@ -1290,9 +1345,9 @@ export function TransactionManager({
 
             {transactions.length === 0 ? (
               <div className="m-4 md:m-5">
-                <EmptyState
-                  title="Chưa có giao dịch."
-                  description="Bắt đầu bằng cách thêm giao dịch đầu tiên hoặc nhập mô tả để AI tạo bản nháp."
+                <CoachEmptyState
+                  title="Chưa có giao dịch để MoneyMind học từ tháng này"
+                  description="Nhập một câu tự nhiên hoặc lưu giao dịch đầu tiên. Khi có dữ liệu, MoneyMind sẽ dùng trang này làm nguồn ngữ cảnh cho nhận xét, ngân sách và báo cáo."
                 />
               </div>
             ) : null}
@@ -1305,6 +1360,7 @@ export function TransactionManager({
           </CardContent>
         </Card>
       </div>
+      </div>
 
       {editingTransaction ? (
         <TransactionEditDialog
@@ -1316,7 +1372,7 @@ export function TransactionManager({
           onSubmit={updateEditingTransaction}
         />
       ) : null}
-    </div>
+    </CoachPageShell>
   );
 }
 

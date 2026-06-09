@@ -105,7 +105,9 @@ describe("TransactionManager", () => {
       );
     });
 
-    expect(container.textContent).toContain("Chưa có giao dịch.");
+    expect(container.textContent).toContain(
+      "Chưa có giao dịch để MoneyMind học từ tháng này",
+    );
 
     act(() => {
       root.render(
@@ -118,6 +120,24 @@ describe("TransactionManager", () => {
     });
 
     expect(container.textContent).toContain("Lương tháng này");
+  });
+
+  it("leads with an AI coach capture experience", () => {
+    act(() => {
+      root.render(
+        React.createElement(TransactionManager, {
+          initialTransactions: [incomeTransaction],
+          categories,
+          selectedMonth,
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Coach Capture");
+    expect(container.textContent).toContain(
+      "Ghi lại hôm nay bằng ngôn ngữ tự nhiên",
+    );
+    expect(container.textContent).toContain("MoneyMind gợi ý");
   });
 
   it("uses the shadcn date picker for the transaction date field", () => {
@@ -188,7 +208,7 @@ describe("TransactionManager", () => {
       '[aria-label="Điều hướng tháng giao dịch"]',
     );
 
-    expect(container.textContent).toContain("tháng 05/2026");
+    expect(container.textContent).toContain("Tháng 05/2026");
     expect(monthNavigation).not.toBeNull();
     expect(monthPickerButton).not.toBeNull();
     expect(monthPickerButton?.textContent).toContain("Tháng 05/2026");
@@ -273,8 +293,8 @@ describe("TransactionManager", () => {
 
     expect(container.textContent).toContain("100.000 ₫");
     expect(container.textContent).toContain("50.000 ₫");
-    expect(container.textContent).toContain("Tổng thu trong tháng này");
-    expect(container.textContent).toContain("Danh mục lớn nhất: Ăn uống");
+    expect(container.textContent).toContain("Tổng thu trong tháng");
+    expect(container.textContent).toContain("Lớn nhất: Ăn uống");
   });
 
   it("opens an alert dialog before deleting a transaction", async () => {

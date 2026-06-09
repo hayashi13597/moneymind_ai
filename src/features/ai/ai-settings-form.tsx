@@ -122,6 +122,7 @@ export function AiSettingsForm() {
   );
   const hasApiKey = Boolean(existingProvider?.apiKey || activeProvider.apiKey);
   const isEditing = Boolean(existingProvider);
+  const readinessLabel = selectedProvider ? "Sẵn sàng" : "Chưa sẵn sàng";
 
   async function saveSettings(values: AiProviderFormValues) {
     setPending(true);
@@ -188,22 +189,36 @@ export function AiSettingsForm() {
     <div className="space-y-5">
       <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
         <InsightCard
-          title="AI cần cấu hình ổn định"
-          description="Cấu hình này dùng cho phân loại giao dịch, nhận xét theo tháng và trả lời câu hỏi tài chính. Hãy chọn model ổn định, phản hồi JSON tốt và phù hợp chi phí của bạn."
+          title="Coach Control"
+          description="Quyền kiểm soát AI nằm ở đây: chọn nhà cung cấp, giữ API key trong trình duyệt và quyết định model nào được phép đọc dữ liệu tài chính của bạn."
         >
-          <div className="space-y-3 text-sm">
-            <div className="flex items-start gap-2 text-[#2F6B4F]">
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-              <span>
-                API key chỉ được lưu trên trình duyệt này và không hiển thị lại.
-              </span>
+          <div className="space-y-4 text-sm">
+            <div className="rounded-2xl border border-[#C8DCC9] bg-white/72 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2F6B4F]">
+                Mức sẵn sàng
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">
+                {readinessLabel}
+              </p>
+              <p className="mt-2 leading-6 text-muted-foreground">
+                {selectedProvider
+                  ? `${selectedProvider.name} đang được dùng cho chat, nhận xét tháng và phân tích giao dịch.`
+                  : "Lưu một cấu hình AI để MoneyMind có thể bắt đầu cố vấn."}
+              </p>
             </div>
-            <div className="flex items-start gap-2 text-muted-foreground">
-              <Bot className="mt-0.5 size-4 shrink-0" />
-              <span>
-                MoneyMind chỉ gửi dữ liệu giao dịch cần thiết của tài khoản hiện
-                tại cho AI.
-              </span>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex items-start gap-2 text-[#2F6B4F]">
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  API key chỉ được lưu trên trình duyệt này và không hiển thị lại.
+                </span>
+              </div>
+              <div className="flex items-start gap-2 text-muted-foreground">
+                <Bot className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  MoneyMind chỉ gửi dữ liệu cần thiết của tài khoản hiện tại cho AI.
+                </span>
+              </div>
             </div>
           </div>
         </InsightCard>
