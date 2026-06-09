@@ -1,4 +1,4 @@
-import nextConfig from "@/../next.config";
+import nextConfig, { createContentSecurityPolicy } from "@/../next.config";
 
 describe("Next.js security headers", () => {
   it("sets security headers on every route", async () => {
@@ -21,5 +21,10 @@ describe("Next.js security headers", () => {
       "strict-origin-when-cross-origin",
     );
     expect(headers.get("Permissions-Policy")).toContain("camera=()");
+  });
+
+  it("allows eval only in development for React debugging", () => {
+    expect(createContentSecurityPolicy(false)).not.toContain("'unsafe-eval'");
+    expect(createContentSecurityPolicy(true)).toContain("'unsafe-eval'");
   });
 });
