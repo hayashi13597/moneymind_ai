@@ -1,5 +1,23 @@
 import type { NextConfig } from "next";
 
+export function createContentSecurityPolicy(
+  isDevelopment = process.env.NODE_ENV === "development",
+) {
+  const devScriptPolicy = isDevelopment ? " 'unsafe-eval'" : "";
+
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline'${devScriptPolicy}`,
+    "style-src 'self'",
+    "img-src 'self' data: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https:",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
@@ -10,8 +28,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+            value: createContentSecurityPolicy(),
           },
           {
             key: "X-Content-Type-Options",

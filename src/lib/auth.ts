@@ -4,6 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 
 import { db } from "@/lib/db";
 import { ensureDefaultCategories } from "@/lib/default-categories";
+import { sendPasswordResetEmail } from "@/lib/email/resend";
 import { getServerEnv } from "@/lib/env";
 
 const env = getServerEnv();
@@ -16,6 +17,16 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    revokeSessionsOnPasswordReset: true,
+    resetPasswordTokenExpiresIn: 3600,
+    sendResetPassword: async ({ user, url }) => {
+      void sendPasswordResetEmail({
+        to: user.email,
+        resetUrl: url,
+      }).catch((error) => {
+        console.error("Failed to send password reset email", error);
+      });
+    },
   },
   databaseHooks: {
     user: {
